@@ -73,15 +73,6 @@ const CrearCasoUse = () => {
     solicitante: nombre || "",
     elementos: "",
   });
-<<<<<<< HEAD
-  
-  const nombre = localStorage.getItem("nombre");
-  
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-=======
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
 
   // Obtener datos iniciales al cargar el componente
   useEffect(() => {

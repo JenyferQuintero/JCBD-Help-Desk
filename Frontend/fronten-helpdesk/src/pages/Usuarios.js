@@ -559,7 +559,7 @@ const Usuarios = () => {
 
 
           <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, {nombre}</span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />

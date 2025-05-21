@@ -141,12 +141,6 @@ const HomePage = () => {
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
-<<<<<<< HEAD
-  const nombre = localStorage.getItem("nombre");
-  
-=======
-
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -487,7 +481,7 @@ const HomePage = () => {
 
 
           <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, {nombre}</span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />

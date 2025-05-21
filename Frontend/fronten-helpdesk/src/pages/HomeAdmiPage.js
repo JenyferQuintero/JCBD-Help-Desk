@@ -54,13 +54,6 @@ const HomeAdmiPage = () => {
     { label: "Borrado", color: "red", icon: "🗑", count: 0 },
 
   ];
-
-<<<<<<< HEAD
-  const nombre = localStorage.getItem("nombre");
-=======
-
-
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
   // Handlers
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
@@ -100,10 +93,6 @@ const HomeAdmiPage = () => {
 
 
   return (
-<<<<<<< HEAD
-=======
-
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
@@ -262,11 +251,7 @@ const HomeAdmiPage = () => {
 
 
           <div className={styles.userContainer}>
-<<<<<<< HEAD
             <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
-=======
-            <span className={styles.username}>Bienvenido, {nombre}</span>
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
