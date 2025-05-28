@@ -86,11 +86,12 @@ const Problemas = () => {
         const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
         const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
       
-        const roleToPath = {
-          usuario: '/home',
-          tecnico: '/HomeAdmiPage',
-          administrador: '/Superadmin'
-        };
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
       
       
       

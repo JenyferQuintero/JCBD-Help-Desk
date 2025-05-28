@@ -131,6 +131,13 @@ const SolucionTickets = () => {
     }
   };
 
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -211,13 +218,6 @@ const SolucionTickets = () => {
   const userRole = localStorage.getItem("rol");
   const isAdminOrTech = ['admin', 'tecnico'].includes(userRole);
 
-<<<<<<< HEAD
-  // Handlers
-
-  const nombre = localStorage.getItem("nombre");
-  
-=======
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -266,9 +266,9 @@ const SolucionTickets = () => {
   
   if (section === 'inicio') {
     if (userRole === 'administrador') {
-      return '/Superadmin';
-    } else if (userRole === 'tecnico') {
       return '/HomeAdmiPage';
+    } else if (userRole === 'tecnico') {
+      return '/HomeTecnicoPage';
     } else {
       return '/home';
     }

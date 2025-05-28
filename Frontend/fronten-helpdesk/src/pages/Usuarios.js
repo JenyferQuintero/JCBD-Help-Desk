@@ -362,23 +362,24 @@ const Usuarios = () => {
     setCurrentPage(1);
   };
 
-  const roleToPath = {
+const roleToPath = {
     usuario: '/home',
-    tecnico: '/HomeAdmiPage',
-    administrador: '/Superadmin'
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
   };
+
 
   const getRouteByRole = (section) => {
     const userRole = localStorage.getItem("rol");
 
     if (section === 'inicio') {
       if (userRole === 'administrador') {
-        return '/Superadmin';
-      } else if (userRole === 'tecnico') {
-        return '/HomeAdmiPage';
-      } else {
-        return '/home';
-      }
+      return '/HomeAdmiPage';
+    } else if (userRole === 'tecnico') {
+      return '/HomeTecnicoPage';
+    } else {
+      return '/home';
+    }
     } else if (section === 'crear-caso') {
       if (userRole === 'administrador') {
         return '/CrearCasoAdmin';

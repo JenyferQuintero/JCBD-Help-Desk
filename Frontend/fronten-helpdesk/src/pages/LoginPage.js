@@ -33,9 +33,9 @@ const Login = () => {
         if (rol === "usuario") {
           navigate("/home");
         } else if (rol === "administrador") {
-          navigate("/Superadmin");
+          navigate("/HomeAdmiPage");
         } else if (rol === "tecnico") {
-          navigate ("/HomeAdmiPage")
+          navigate ("/HomeTecnicoPage")
         }else {
           alert("Sin rol para ingresar");
           window.location.reload();
@@ -54,7 +54,7 @@ const Login = () => {
     <div className={styles.Login}> {/* Usar clases del módulo */}
       <header>
         <img src={Imagen} alt="Logo" className={styles.empresarial} />
-        <h1>BIENVENIDOS A HELP DESK JCDB</h1>
+        <h1>BIENVENIDOS A HELP DESK JCBD</h1>
       </header>
 
       <div className={styles.row}>

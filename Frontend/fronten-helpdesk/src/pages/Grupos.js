@@ -86,11 +86,12 @@ const Grupos = () => {
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  const roleToPath = {
+const roleToPath = {
     usuario: '/home',
-    tecnico: '/HomeAdmiPage',
-    administrador: '/Superadmin'
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
   };
+
 
 
 

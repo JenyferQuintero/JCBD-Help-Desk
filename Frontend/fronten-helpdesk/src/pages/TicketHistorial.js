@@ -306,10 +306,10 @@ const TicketHistorial = () => {
   const userRole = localStorage.getItem("rol");
   
   if (section === 'inicio') {
-    if (userRole === 'administrador') {
-      return '/Superadmin';
-    } else if (userRole === 'tecnico') {
+  if (userRole === 'administrador') {
       return '/HomeAdmiPage';
+    } else if (userRole === 'tecnico') {
+      return '/HomeTecnicoPage';
     } else {
       return '/home';
     }

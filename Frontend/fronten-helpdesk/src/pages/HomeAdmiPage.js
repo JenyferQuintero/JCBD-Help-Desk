@@ -86,8 +86,8 @@ const HomeAdmiPage = () => {
 
   const roleToPath = {
     usuario: '/home',
-    tecnico: '/HomeAdmiPage',
-    administrador: '/Superadmin'
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
   };
 
 

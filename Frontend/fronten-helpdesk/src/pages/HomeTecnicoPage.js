@@ -6,9 +6,9 @@ import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerS
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
-import styles from "../styles/Superadmin.module.css";
+import styles from "../styles/HomeAdmiPage.module.css";
 
-const Superadmin = () => {
+const HomeAdmiPage = () => {
 
   // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -54,9 +54,6 @@ const Superadmin = () => {
     { label: "Borrado", color: "red", icon: "🗑", count: 0 },
 
   ];
-
-
-
   // Handlers
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
@@ -87,16 +84,15 @@ const Superadmin = () => {
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  const roleToPath = {
+const roleToPath = {
     usuario: '/home',
-    tecnico: '/HomeAdmiPage',
-    administrador: '/Superadmin'
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
   };
 
 
 
   return (
-
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
@@ -255,7 +251,7 @@ const Superadmin = () => {
 
 
           <div className={styles.userContainer}>
-           <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -267,7 +263,7 @@ const Superadmin = () => {
 
 
       {/* Contenido Principal */}
-      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      <div className={styles.containerHomeAdmiPage} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <main>
           <div className={styles.flexColumna}>
             <div className={styles.row}>
@@ -451,4 +447,4 @@ const Superadmin = () => {
   );
 };
 
-export default Superadmin;
+export default HomeAdmiPage;

@@ -56,6 +56,13 @@ const CrearCasoUse = () => {
     }
   };
 
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
+
 
   console.log(nombre);
   
@@ -188,9 +195,9 @@ const CrearCasoUse = () => {
   
   if (section === 'inicio') {
     if (userRole === 'administrador') {
-      return '/Superadmin';
-    } else if (userRole === 'tecnico') {
       return '/HomeAdmiPage';
+    } else if (userRole === 'tecnico') {
+      return '/HomeTecnicoPage';
     } else {
       return '/home';
     }

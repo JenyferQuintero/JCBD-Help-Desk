@@ -91,6 +91,12 @@ const Tickets = () => {
     setIsAdminOpen(false);
   };
 
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
 
   // Función para cargar tickets reales (opcional)
   const fetchTickets = async () => {
@@ -242,12 +248,12 @@ const Tickets = () => {
 
     if (section === 'inicio') {
       if (userRole === 'administrador') {
-        return '/Superadmin';
-      } else if (userRole === 'tecnico') {
-        return '/HomeAdmiPage';
-      } else {
-        return '/home';
-      }
+      return '/HomeAdmiPage';
+    } else if (userRole === 'tecnico') {
+      return '/HomeTecnicoPage';
+    } else {
+      return '/home';
+    }
     } else if (section === 'crear-caso') {
       if (userRole === 'administrador') {
         return '/CrearCasoAdmin';

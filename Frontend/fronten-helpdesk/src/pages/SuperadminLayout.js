@@ -1,155 +1,96 @@
 import React, { useState } from "react";
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import styles from "../styles/Superadmin.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
+import styles from "../styles/HomeAdmiPage.module.css";
 
 const SuperadminLayout = () => {
-  const { user, logout } = useAuth();
+
+  // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeView, setActiveView] = useState("personal");
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
+  // Obtener datos del usuario
+  const nombre = localStorage.getItem("nombre");
+  const userRole = localStorage.getItem("rol") || "";
+
+
+  // Datos
+  const tickets = [
+    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
+    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
+    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
+    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
+    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
+    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
+    { icon: "📝", label: "Abiertos", count: 5, color: "#4CAF50" },
+    { icon: "⏳", label: "En curso", count: 3, color: "#FFC107" },
+    { icon: "✅", label: "Cerrados", count: 12, color: "#2196F3" },
+    { icon: "⚠️", label: "Pendientes", count: 2, color: "#FF5722" },
+    { icon: "🔧", label: "En solución", count: 1, color: "#9C27B0" },
+    { icon: "✔️", label: "Resueltos", count: 4, color: "#607D8B" },
+  ];
+
+  const problems = [
+    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
+    { label: "Aceptado", color: "#008000", icon: "✔", count: 0 },
+    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
+    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
+    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
+    { label: "Bajo observación", color: "black", icon: "👁", count: 0 },
+    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
+    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
+
+  ];
   // Handlers
 
-  const nombre = localStorage.getItem("nombre");
-
   const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  
+
   const toggleSupport = () => {
     setIsSupportOpen(!isSupportOpen);
     setIsAdminOpen(false);
     setIsConfigOpen(false);
   };
-  
+
   const toggleAdmin = () => {
     setIsAdminOpen(!isAdminOpen);
     setIsSupportOpen(false);
     setIsConfigOpen(false);
   };
-  
+
   const toggleConfig = () => {
     setIsConfigOpen(!isConfigOpen);
     setIsSupportOpen(false);
     setIsAdminOpen(false);
   };
 
-  const handleSubmit = async (e, section = 'inicio') => {
-  e?.preventDefault(); // Opcional porque ahora puede usarse para navegación
-  setLoading(true);
-  setMessage("");
-
-  try {
-    // Si no hay credenciales, verifica el rol almacenado (para navegación)
-    if (!usuario && !password) {
-      const storedRol = localStorage.getItem("rol");
-      const storedId = localStorage.getItem("id_usuario");
-
-      if (!storedRol || !storedId) {
-        throw new Error("No hay sesión activa");
-      }
-
-      // Redirige según el rol almacenado y la sección
-      if (section === 'inicio') {
-        if (storedRol === 'administrador') {
-          navigate("/Superadmin");
-        } else if (storedRol === 'tecnico') {
-          navigate("/HomeAdmiPage");
-        } else {
-          navigate("/home");
-        }
-      } 
-      else if (section === 'crear-caso') {
-        if (storedRol === 'administrador' || storedRol === 'tecnico') {
-          navigate("/CrearCasoAdmin");
-        } else {
-          navigate("/CrearCasoUse");
-        }
-      } 
-      else if (section === 'tickets') {
-        if (storedRol === 'administrador') {
-          navigate("/TicketsAdmin");
-        } else if (storedRol === 'tecnico') {
-          navigate("/TicketsTecnico");
-        } else {
-          navigate("/Tickets");
-        }
-      } 
-      else {
-        navigate("/home"); // Ruta por defecto
-      }
-      return;
-    }
-
-    
-    const response = await axios.post("http://127.0.0.1:5000/auth/login", {
-      usuario,
-      password,
-    });
-
-    if (response.status === 200) {
-      const { nombre, usuario, rol, usuario_id } = response.data;
-      localStorage.setItem("id_usuario", usuario_id);
-      localStorage.setItem("nombre", nombre);
-      localStorage.setItem("usuario", usuario);
-      localStorage.setItem("rol", rol);
-
-      // Redirige según el rol después del login
-      if (rol === "usuario") {
-        navigate("/home");
-      } else if (rol === "administrador") {
-        navigate("/Superadmin");
-      } else if (rol === "tecnico") {
-        navigate("/HomeAdmiPage");
-      } else {
-        alert("Sin rol para ingresar");
-        window.location.reload();
-      }
-    }
-    setMessage(response.data.mensaje);
-  } catch (error) {
-    setMessage(error.response?.data?.error || "Error de autenticación o navegación");
-    console.error("Error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-    
-    setIsLoading(true);
-    try {
-      navigate(`/search?query=${encodeURIComponent(searchTerm)}`);
-      setSearchTerm("");
-    } catch (err) {
-      setError("Error al realizar la búsqueda");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSelectChange = (event) => {
+    const value = event.target.value;
+    setActiveView(value === "0" ? "personal" : value === "1" ? "global" : "todo");
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
   };
+
+
 
   return (
     <div className={styles.containerPrincipal}>
@@ -176,25 +117,9 @@ const SuperadminLayout = () => {
             <ul className={styles.menuIconos}>
               {/* Opción Inicio - visible para todos */}
               <li className={styles.iconosMenu}>
-                <Link to={handleNavigation('inicio')} className={styles.linkSinSubrayado}>
+                <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
                   <FcHome className={styles.menuIcon} />
                   <span className={styles.menuText}>Inicio</span>
-                </Link>
-              </li>
-
-              {/* Opción Crear Caso - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={handleNavigation('crear-caso')} className={styles.linkSinSubrayado}>
-                  <FcCustomerSupport className={styles.menuIcon} />
-                  <span className={styles.menuText}>Crear Caso</span>
-                </Link>
-              </li>
-
-              {/* Opción Tickets - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={handleNavigation('tickets')} className={styles.linkSinSubrayado}>
-                  <FcAnswers className={styles.menuIcon} />
-                  <span className={styles.menuText}>Tickets</span>
                 </Link>
               </li>
 
@@ -300,8 +225,7 @@ const SuperadminLayout = () => {
       {/* Header */}
       <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <div className={styles.containerInicioImg}>
-          <Link to={handleNavigation('inicio')} className={styles.linkSinSubrayado}>
-            <FcHome className={styles.menuIcon} />
+          <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
             <span>Inicio</span>
           </Link>
         </div>
@@ -327,11 +251,7 @@ const SuperadminLayout = () => {
 
 
           <div className={styles.userContainer}>
-<<<<<<< HEAD
             <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
-=======
-            <span className={styles.username}>Bienvenido, {nombre}</span>
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -342,10 +262,160 @@ const SuperadminLayout = () => {
       </header>
 
 
-      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      {/* Contenido Principal */}
+      <div className={styles.containerHomeAdmiPage} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+        <main>
+          <div className={styles.flexColumna}>
+            <div className={styles.row}>
+              <div className={styles.col}>
+                <div className={styles.flexColumnHorizontal}>
+                  <div className={styles.viewButtonsContainer}>
+                    <button
+                      className={`${styles.viewButton} ${activeView === "personal" ? styles.active : ""}`}
+                      onClick={() => setActiveView("personal")}
+                    >
+                      Vista Personal
+                    </button>
+                    <button
+                      className={`${styles.viewButton} ${activeView === "global" ? styles.active : ""}`}
+                      onClick={() => setActiveView("global")}
+                    >
+                      Vista Global
+                    </button>
+                    <button
+                      className={`${styles.viewButton} ${activeView === "todo" ? styles.active : ""}`}
+                      onClick={() => setActiveView("todo")}
+                    >
+                      Todo
+                    </button>
+                  </div>
+                  <select className={`${styles.viewSelect} form-select`} onChange={handleSelectChange}>
+                    <option value={0}>Vista Personal</option>
+                    <option value={1}>Vista Global</option>
+                    <option value={2}>Todo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          <div className="app-container">
+            {/* Vista Personal */}
+            {(activeView === "personal" || activeView === "todo") && (
+              <>
+                <div className={styles.tablaContainer}>
+                  <h2>SUS CASOS A CERRAR</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>SOLICITANTE</th>
+                        <th>ELEMENTOS ASOCIADOS</th>
+                        <th>DESCRIPCIÓN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>ID: 2503160091</td>
+                        <td>Santiago Caricena Corredor</td>
+                        <td>General</td>
+                        <td>NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)</td>
+                      </tr>
+                      <tr>
+                        <td>ID: 2503160090</td>
+                        <td>Santiago Caricena Corredor</td>
+                        <td>General</td>
+                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={styles.tablaContainer}>
+                  <h2>SUS CASOS EN CURSO</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>SOLICITANTE</th>
+                        <th>ELEMENTOS ASOCIADOS</th>
+                        <th>DESCRIPCIÓN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>ID: 2503160088</td>
+                        <td>HUN HUN Generico</td>
+                        <td>General</td>
+                        <td>LLAMOO DE TIMBRES (1 - 0)</td>
+                      </tr>
+                      <tr>
+                        <td>ID: 2503160088</td>
+                        <td>Wendy Johanna Alfonso Peralta</td>
+                        <td>General</td>
+                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={styles.tablaContainer}>
+                  <h2>ENCUESTA DE SATISFACCIÓN</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>SOLICITANTE</th>
+                        <th>ELEMENTOS ASOCIADOS</th>
+                        <th>DESCRIPCIÓN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>ID: 2503150021</td>
+                        <td>Julian Antonio Niño Oedoy</td>
+                        <td>General</td>
+                        <td>ALTA MEDICA (1 - 0)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {/* Vista Global */}
+            {(activeView === "global" || activeView === "todo") && (
+              <>
+                <div className={styles.sectionContainer}>
+                  <h2>Tickets</h2>
+                  <div className={styles.cardsContainer}>
+                    {tickets.map((ticket, index) => (
+                      <div key={index} className={styles.card} style={{ borderColor: ticket.color }}>
+                        <span className="icon">{ticket.icon}</span>
+                        <span className="label">{ticket.label}</span>
+                        <span className="count">{ticket.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.sectionContainer}>
+                  <h2>Problemas</h2>
+                  <div className={styles.cardsContainer}>
+                    {problems.map((problem, index) => (
+                      <div key={index} className={styles.card} style={{ borderColor: problem.color }}>
+                        <span className="icon">{problem.icon}</span>
+                        <span className="label">{problem.label}</span>
+                        <span className="count">{problem.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
       </div>
-
 
       {/* Chatbot */}
       <div className={styles.chatbotContainer}>
@@ -376,5 +446,6 @@ const SuperadminLayout = () => {
     </div>
   );
 };
+
 
 export default SuperadminLayout;

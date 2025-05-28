@@ -87,10 +87,11 @@ const Categorias = () => {
       const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
     
       const roleToPath = {
-        usuario: '/home',
-        tecnico: '/HomeAdmiPage',
-        administrador: '/Superadmin'
-      };
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
     
     
     

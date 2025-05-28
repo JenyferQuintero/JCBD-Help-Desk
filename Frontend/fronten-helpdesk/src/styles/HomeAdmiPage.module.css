@@ -1,36 +1,28 @@
-/* HomeAdmiPage.module.css */
-.containerPrincipal {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: auto; /* o 'hidden' si no quieres scroll */
-  position: relative; /* para posicionar hijos absolutos si es necesario */
-  display: flex; /* opcional, para flexbox layout */
-  flex-direction: column; /* opcional, para apilar hijos verticalmente */
-  box-sizing: border-box; /* para incluir padding en el tamaño total */
-}
-<<<<<<< HEAD
-.containerHomeAdmiPage {  
-  width: 96%;
-  margin: 9px auto 20px auto;
-  padding: 20px;
-=======
-.container {  
-  width: calc(90% - 80px); /* Ajustar según el margen */
-  margin: 20px auto;
-  padding: 80px;
->>>>>>> 6f35d6fd23931639e33de38c72da2f182dd2e407
-  background-color: rgb(224, 224, 241);
-  border-radius: 15px;
-  box-shadow: 15px 15px 15px rgba(15, 12, 207, 0.3);
-  transition: margin-left 0.3s ease;
-  min-height: 89vh;
-  max-height: calc(100vh - 49px);
-  display: block;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
+  .containerPrincipal {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+   
+  }
+ .containerHomeAdmiPage {
+    width: calc(92% - 60px);
+    height: 100%;
+    margin: 20px auto;
+    padding: 80px;
+    background-color: rgb(224, 224, 241);
+    border-radius: 15px;
+    box-shadow: 15px 15px 15px rgba(15, 12, 207, 0.3);
+    margin-top: 9px;
+    transition: margin-left 0.3s ease;
+
+  }
+
 
 .containerInicio {
   display: flex;

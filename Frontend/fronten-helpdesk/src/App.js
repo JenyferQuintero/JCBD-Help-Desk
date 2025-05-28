@@ -7,8 +7,8 @@ import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import CrearCasoUse from "./pages/CrearCasoUse";
 import HomeAdmiPage from "./pages/HomeAdmiPage";
+import HomeTecnicoPage from "./pages/HomeTecnicoPage";
 import Tickets from "./pages/Tickets";
-import Superadmin from "./pages/Superadmin";
 import CrearCasoAdmin from "./pages/CrearCasoAdmin";
 import Problemas from "./pages/Problemas";
 import Estadisticas from "./pages/Estadisticas";
@@ -30,8 +30,8 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/CrearCasoUse" element={<CrearCasoUse />} />
           <Route path="/HomeAdmiPage" element={<HomeAdmiPage />} />
+          <Route path="/HomeTecnicoPage" element={<HomeTecnicoPage />} />
           <Route path="/Tickets" element={<Tickets />} />
-          <Route path="/Superadmin" element={<Superadmin />} />
           <Route path="/CrearCasoAdmin" element={<CrearCasoAdmin />} />
           <Route path="/Problemas" element={<Problemas />} />
           <Route path="/Estadisticas" element={<Estadisticas />} />
@@ -43,15 +43,15 @@ function App() {
           <Route path="/EncuestaSatisfaccion/:surveyId" element={<EncuestaSatisfaccion />} />
           <Route path="/tickets/:id/historial" element={<TicketHistorial />} />
           {/* Rutas protegidas */}
-          <Route path="/Superadmin" element={
+          <Route path="/HomeAdmiPage" element={
             <ProtectedRoute allowedRoles={['administrador']}>
-              <Superadmin />
+              <HomeAdmiPage />
             </ProtectedRoute>
           } />
 
-          <Route path="/HomeAdmiPage" element={
+          <Route path="/HomeTecnicoPage" element={
             <ProtectedRoute allowedRoles={['tecnico']}>
-              <HomeAdmiPage />
+              <HomeTecnicoPage />
             </ProtectedRoute>
           } />
 
