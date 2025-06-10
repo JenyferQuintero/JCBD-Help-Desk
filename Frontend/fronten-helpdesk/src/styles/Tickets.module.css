@@ -3,7 +3,7 @@
   height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: auto; /* o 'hidden' si no quieres scroll */
+  overflow: hiddn; /* o 'hidden' si no quieres scroll */
   position: relative; /* para posicionar hijos absolutos si es necesario */
   display: flex; /* opcional, para flexbox layout */
   flex-direction: column; /* opcional, para apilar hijos verticalmente */
@@ -688,6 +688,22 @@
     margin-left: 10px;
   }
 
+  .linkSinSubrayado {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.submenuLink {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: #333;
+  width: 100%;
+}
+
   .container {
     padding: 20px;
     width: calc(100% - 60px);
@@ -858,6 +874,8 @@ tr:hover {
   gap: 10px;
 }
 
+
+
 .applyButton {
   background-color: #4CAF50;
   color: white;
@@ -978,7 +996,7 @@ tr:hover {
 .tableContainer {
   margin-top: 20px;
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .tablaContainer table {
@@ -1283,3 +1301,74 @@ tr:hover {
   
     }
   }
+
+  /* Estilos para los select de filtro */
+.filterGroup select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+}
+
+/* Estilos para las opciones */
+.filterGroup select option {
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* Estilos específicos para las prioridades */
+.filterGroup select option[value="Alta"] {
+  background-color: #F44336;
+  color: white;
+}
+
+.filterGroup select option[value="Mediana"] {
+  background-color: #FF9800;
+  color: white;
+}
+
+.filterGroup select option[value="Baja"] {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Estilos específicos para los estados */
+.filterGroup select option[value="Abierto"] {
+  background-color: #F44336;
+  color: white;
+}
+
+.filterGroup select option[value="En Curso"] {
+  background-color: #FF9800;
+  color: white;
+}
+
+.filterGroup select option[value="Cerrado"] {
+  background-color: #FFEB3B;
+  color: #333;
+}
+
+/* Estilos para igualar el tamaño de las opciones */
+.filterGroup select option {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+/* Estilo para la opción por defecto */
+.filterGroup select option[value=""] {
+  background-color: white;
+  color: #333;
+}
+

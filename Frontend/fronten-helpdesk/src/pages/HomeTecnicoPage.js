@@ -8,7 +8,7 @@ import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/HomeAdmiPage.module.css";
 
-const HomeAdmiPage = () => {
+const HomeTecnicoPage = () => {
 
   // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -28,31 +28,26 @@ const HomeAdmiPage = () => {
 
 
   // Datos
-  const tickets = [
+    const tickets = [
     { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
     { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
-    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
     { label: "Borrado", color: "red", icon: "🗑", count: 0 },
     { icon: "📝", label: "Abiertos", count: 5, color: "#4CAF50" },
-    { icon: "⏳", label: "En curso", count: 3, color: "#FFC107" },
+    { icon: "⏳", label: "En curso", count: 3, color: "lightgreen" },
     { icon: "✅", label: "Cerrados", count: 12, color: "#2196F3" },
     { icon: "⚠️", label: "Pendientes", count: 2, color: "#FF5722" },
-    { icon: "🔧", label: "En solución", count: 1, color: "#9C27B0" },
     { icon: "✔️", label: "Resueltos", count: 4, color: "#607D8B" },
   ];
 
   const problems = [
     { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
     { label: "Aceptado", color: "#008000", icon: "✔", count: 0 },
-    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
+    { label: "En curso", color: "lightgreen", icon: "📅", count: 0 },
     { label: "En espera", color: "orange", icon: "🟡", count: 0 },
     { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
     { label: "Bajo observación", color: "black", icon: "👁", count: 0 },
     { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
     { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-
   ];
   // Handlers
 
@@ -447,4 +442,4 @@ const roleToPath = {
   );
 };
 
-export default HomeAdmiPage;
+export default HomeTecnicoPage;

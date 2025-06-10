@@ -1,63 +1,78 @@
-import React, { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Outlet, Link, useParams, useNavigate } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
+import axios from 'axios';
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/CrearCasoAdmin.module.css";
 
 const CrearCasoAdmin = () => {
-   // Estados
+  // Obtener datos del usuario
+  const userRole = localStorage.getItem("rol") || "";
+  const nombre = localStorage.getItem("nombre") || "";
+
+  // Verificación de rol
+  const isAdminOrTech = userRole === "administrador" || userRole === "tecnico";
+
+  if (!isAdminOrTech) {
+    return (
+      <div className={styles.accessDenied}>
+        <h2>Acceso denegado</h2>
+        <p>No tienes permisos para acceder a esta página.</p>
+        <Link to="/" className={styles.returnLink}>
+          Volver al inicio
+        </Link>
+      </div>
+    );
+  }
+
+
+  // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeView, setActiveView] = useState("personal");
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [ticket, setTicket] = useState({
+    entidad: '',
+    titulo: '',
+    descripcion: '',
+    archivos: [],
+    id: '',
+    solicitante: '',
+    prioridad: '',
+    estado: '',
+    tecnico: '',
+    grupo: '',
+    categoria: '',
+    fechaApertura: '',
+    ultimaActualizacion: '',
+    tipo: 'incidencia',
+    ubicacion: '',
+    observador: '',
+    asignadoA: '',
+    grupoAsignado: ''
+  });
+  const [categorias, setCategorias] = useState([]);
+  const [grupos, setGrupos] = useState([]);
+  const [tecnicos, setTecnicos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // Obtener datos del usuario
-  const nombre = localStorage.getItem("nombre");
-  const userRole = localStorage.getItem("rol") || "";
-
-
-  // Datos
-  const tickets = [
-    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
-    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
-    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
-    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-    { icon: "📝", label: "Abiertos", count: 5, color: "#4CAF50" },
-    { icon: "⏳", label: "En curso", count: 3, color: "#FFC107" },
-    { icon: "✅", label: "Cerrados", count: 12, color: "#2196F3" },
-    { icon: "⚠️", label: "Pendientes", count: 2, color: "#FF5722" },
-    { icon: "🔧", label: "En solución", count: 1, color: "#9C27B0" },
-    { icon: "✔️", label: "Resueltos", count: 4, color: "#607D8B" },
-  ];
-
-  const problems = [
-    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "Aceptado", color: "#008000", icon: "✔", count: 0 },
-    { label: "En curso (asignada)", color: "lightgreen", icon: "📅", count: 0 },
-    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
-    { label: "Bajo observación", color: "black", icon: "👁", count: 0 },
-    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
-    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-
-  ];
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdTicketId, setCreatedTicketId] = useState(null);
+  const navigate = useNavigate();
 
 
 
   // Handlers
-
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
   const toggleSupport = () => {
@@ -78,139 +93,207 @@ const CrearCasoAdmin = () => {
     setIsAdminOpen(false);
   };
 
-  const handleSelectChange = (event) => {
-    const value = event.target.value;
-    setActiveView(value === "0" ? "personal" : value === "1" ? "global" : "todo");
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setTicket(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setTicket(prev => ({ ...prev, archivos: [...prev.archivos, ...files] }));
+  };
+
+  const removeFile = (index) => {
+    setTicket(prev => {
+      const newFiles = [...prev.archivos];
+      newFiles.splice(index, 1);
+      return { ...prev, archivos: newFiles };
+    });
+  };
+
+  const handleSubmit = () => {
+    if (!ticket.entidad || !ticket.titulo || !ticket.descripcion) {
+      setError("Por favor complete todos los campos obligatorios");
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('entidad', ticket.entidad);
+    formData.append('titulo', ticket.titulo);
+    formData.append('descripcion', ticket.descripcion);
+
+    if (ticket.archivos?.length > 0) {
+      ticket.archivos.forEach((file, index) => {
+        formData.append(`archivos[${index}]`, file);
+      });
+    }
+
+    axios.post('/api/casos', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+      .then(response => {
+        // Guardar el ID del ticket creado
+        setCreatedTicketId(response.data.id);
+        // Mostrar el modal de éxito
+        setShowSuccessModal(true);
+        // Limpiar el formulario
+        setTicket({
+          ...ticket,
+          titulo: '',
+          descripcion: '',
+          archivos: []
+        });
+      })
+      .catch(error => {
+        setError("Error al crear el caso: " + error.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    navigate('/Tickets'); // Redirige a la página de tickets
+  };
+
+  const handleSave = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setSuccessMessage("Ticket actualizado correctamente");
+      setIsEditing(false);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const formatDateTimeForInput = (dateString) => {
+    if (!dateString) return '';
+    if (dateString.includes('T')) return dateString.substring(0, 16);
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    const pad = (num) => num.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-const roleToPath = {
-    usuario: '/home',
-    tecnico: '/HomeTecnicoPage',
-    administrador: '/HomeAdmiPage'
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        setCategorias([
+          { id: 1, nombre: "Hardware" },
+          { id: 2, nombre: "Software" },
+          { id: 3, nombre: "Redes" }
+        ]);
+        setGrupos([
+          { id: 1, nombre: "Soporte TI" },
+          { id: 2, nombre: "Desarrollo" }
+        ]);
+        setTecnicos([
+          { id: 1, nombre: "Juan Pérez" },
+          { id: 2, nombre: "María García" }
+        ]);
+        setLoading(false);
+      } catch (err) {
+        setError("Error al cargar los datos");
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
-
-
+  if (loading) {
+    return <div className={styles.loading}>Cargando ticket...</div>;
+  }
 
   return (
-
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
-      <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMenu}
-        onMouseLeave={toggleMenu}
-      >
+      <aside className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        onMouseEnter={toggleMenu} onMouseLeave={toggleMenu}>
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
             <img src={Logo} alt="Logo" />
           </div>
 
-          <button
-            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-            type="button"
-            onClick={toggleMobileMenu}
-          >
+          <button className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+            type="button" onClick={toggleMobileMenu}>
             <FiAlignJustify className={styles.menuIcon} />
           </button>
 
           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
             <ul className={styles.menuIconos}>
-              {/* Opción Inicio - visible para todos */}
               <li className={styles.iconosMenu}>
-                <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
+                <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
                   <FcHome className={styles.menuIcon} />
                   <span className={styles.menuText}>Inicio</span>
                 </Link>
               </li>
 
-              {/* Menú Soporte - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                    <FcAssistant className={styles.menuIcon} />
-                    <span className={styles.menuText}> Soporte</span>
-                  </div>
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                  <FcAssistant className={styles.menuIcon} />
+                  <span className={styles.menuText}> Soporte</span>
+                </div>
+                <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                  <li><Link to="/Tickets" className={styles.submenuLink}>
+                    <FcAnswers className={styles.menuIcon} />
+                    <span className={styles.menuText}>Tickets</span>
+                  </Link></li>
+                  <li><Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                    <FcCustomerSupport className={styles.menuIcon} />
+                    <span className={styles.menuText}>Crear Caso</span>
+                  </Link></li>
+                  <li><Link to="/Problemas" className={styles.submenuLink}>
+                    <FcExpired className={styles.menuIcon} />
+                    <span className={styles.menuText}>Problemas</span>
+                  </Link></li>
+                  <li><Link to="/Estadisticas" className={styles.submenuLink}>
+                    <FcBullish className={styles.menuIcon} />
+                    <span className={styles.menuText}>Estadísticas</span>
+                  </Link></li>
+                </ul>
+              </li>
 
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Tickets" className={styles.submenuLink}>
-                        <FcAnswers className={styles.menuIcon} />
-                        <span className={styles.menuText}>Tickets</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                        <FcCustomerSupport className={styles.menuIcon} />
-                        <span className={styles.menuText}>Crear Caso</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Problemas" className={styles.submenuLink}>
-                        <FcExpired className={styles.menuIcon} />
-                        <span className={styles.menuText}>Problemas</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Estadisticas" className={styles.submenuLink}>
-                        <FcBullish className={styles.menuIcon} />
-                        <span className={styles.menuText}>Estadísticas</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                  <FcBusinessman className={styles.menuIcon} />
+                  <span className={styles.menuText}> Administración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                  <li><Link to="/Usuarios" className={styles.submenuLink}>
+                    <FcPortraitMode className={styles.menuIcon} />
+                    <span className={styles.menuText}> Usuarios</span>
+                  </Link></li>
+                  <li><Link to="/Grupos" className={styles.submenuLink}>
+                    <FcConferenceCall className={styles.menuIcon} />
+                    <span className={styles.menuText}> Grupos</span>
+                  </Link></li>
+                  <li><Link to="/Entidades" className={styles.submenuLink}>
+                    <FcOrganization className={styles.menuIcon} />
+                    <span className={styles.menuText}> Entidades</span>
+                  </Link></li>
+                </ul>
+              </li>
 
-              {/* Menú Administración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                    <FcBusinessman className={styles.menuIcon} />
-                    <span className={styles.menuText}> Administración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Usuarios" className={styles.submenuLink}>
-                        <FcPortraitMode className={styles.menuIcon} />
-                        <span className={styles.menuText}> Usuarios</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Grupos" className={styles.submenuLink}>
-                        <FcConferenceCall className={styles.menuIcon} />
-                        <span className={styles.menuText}> Grupos</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Entidades" className={styles.submenuLink}>
-                        <FcOrganization className={styles.menuIcon} />
-                        <span className={styles.menuText}> Entidades</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              {/* Menú Configuración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                    <FcAutomatic className={styles.menuIcon} />
-                    <span className={styles.menuText}> Configuración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Categorias" className={styles.submenuLink}>
-                        <FcGenealogy className={styles.menuIcon} />
-                        <span className={styles.menuText}>Categorias</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                  <FcAutomatic className={styles.menuIcon} />
+                  <span className={styles.menuText}> Configuración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                  <li><Link to="/Categorias" className={styles.submenuLink}>
+                    <FcGenealogy className={styles.menuIcon} />
+                    <span className={styles.menuText}>Categorias</span>
+                  </Link></li>
+                </ul>
+              </li>
             </ul>
           </div>
 
@@ -226,216 +309,257 @@ const roleToPath = {
       <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
         <Outlet />
       </div>
+
       {/* Header */}
       <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <div className={styles.containerInicioImg}>
-          <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
+          <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
             <span>Inicio</span>
           </Link>
         </div>
         <div className={styles.inputContainer}>
           <div className={styles.searchContainer}>
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              className={styles.buttonBuscar}
-              title="Buscar"
-              disabled={isLoading || !searchTerm.trim()}
-            >
+            <input className={styles.search} type="text" placeholder="Buscar..."
+              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <button className={styles.buttonBuscar} title="Buscar"
+              disabled={isLoading || !searchTerm.trim()}>
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
             {isLoading && <span className={styles.loading}>Buscando...</span>}
             {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
-
           <div className={styles.userContainer}>
-           <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
-              <Link to="/">
-                <FaPowerOff className={styles.icon} />
-              </Link>
+              <Link to="/"><FaPowerOff className={styles.icon} /></Link>
             </div>
           </div>
         </div>
       </header>
 
+      <div className={styles.containerCrearCasoAdmin} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
 
-      {/* Contenido Principal */}
-      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-        <main>
-          <div className={styles.flexColumna}>
-            <div className={styles.row}>
-              <div className={styles.col}>
-                <div className={styles.flexColumnHorizontal}>
-                  <div className={styles.viewButtonsContainer}>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "personal" ? styles.active : ""}`}
-                      onClick={() => setActiveView("personal")}
-                    >
-                      Vista Personal
-                    </button>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "global" ? styles.active : ""}`}
-                      onClick={() => setActiveView("global")}
-                    >
-                      Vista Global
-                    </button>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "todo" ? styles.active : ""}`}
-                      onClick={() => setActiveView("todo")}
-                    >
-                      Todo
-                    </button>
-                  </div>
-                  <select className={`${styles.viewSelect} form-select`} onChange={handleSelectChange}>
-                    <option value={0}>Vista Personal</option>
-                    <option value={1}>Vista Global</option>
-                    <option value={2}>Todo</option>
+        <div className={styles.containersolucion}>
+          <h1 className={styles.title}>Creación de Ticket</h1>
+
+
+          <div className={styles.crearCasoContainer}>
+            <div className={styles.userIndicator}> {nombre}</div>
+            <div className={styles.gloBoContainer}>
+              <div className={styles.gloBoHeader}>
+                <h2>Crear Nuevo Caso</h2>
+              </div>
+
+              <div className={styles.gloBoBody}>
+                <div className={styles.formGroup}>
+                  <label>Entidad:</label>
+                  <select className={styles.inputField} value={ticket.entidad}
+                    name="entidad" onChange={handleChange}>
+                    <option value="">Seleccione una entidad</option>
+                    <option value="Contabilidad">Contabilidad</option>
+                    <option value="Talento Humano">Talento Humano</option>
+                    <option value="Almacen">Almacen</option>
                   </select>
                 </div>
+
+                <div className={styles.formGroup}>
+                  <label>Título:</label>
+                  <input type="text" className={styles.inputField} placeholder="Ingrese el título del caso"
+                    value={ticket.titulo} name="titulo" onChange={handleChange} />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Descripción:</label>
+                  <textarea className={`${styles.inputField} ${styles.textareaField}`}
+                    placeholder="Describa el caso detalladamente" value={ticket.descripcion}
+                    name="descripcion" onChange={handleChange} rows={5} />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Adjuntar archivos:</label>
+                  <div className={styles.fileUploadContainer}>
+                    <input type="file" id="fileUpload" className={styles.fileInput}
+                      onChange={handleFileUpload} multiple />
+                    <label htmlFor="fileUpload" className={styles.fileUploadButton}>
+                      Seleccionar archivos
+                    </label>
+                    {ticket.archivos?.length > 0 && (
+                      <div className={styles.fileList}>
+                        {ticket.archivos.map((file, index) => (
+                          <div key={index} className={styles.fileItem}>
+                            <span>{file.name}</span>
+                            <button type="button" onClick={() => removeFile(index)}
+                              className={styles.removeFileButton}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.formActions}>
+                  <button type="button" className={styles.submitButton} onClick={handleSubmit}>
+                    Crear Ticket
+                  </button>
+                </div>
               </div>
+              <div className={styles.gloBoPointer}></div>
+            </div>
+            {/* Modal de éxito */}
+            {showSuccessModal && (
+              <div className={styles.modalOverlay}>
+                <div className={styles.successModal}>
+                  <h3>¡Ticket creado exitosamente!</h3>
+                  <p>El ticket fue creado con el número: <strong>{createdTicketId}</strong></p>
+                  <button
+                    onClick={handleCloseModal}
+                    className={styles.modalButton}
+                  >
+                    Aceptar
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+            <div className={styles.ticketInfoContainer}>
+              <div className={styles.header}>
+                <h3>Información del Ticket</h3>
+                {!isEditing && (
+                  <button onClick={() => setIsEditing(true)} className={styles.editButton}>
+                    Editar
+                  </button>
+                )}
+              </div>
+
+              {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+
+              <div className={styles.verticalForm}>
+                <h4>Casos</h4>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.fecha}>Fecha de apertura:</label>
+                  <input type="datetime-local" name="fechaApertura"
+                    value={formatDateTimeForInput(ticket.fechaApertura)}
+                    onChange={handleChange} disabled={!isEditing || !isAdminOrTech} />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Tipo:</label>
+                  <select name="tipo" value={ticket.tipo} onChange={handleChange}
+                    disabled={!isEditing || !isAdminOrTech}>
+                    <option value="incidencia">Incidencia</option>
+                    <option value="requerimiento">Requerimiento</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Categoría:</label>
+                  <select name="categoria" value={ticket.categoria}
+                    onChange={handleChange} disabled={!isEditing}>
+                    {categorias.map(cat => (
+                      <option key={cat.id} value={cat.nombre}>{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Estado:</label>
+                  <select name="estado" value={ticket.estado}
+                    onChange={handleChange} disabled={!isEditing || !isAdminOrTech}>
+                    <option value="nuevo">Nuevo</option>
+                    <option value="en curso">En curso</option>
+                    <option value="en espera">En espera</option>
+                    <option value="resuelto">Resuelto</option>
+                    <option value="cerrado">Cerrado</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Prioridad:</label>
+                  <select name="prioridad" value={ticket.prioridad}
+                    onChange={handleChange} disabled={!isEditing}>
+                    <option value="alta">Alta</option>
+                    <option value="mediana">Mediana</option>
+                    <option value="baja">Baja</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Ubicación:</label>
+                  <input type="text" name="ubicacion" value={ticket.ubicacion}
+                    onChange={handleChange} disabled={!isEditing || !isAdminOrTech} />
+                </div>
+
+                <h4>Asignaciones</h4>
+
+                <div className={styles.formGroup}>
+                  <label>Solicitante:</label>
+                  <input type="text" name="solicitante" value={ticket.solicitante}
+                    onChange={handleChange} disabled={!isEditing || !isAdminOrTech} />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Observador:</label>
+                  <input type="text" name="observador" value={ticket.observador}
+                    onChange={handleChange} disabled={!isEditing || !isAdminOrTech} />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Asignado a:</label>
+                  {isAdminOrTech ? (
+                    <select name="asignadoA" value={ticket.asignadoA}
+                      onChange={handleChange} disabled={!isEditing}>
+                      <option value="">Seleccionar técnico</option>
+                      {tecnicos.map(tec => (
+                        <option key={tec.id} value={tec.nombre}>{tec.nombre}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input type="text" value={ticket.asignadoA} disabled />
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Grupo asignado:</label>
+                  {isAdminOrTech ? (
+                    <select name="grupoAsignado" value={ticket.grupoAsignado}
+                      onChange={handleChange} disabled={!isEditing}>
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.id} value={grupo.nombre}>{grupo.nombre}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input type="text" value={ticket.grupoAsignado} disabled />
+                  )}
+                </div>
+              </div>
+
+              {isEditing && (
+                <div className={styles.actions}>
+                  <button onClick={handleSave} className={styles.saveButton}>
+                    Guardar Cambios
+                  </button>
+                  <button onClick={() => setIsEditing(false)} className={styles.cancelButton}>
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="app-container">
-            {/* Vista Personal */}
-            {(activeView === "personal" || activeView === "todo") && (
-              <>
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS A CERRAR</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160091</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160090</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS EN CURSO</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>HUN HUN Generico</td>
-                        <td>General</td>
-                        <td>LLAMOO DE TIMBRES (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>Wendy Johanna Alfonso Peralta</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>ENCUESTA DE SATISFACCIÓN</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503150021</td>
-                        <td>Julian Antonio Niño Oedoy</td>
-                        <td>General</td>
-                        <td>ALTA MEDICA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-
-            {/* Vista Global */}
-            {(activeView === "global" || activeView === "todo") && (
-              <>
-                <div className={styles.sectionContainer}>
-                  <h2>Tickets</h2>
-                  <div className={styles.cardsContainer}>
-                    {tickets.map((ticket, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: ticket.color }}>
-                        <span className="icon">{ticket.icon}</span>
-                        <span className="label">{ticket.label}</span>
-                        <span className="count">{ticket.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={styles.sectionContainer}>
-                  <h2>Problemas</h2>
-                  <div className={styles.cardsContainer}>
-                    {problems.map((problem, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: problem.color }}>
-                        <span className="icon">{problem.icon}</span>
-                        <span className="label">{problem.label}</span>
-                        <span className="count">{problem.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </main>
+        </div>
       </div>
 
       {/* Chatbot */}
       <div className={styles.chatbotContainer}>
-        <img
-          src={ChatbotIcon}
-          alt="Chatbot"
-          className={styles.chatbotIcon}
-          onClick={toggleChat}
-        />
+        <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={toggleChat} />
         {isChatOpen && (
           <div className={styles.chatWindow}>
             <div className={styles.chatHeader}>
               <h4>Chat de Soporte</h4>
-              <button onClick={toggleChat} className={styles.closeChat}>
-                &times;
-              </button>
+              <button onClick={toggleChat} className={styles.closeChat}>&times;</button>
             </div>
             <div className={styles.chatBody}>
               <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
@@ -447,10 +571,8 @@ const roleToPath = {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
-
- 
 
 export default CrearCasoAdmin;

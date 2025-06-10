@@ -747,7 +747,7 @@ const SolucionTickets = () => {
 
               {/* Container para la solución */}
               <form onSubmit={handleSubmit} className={styles.solutionForm}>
-                <h2 className={styles.solutionTitle}>Proporcionar Solución</h2>
+                <h2 className={styles.solutionTitle}>Seguimiento </h2>
 
                 <div className={styles.formGroup}>
                   <label htmlFor="solucion" className={styles.label}>

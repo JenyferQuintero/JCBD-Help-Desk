@@ -10,18 +10,18 @@
   box-sizing: border-box;
 }
 
-.container {  
-  width: 85%;
-  height: 100%;
-  margin: 0 auto;
-  padding: 80px;
-  background-color: rgb(224, 224, 241);
-  border-radius: 15px;
-  box-shadow: 15px 15px 15px rgba(15, 12, 207, 0.3);
-  margin-top: 9px;
-  transition: margin-left 0.3s ease;
-}
+.containerContenido {
+    width: calc(92% - 60px);
+    height: 100%;
+    margin: 20px auto;
+    padding: 80px;
+    background-color: rgb(224, 224, 241);
+    border-radius: 15px;
+    box-shadow: 15px 15px 15px rgba(15, 12, 207, 0.3);
+    margin-top: 9px;
+    transition: margin-left 0.3s ease;
 
+  }
 .containerInicio {
   display: flex;
   justify-content: space-between;

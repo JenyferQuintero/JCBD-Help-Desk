@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcEmptyFilter, FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FaPrint } from "react-icons/fc";
+import { FcEmptyFilter, FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import { FaFileExcel, FaFilePdf, FaFileCsv, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
@@ -10,7 +10,7 @@ import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/Tickets.module.css";
 
-// Datos de ejemplo más completos
+// Datos de ejemplo
 const initialData = Array.from({ length: 100 }, (_, i) => ({
   id: `2503290${(1000 - i).toString().padStart(3, '0')}`,
   titulo: `CREACION DE USUARIOS - PARALELO ACADEMICO ${i + 1}`,
@@ -26,69 +26,220 @@ const initialData = Array.from({ length: 100 }, (_, i) => ({
 }));
 
 const Tickets = () => {
-  // Estados para menú y chat
+  // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Estados para datos y carga
-  const [tickets, setTickets] = useState(initialData); // Usamos los datos de ejemplo inicialmente
+  const [tickets, setTickets] = useState(initialData);
   const [filteredTickets, setFilteredTickets] = useState(initialData);
-  const [isLoading, setIsLoading] = useState(false); // Cambiado a false porque usamos datos locales
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [usingDemoData, setUsingDemoData] = useState(true); // Para indicar que estamos usando datos de ejemplo
-
-  // Estados para búsqueda y filtros
+  const [usingDemoData, setUsingDemoData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    id: '',
-    titulo: '',
-    solicitante: '',
-    prioridad: '',
-    estado: '',
-    tecnico: '',
-    grupo: '',
-    categoria: ''
+    id: '', titulo: '', solicitante: '', prioridad: '', estado: '',
+    tecnico: '', grupo: '', categoria: ''
   });
-
-  // Estados para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
-  // Obtener rol del usuario desde localStorage
+  const navigate = useNavigate();
+  const location = useLocation();
   const userRole = localStorage.getItem("rol") || "usuario";
   const nombre = localStorage.getItem("nombre");
 
-  // Handlers para menú y chat
-
+  // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
 
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
+  const toggleSupport = (e) => {
+  e.stopPropagation(); // Evita que el evento se propague
+  setIsSupportOpen(!isSupportOpen);
+  setIsAdminOpen(false);
+  setIsConfigOpen(false);
+};
 
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
+const toggleAdmin = (e) => {
+  e.stopPropagation();
+  setIsAdminOpen(!isAdminOpen);
+  setIsSupportOpen(false);
+  setIsConfigOpen(false);
+};
 
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
+const toggleConfig = (e) => {
+  e.stopPropagation();
+  setIsConfigOpen(!isConfigOpen);
+  setIsSupportOpen(false);
+  setIsAdminOpen(false);
+};
+
+
+  // Renderizado condicional del menú según rol
+  const renderMenuItems = () => {
+    const commonItems = (
+      <ul className={styles.menuIconos}>
+        <li className={styles.iconosMenu}>
+          <Link to={getRouteByRole('inicio')} className={styles.linkSinSubrayado}>
+            <FcHome className={styles.menuIcon} />
+            <span className={styles.menuText}>Inicio</span>
+          </Link>
+        </li>
+        {userRole === 'usuario' && (
+          <>
+            <li className={styles.iconosMenu}>
+              <Link to={getRouteByRole('crear-caso')} className={styles.linkSinSubrayado}>
+                <FcCustomerSupport className={styles.menuIcon} />
+                <span className={styles.menuText}>Crear Caso</span>
+              </Link>
+            </li>
+            <li className={styles.iconosMenu}>
+              <Link to={getRouteByRole('tickets')} className={styles.linkSinSubrayado}>
+                <FcAnswers className={styles.menuIcon} />
+                <span className={styles.menuText}>Tickets</span>
+              </Link>
+            </li>
+          </>
+        )}
+      </ul>
+    );
+
+    const adminItems = (
+      <ul className={styles.menuIconos}>
+        <li className={styles.iconosMenu}>
+          <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+            <FcAssistant className={styles.menuIcon} />
+            <span className={styles.menuText}> Soporte</span>
+          </div>
+
+          <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+            <li>
+              <Link to="/Tickets" className={styles.submenuLink}>
+                <FcAnswers className={styles.menuIcon} />
+                <span className={styles.menuText}>Tickets</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                <FcCustomerSupport className={styles.menuIcon} />
+                <span className={styles.menuText}>Crear Caso</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/Problemas" className={styles.submenuLink}>
+                <FcExpired className={styles.menuIcon} />
+                <span className={styles.menuText}>Problemas</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/Estadisticas" className={styles.submenuLink}>
+                <FcBullish className={styles.menuIcon} />
+                <span className={styles.menuText}>Estadísticas</span>
+              </Link>
+            </li>
+          </ul>
+        </li>
+        <li className={styles.iconosMenu}>
+          <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+            <FcBusinessman className={styles.menuIcon} />
+            <span className={styles.menuText}> Administración</span>
+          </div>
+          <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+            <li>
+              <Link to="/Usuarios" className={styles.submenuLink}>
+                <FcPortraitMode className={styles.menuIcon} />
+                <span className={styles.menuText}> Usuarios</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/Grupos" className={styles.submenuLink}>
+                <FcConferenceCall className={styles.menuIcon} />
+                <span className={styles.menuText}> Grupos</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/Entidades" className={styles.submenuLink}>
+                <FcOrganization className={styles.menuIcon} />
+                <span className={styles.menuText}> Entidades</span>
+              </Link>
+            </li>
+          </ul>
+        </li>
+        <li className={styles.iconosMenu}>
+          <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+            <FcAutomatic className={styles.menuIcon} />
+            <span className={styles.menuText}> Configuración</span>
+          </div>
+          <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+            <li>
+              <Link to="/Categorias" className={styles.submenuLink}>
+                <FcGenealogy className={styles.menuIcon} />
+                <span className={styles.menuText}>Categorias</span>
+              </Link>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    );
+
+    const techItems = (
+      <>
+        <li className={styles.iconosMenu}>
+          <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+            <FcAssistant className={styles.menuIcon} />
+            <span className={styles.menuText}> Soporte</span>
+          </div>
+          <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+            <li>
+              <Link to="/Tickets" className={styles.submenuLink}>
+                <FcAnswers className={styles.menuIcon} />
+                <span className={styles.menuText}>Tickets</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                <FcCustomerSupport className={styles.menuIcon} />
+                <span className={styles.menuText}>Crear Caso</span>
+              </Link>
+            </li>
+            <li>
+              <Link to="/Problemas" className={styles.submenuLink}>
+                <FcExpired className={styles.menuIcon} />
+                <span className={styles.menuText}>Problemas</span>
+              </Link>
+            </li>
+          </ul>
+        </li>
+        <li className={styles.iconosMenu}>
+          <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+            <FcBusinessman className={styles.menuIcon} />
+            <span className={styles.menuText}> Administración</span>
+          </div>
+          <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+            <li>
+              <Link to="/Usuarios" className={styles.submenuLink}>
+                <FcPortraitMode className={styles.menuIcon} />
+                <span className={styles.menuText}> Usuarios</span>
+              </Link>
+            </li>
+          </ul>
+        </li>
+      </>
+    );
+
+    return (
+      <>
+        {commonItems}
+        {userRole === 'administrador' && adminItems}
+        {userRole === 'tecnico' && techItems}
+      </>
+    );
   };
 
   const roleToPath = {
@@ -248,12 +399,12 @@ const Tickets = () => {
 
     if (section === 'inicio') {
       if (userRole === 'administrador') {
-      return '/HomeAdmiPage';
-    } else if (userRole === 'tecnico') {
-      return '/HomeTecnicoPage';
-    } else {
-      return '/home';
-    }
+        return '/HomeAdmiPage';
+      } else if (userRole === 'tecnico') {
+        return '/HomeTecnicoPage';
+      } else {
+        return '/home';
+      }
     } else if (section === 'crear-caso') {
       if (userRole === 'administrador') {
         return '/CrearCasoAdmin';
@@ -278,134 +429,21 @@ const Tickets = () => {
   return (
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
-      <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMenu}
-        onMouseLeave={toggleMenu}
-      >
+      <aside className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        onMouseEnter={toggleMenu} onMouseLeave={toggleMenu}>
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
             <img src={Logo} alt="Logo" />
           </div>
 
-          <button
-            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-            type="button"
-            onClick={toggleMobileMenu}
-          >
+          <button className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+            type="button" onClick={toggleMobileMenu}>
             <FiAlignJustify className={styles.menuIcon} />
           </button>
 
           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
             <ul className={styles.menuIconos}>
-              {/* Opción Inicio - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('inicio')} className={styles.linkSinSubrayado}>
-                  <FcHome className={styles.menuIcon} />
-                  <span className={styles.menuText}>Inicio</span>
-                </Link>
-              </li>
-
-              {/* Opción Crear Caso - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('crear-caso')} className={styles.linkSinSubrayado}>
-                  <FcCustomerSupport className={styles.menuIcon} />
-                  <span className={styles.menuText}>Crear Caso</span>
-                </Link>
-              </li>
-
-              {/* Opción Tickets - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('tickets')} className={styles.linkSinSubrayado}>
-                  <FcAnswers className={styles.menuIcon} />
-                  <span className={styles.menuText}>Tickets</span>
-                </Link>
-              </li>
-
-              {/* Menú Soporte - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                    <FcAssistant className={styles.menuIcon} />
-                    <span className={styles.menuText}> Soporte</span>
-                  </div>
-
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Tickets" className={styles.submenuLink}>
-                        <FcAnswers className={styles.menuIcon} />
-                        <span className={styles.menuText}>Tickets</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                        <FcCustomerSupport className={styles.menuIcon} />
-                        <span className={styles.menuText}>Crear Caso</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Problemas" className={styles.submenuLink}>
-                        <FcExpired className={styles.menuIcon} />
-                        <span className={styles.menuText}>Problemas</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Estadisticas" className={styles.submenuLink}>
-                        <FcBullish className={styles.menuIcon} />
-                        <span className={styles.menuText}>Estadísticas</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              {/* Menú Administración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                    <FcBusinessman className={styles.menuIcon} />
-                    <span className={styles.menuText}> Administración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Usuarios" className={styles.submenuLink}>
-                        <FcPortraitMode className={styles.menuIcon} />
-                        <span className={styles.menuText}> Usuarios</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Grupos" className={styles.submenuLink}>
-                        <FcConferenceCall className={styles.menuIcon} />
-                        <span className={styles.menuText}> Grupos</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Entidades" className={styles.submenuLink}>
-                        <FcOrganization className={styles.menuIcon} />
-                        <span className={styles.menuText}> Entidades</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              {/* Menú Configuración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                    <FcAutomatic className={styles.menuIcon} />
-                    <span className={styles.menuText}> Configuración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Categorias" className={styles.submenuLink}>
-                        <FcGenealogy className={styles.menuIcon} />
-                        <span className={styles.menuText}>Categorias</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
+              {renderMenuItems()}
             </ul>
           </div>
 
@@ -450,7 +488,7 @@ const Tickets = () => {
 
 
           <div className={styles.userContainer}>
-           <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -577,29 +615,29 @@ const Tickets = () => {
             </div>
             <div className={styles.filterRow}>
               <div className={styles.filterGroup}>
-                <label>Prioridad</label>
+                <label >Prioridad</label>
                 <select
                   name="prioridad"
                   value={filters.prioridad}
                   onChange={handleFilterChange}
                 >
-                  <option value="">Todas las prioridades</option>
-                  <option value="Alta">Alta</option>
-                  <option value="Mediana">Mediana</option>
-                  <option value="Baja">Baja</option>
+                  <option className={styles.prioridad} value="">Todas las prioridades</option>
+                  <option className={styles.prioridad} value="Alta">Alta</option>
+                  <option className={styles.prioridad} value="Mediana">Mediana</option>
+                  <option className={styles.prioridad} value="Baja">Baja</option>
                 </select>
               </div>
               <div className={styles.filterGroup}>
-                <label>Estado</label>
+                <label >Estado</label>
                 <select
                   name="estado"
                   value={filters.estado}
                   onChange={handleFilterChange}
                 >
-                  <option value="">Todos los estados</option>
-                  <option value="Abierto">Abierto</option>
-                  <option value="En Curso">En Curso</option>
-                  <option value="Cerrado">Cerrado</option>
+                  <option className={styles.prioridad} value="">Todos los estados</option>
+                  <option className={styles.prioridad} value="Abierto">Abierto</option>
+                  <option className={styles.prioridad} value="En Curso">En Curso</option>
+                  <option className={styles.prioridad} value="Cerrado">Cerrado</option>
                 </select>
               </div>
               <div className={styles.filterGroup}>

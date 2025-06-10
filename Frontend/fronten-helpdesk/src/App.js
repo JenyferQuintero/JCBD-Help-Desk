@@ -2,7 +2,6 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './Componentes/ProtectedRoute'; 
-import { styles } from './App.css';
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import CrearCasoUse from "./pages/CrearCasoUse";
