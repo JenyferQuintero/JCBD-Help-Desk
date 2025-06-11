@@ -12,7 +12,7 @@
   }
  .containerHomeAdmiPage {
     width: calc(92% - 60px);
-    height: 100%;
+    height: auto;
     margin: 20px auto;
     padding: 80px;
     background-color: rgb(224, 224, 241);
