@@ -2,8 +2,30 @@ import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcEmptyFilter, FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
-import { FaFileExcel, FaFilePdf, FaFileCsv, FaChevronDown, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import {
+  FcEmptyFilter,
+  FcHome,
+  FcAssistant,
+  FcBusinessman,
+  FcAutomatic,
+  FcAnswers,
+  FcCustomerSupport,
+  FcExpired,
+  FcGenealogy,
+  FcBullish,
+  FcConferenceCall,
+  FcPortraitMode,
+  FcOrganization,
+  FcPrint,
+} from "react-icons/fc";
+import {
+  FaFileExcel,
+  FaFilePdf,
+  FaFileCsv,
+  FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
@@ -12,17 +34,17 @@ import styles from "../styles/Tickets.module.css";
 
 // Datos de ejemplo
 const initialData = Array.from({ length: 100 }, (_, i) => ({
-  id: `2503290${(1000 - i).toString().padStart(3, '0')}`,
+  id: `2503290${(1000 - i).toString().padStart(3, "0")}`,
   titulo: `CREACION DE USUARIOS - PARALELO ACADEMICO ${i + 1}`,
-  solicitante: 'Jenyfer Quintero Calixto',
-  descripcion: 'ALIMENTAR EL EXCEL DE DELOGIN',
-  prioridad: ['Mediana', 'Alta', 'Baja'][i % 3],
-  estado: ['Cerrado', 'Abierto', 'En Curso'][i % 3],
-  tecnico: 'Jenyfer Quintero Calixto',
-  grupo: 'EDQ B',
-  categoria: 'CREACION DE USUARIO',
-  ultimaActualizacion: '2025-03-29 03:40',
-  fechaApertura: '2025-03-29 03:19'
+  solicitante: "Jenyfer Quintero Calixto",
+  descripcion: "ALIMENTAR EL EXCEL DE DELOGIN",
+  prioridad: ["Mediana", "Alta", "Baja"][i % 3],
+  estado: ["Cerrado", "Abierto", "En Curso"][i % 3],
+  tecnico: "Jenyfer Quintero Calixto",
+  grupo: "EDQ B",
+  categoria: "CREACION DE USUARIO",
+  ultimaActualizacion: "2025-03-29 03:40",
+  fechaApertura: "2025-03-29 03:19",
 }));
 
 const Tickets = () => {
@@ -41,8 +63,14 @@ const Tickets = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    id: '', titulo: '', solicitante: '', prioridad: '', estado: '',
-    tecnico: '', grupo: '', categoria: ''
+    id: "",
+    titulo: "",
+    solicitante: "",
+    prioridad: "",
+    estado: "",
+    tecnico: "",
+    grupo: "",
+    categoria: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(15);
@@ -57,7 +85,8 @@ const Tickets = () => {
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+  const toggleExportDropdown = () =>
+    setIsExportDropdownOpen(!isExportDropdownOpen);
 
   const toggleSupport = (e) => {
     e.stopPropagation();
@@ -81,9 +110,9 @@ const Tickets = () => {
   };
 
   const roleToPath = {
-    usuario: '/home',
-    tecnico: '/HomeTecnicoPage',
-    administrador: '/HomeAdmiPage'
+    usuario: "/home",
+    tecnico: "/HomeTecnicoPage",
+    administrador: "/HomeAdmiPage",
   };
 
   // Función para cargar tickets reales (opcional)
@@ -92,12 +121,17 @@ const Tickets = () => {
     setError(null);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://127.0.0.1:5000/api/tickets", {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await axios.get(
+        "http://localhost:5000/usuarios/tickets",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setTickets(response.data);
+      console.log("Datos de tickets obtenidos del servidor:", response.data);
+
       setFilteredTickets(response.data);
       setUsingDemoData(false);
     } catch (err) {
@@ -112,7 +146,7 @@ const Tickets = () => {
 
   useEffect(() => {
     // Comentado para usar solo datos de ejemplo
-    // fetchTickets();
+    fetchTickets();
   }, []);
 
   // Manejar búsqueda desde URL
@@ -134,8 +168,8 @@ const Tickets = () => {
       return;
     }
 
-    const filtered = tickets.filter(item => {
-      return Object.values(item).some(val => {
+    const filtered = tickets.filter((item) => {
+      return Object.values(item).some((val) => {
         if (val === null || val === undefined) return false;
         return String(val).toLowerCase().includes(term);
       });
@@ -159,14 +193,16 @@ const Tickets = () => {
   // Handlers para filtros
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const applyFilters = () => {
-    const filteredData = tickets.filter(item => {
-      return Object.keys(filters).every(key => {
+    const filteredData = tickets.filter((item) => {
+      return Object.keys(filters).every((key) => {
         if (!filters[key]) return true;
-        return String(item[key]).toLowerCase().includes(filters[key].toLowerCase());
+        return String(item[key])
+          .toLowerCase()
+          .includes(filters[key].toLowerCase());
       });
     });
     setFilteredTickets(filteredData);
@@ -175,14 +211,14 @@ const Tickets = () => {
 
   const clearFilters = () => {
     setFilters({
-      id: '',
-      titulo: '',
-      solicitante: '',
-      prioridad: '',
-      estado: '',
-      tecnico: '',
-      grupo: '',
-      categoria: ''
+      id: "",
+      titulo: "",
+      solicitante: "",
+      prioridad: "",
+      estado: "",
+      tecnico: "",
+      grupo: "",
+      categoria: "",
     });
     setFilteredTickets(tickets);
     setCurrentPage(1);
@@ -216,7 +252,8 @@ const Tickets = () => {
   const totalPages = Math.ceil(filteredTickets.length / rowsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const nextPage = () =>
+    currentPage < totalPages && setCurrentPage(currentPage + 1);
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
   const handleRowsPerPageChange = (e) => {
@@ -230,33 +267,33 @@ const Tickets = () => {
   };
 
   const getRouteByRole = (section) => {
-    if (section === 'inicio') {
-      if (userRole === 'administrador') {
-        return '/HomeAdmiPage';
-      } else if (userRole === 'tecnico') {
-        return '/HomeTecnicoPage';
+    if (section === "inicio") {
+      if (userRole === "administrador") {
+        return "/HomeAdmiPage";
+      } else if (userRole === "tecnico") {
+        return "/HomeTecnicoPage";
       } else {
-        return '/home';
+        return "/home";
       }
-    } else if (section === 'crear-caso') {
-      if (userRole === 'administrador') {
-        return '/CrearCasoAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/CrearCasoAdmin';
+    } else if (section === "crear-caso") {
+      if (userRole === "administrador") {
+        return "/CrearCasoAdmin";
+      } else if (userRole === "tecnico") {
+        return "/CrearCasoAdmin";
       } else {
-        return '/CrearCasoUse';
+        return "/CrearCasoUse";
       }
-    } else if (section === 'tickets') {
-      return '/Tickets';
+    } else if (section === "tickets") {
+      return "/Tickets";
     } else {
-      return '/home';
+      return "/home";
     }
   };
 
   // Renderizar menú según el rol
   const renderMenuByRole = () => {
     switch (userRole) {
-      case 'administrador':
+      case "administrador":
         return (
           <ul className={styles.menuIconos}>
             <li className={styles.iconosMenu}>
@@ -271,7 +308,11 @@ const Tickets = () => {
                 <FcAssistant className={styles.menuIcon} />
                 <span className={styles.menuText}> Soporte</span>
               </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+              <ul
+                className={`${styles.submenu} ${
+                  isSupportOpen ? styles.showSubmenu : ""
+                }`}
+              >
                 <li>
                   <Link to="/Tickets" className={styles.submenuLink}>
                     <FcAnswers className={styles.menuIcon} />
@@ -304,7 +345,11 @@ const Tickets = () => {
                 <FcBusinessman className={styles.menuIcon} />
                 <span className={styles.menuText}> Administración</span>
               </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+              <ul
+                className={`${styles.submenu} ${
+                  isAdminOpen ? styles.showSubmenu : ""
+                }`}
+              >
                 <li>
                   <Link to="/Usuarios" className={styles.submenuLink}>
                     <FcPortraitMode className={styles.menuIcon} />
@@ -331,7 +376,11 @@ const Tickets = () => {
                 <FcAutomatic className={styles.menuIcon} />
                 <span className={styles.menuText}> Configuración</span>
               </div>
-              <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+              <ul
+                className={`${styles.submenu} ${
+                  isConfigOpen ? styles.showSubmenu : ""
+                }`}
+              >
                 <li>
                   <Link to="/Categorias" className={styles.submenuLink}>
                     <FcGenealogy className={styles.menuIcon} />
@@ -343,7 +392,7 @@ const Tickets = () => {
           </ul>
         );
 
-      case 'tecnico':
+      case "tecnico":
         return (
           <ul className={styles.menuIconos}>
             <li className={styles.iconosMenu}>
@@ -358,7 +407,11 @@ const Tickets = () => {
                 <FcAssistant className={styles.menuIcon} />
                 <span className={styles.menuText}> Soporte</span>
               </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+              <ul
+                className={`${styles.submenu} ${
+                  isSupportOpen ? styles.showSubmenu : ""
+                }`}
+              >
                 <li>
                   <Link to="/Tickets" className={styles.submenuLink}>
                     <FcAnswers className={styles.menuIcon} />
@@ -379,7 +432,11 @@ const Tickets = () => {
                 <FcBusinessman className={styles.menuIcon} />
                 <span className={styles.menuText}> Administración</span>
               </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+              <ul
+                className={`${styles.submenu} ${
+                  isAdminOpen ? styles.showSubmenu : ""
+                }`}
+              >
                 <li>
                   <Link to="/Usuarios" className={styles.submenuLink}>
                     <FcPortraitMode className={styles.menuIcon} />
@@ -391,7 +448,7 @@ const Tickets = () => {
           </ul>
         );
 
-      case 'usuario':
+      case "usuario":
       default:
         return (
           <ul className={styles.menuIconos}>
@@ -424,7 +481,9 @@ const Tickets = () => {
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        className={`${styles.menuVertical} ${
+          isMenuExpanded ? styles.expanded : ""
+        }`}
         onMouseEnter={toggleMenu}
         onMouseLeave={toggleMenu}
       >
@@ -441,7 +500,11 @@ const Tickets = () => {
             <FiAlignJustify className={styles.menuIcon} />
           </button>
 
-          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+          <div
+            className={`${styles.menuVerticalDesplegable} ${
+              isMobileMenuOpen ? styles.mobileMenuOpen : ""
+            }`}
+          >
             {renderMenuByRole()}
           </div>
 
@@ -454,14 +517,25 @@ const Tickets = () => {
       </aside>
 
       {/* Contenido principal */}
-      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
+      <div
+        style={{
+          marginLeft: isMenuExpanded ? "200px" : "60px",
+          transition: "margin-left 0.3s ease",
+        }}
+      >
         <Outlet />
       </div>
-      
+
       {/* Header */}
-      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      <header
+        className={styles.containerInicio}
+        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
+      >
         <div className={styles.containerInicioImg}>
-          <Link to={getRouteByRole('inicio')} className={styles.linkSinSubrayado}>
+          <Link
+            to={getRouteByRole("inicio")}
+            className={styles.linkSinSubrayado}
+          >
             <span>Inicio</span>
           </Link>
         </div>
@@ -486,7 +560,9 @@ const Tickets = () => {
           </div>
 
           <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>
+              Bienvenido, <span id="nombreusuario">{nombre}</span>
+            </span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -497,7 +573,10 @@ const Tickets = () => {
       </header>
 
       {/* Contenido principal - Tabla de tickets */}
-      <div className={styles.containerticket} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      <div
+        className={styles.containerticket}
+        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
+      >
         {/* Barra de herramientas */}
         <div className={styles.toolbar}>
           <div className={styles.searchContainer}>
@@ -528,7 +607,7 @@ const Tickets = () => {
               title="Alternar filtros"
             >
               <FcEmptyFilter />
-              <span>{showFilters ? 'Ocultar' : 'Mostrar'} filtros</span>
+              <span>{showFilters ? "Ocultar" : "Mostrar"} filtros</span>
             </button>
 
             {/* Dropdown de exportación */}
@@ -551,22 +630,13 @@ const Tickets = () => {
                   >
                     <FaFileExcel /> Excel
                   </button>
-                  <button
-                    onClick={exportToPdf}
-                    className={styles.exportOption}
-                  >
+                  <button onClick={exportToPdf} className={styles.exportOption}>
                     <FaFilePdf /> PDF
                   </button>
-                  <button
-                    onClick={exportToCsv}
-                    className={styles.exportOption}
-                  >
+                  <button onClick={exportToCsv} className={styles.exportOption}>
                     <FaFileCsv /> CSV
                   </button>
-                  <button
-                    onClick={printTable}
-                    className={styles.exportOption}
-                  >
+                  <button onClick={printTable} className={styles.exportOption}>
                     <FcPrint /> Imprimir
                   </button>
                 </div>
@@ -695,6 +765,8 @@ const Tickets = () => {
                 <th>Técnico</th>
                 <th>Grupo</th>
                 <th>Categoría</th>
+                <th>Fecha Apertura</th>
+                <th>Fecha Ultima Actualizacion</th>
               </tr>
             </thead>
             <tbody>
@@ -704,40 +776,64 @@ const Tickets = () => {
                     <td>
                       <span
                         className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id)}
+                        onClick={() => handleTicketClick(ticket.id_ticket)}
                       >
-                        {ticket.id}
+                        {ticket.id_ticket}
                       </span>
                     </td>
                     <td>
                       <span
                         className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id)}
+                        onClick={() => handleTicketClick(ticket.id_ticket)}
                       >
-                        {ticket.titulo}
+                        {ticket.titulo.toUpperCase()}
                       </span>
                     </td>
-                    <td>{ticket.solicitante}</td>
-                    <td>{ticket.descripcion}</td>
+                    <td>{ticket.solicitante.toUpperCase()}</td>
+                    <td>{ticket.descripcion.toUpperCase()}</td>
                     <td>
-                      <span className={`${styles.priority} ${styles[ticket.prioridad.toLowerCase()]}`}>
-                        {ticket.prioridad}
+                      <span
+                        className={`${styles.priority} ${
+                          styles[ticket.prioridad?.toLowerCase()]
+                        }`}
+                      >
+                        {ticket.prioridad.toUpperCase()}
                       </span>
                     </td>
                     <td>
-                      <span className={`${styles.status} ${styles[ticket.estado.toLowerCase().replace(' ', '')]}`}>
-                        {ticket.estado}
+                      <span
+                        className={`${styles.status} ${
+                          styles[ticket.estado?.toLowerCase()] || styles.default
+                        }`}
+                      >
+                        {ticket.estado_ticket}
                       </span>
                     </td>
-                    <td>{ticket.tecnico}</td>
-                    <td>{ticket.grupo}</td>
-                    <td>{ticket.categoria}</td>
+                    <td>NO ASIGNADO</td>{" "}
+                    {/* Puedes reemplazar luego con ticket.tecnico si lo agregas */}
+                    <td>SIN GRUPO</td> {/* Igual para grupo */}
+                    <td>{ticket.categoria.toUpperCase()}</td>
+                    <td>
+                      {new Date(ticket.fecha_creacion + " -05:00") // le decimos explícitamente que es hora Colombia
+                        .toLocaleString("es-CO", {
+                          timeZone: "America/Bogota",
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })
+                        .toUpperCase()}
+                    </td>
+                    <td>SIN ACTUALIZACION</td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan="9" className={styles.noResults}>
-                    No se encontraron tickets que coincidan con los criterios de búsqueda
+                    No se encontraron tickets que coincidan con los criterios de
+                    búsqueda
                   </td>
                 </tr>
               )}
@@ -754,12 +850,16 @@ const Tickets = () => {
               onChange={handleRowsPerPageChange}
               className={styles.rowsSelect}
             >
-              {[15, 30, 50, 100].map(option => (
-                <option key={option} value={option}>{option}</option>
+              {[15, 30, 50, 100].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
             </select>
             <span className={styles.rowsInfo}>
-              Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredTickets.length)} de {filteredTickets.length} tickets
+              Mostrando {indexOfFirstRow + 1}-
+              {Math.min(indexOfLastRow, filteredTickets.length)} de{" "}
+              {filteredTickets.length} tickets
             </span>
           </div>
 
@@ -788,7 +888,9 @@ const Tickets = () => {
                 <button
                   key={pageNumber}
                   onClick={() => paginate(pageNumber)}
-                  className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
+                  className={`${styles.paginationButton} ${
+                    currentPage === pageNumber ? styles.active : ""
+                  }`}
                 >
                   {pageNumber}
                 </button>
@@ -802,7 +904,9 @@ const Tickets = () => {
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <button
                 onClick={() => paginate(totalPages)}
-                className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
+                className={`${styles.paginationButton} ${
+                  currentPage === totalPages ? styles.active : ""
+                }`}
               >
                 {totalPages}
               </button>

@@ -1387,4 +1387,6 @@ tr:hover {
 }
 
 
-
+.uppercase {
+  text-transform: uppercase;
+}

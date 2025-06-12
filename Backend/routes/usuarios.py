@@ -167,19 +167,28 @@ def crear_ticket():
         titulo = request.form.get("titulo")
         descripcion = request.form.get("descripcion")
         ubicacion = request.form.get("origen")
-        #adjunto = request.files.get("archivo")
+        tipo = request.form.get("tipo")
+        categoria = request.form.get("categoria")
+        solicitante = request.form.get("solicitante")
+
+        # adjunto = request.files.get("archivo")
 
         if not all([prioridad, titulo, descripcion, ubicacion]):
             return jsonify({"success": False, "message": "Faltan campos requeridos"}), 400
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        query = """
-            INSERT INTO tickets (prioridad, titulo, descripcion, ubicacion)
-            VALUES (%s, %s, %s, %s)
+        query_ticket = """
+            INSERT INTO tickets (prioridad, tipo,  titulo, descripcion, ubicacion, id_categoria1)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (prioridad, titulo, descripcion,
-                           ubicacion))
+        cursor.execute(query_ticket, (prioridad, tipo, titulo, descripcion,
+                                      ubicacion, categoria))
+        ticket_id = cursor.lastrowid  # Obtener el ID del ticket recién creado
+        query_usuarios_ticket = """ INSERT INTO usuarios_tickets (id_usuario1, id_ticket1)
+            VALUES (%s, %s)
+        """
+        cursor.execute(query_usuarios_ticket, (solicitante, ticket_id))
         conn.commit()
 
         cursor.close()
@@ -190,3 +199,40 @@ def crear_ticket():
     except Exception as e:
         print("Error al crear ticket:", e)
         return jsonify({"success": False, "message": "Error interno del servidor"}), 500
+
+
+@usuarios_bp.route("/tickets", methods=["GET"])
+def obtener_tickets():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+    SELECT 
+        t.id_ticket,
+        t.titulo,
+        t.descripcion,
+        t.ubicacion,
+        t.prioridad,
+        t.tipo,
+        t.estado_ticket,
+        t.grupo,
+        t.fecha_creacion,
+        c.nombre_categoria AS categoria,
+        u.nombre_completo AS solicitante
+    FROM tickets t
+    JOIN categorias c ON t.id_categoria1 = c.id_categoria
+    JOIN usuarios_tickets ut ON t.id_ticket = ut.id_ticket1
+    JOIN usuarios u ON ut.id_usuario1 = u.id_usuario
+""")
+
+        tickets = cursor.fetchall()
+
+        print("Tickets obtenidos:", tickets)  # <- ahora sí se ejecutará
+
+        cursor.close()
+        conn.close()
+        return jsonify(tickets)
+
+    except Exception as e:
+        print("Error al obtener tickets:", e)
+        return jsonify({"success": False, "message": "Error al obtener tickets"}), 500

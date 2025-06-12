@@ -19,7 +19,7 @@ def Login():
 
     try:
         cursor.execute(
-            "SELECT id_usuario, nombres, nombre_usuario, rol FROM usuarios WHERE nombre_usuario = %s AND contraseña = %s",
+            "SELECT id_usuario, nombre_completo, nombre_usuario, rol FROM usuarios WHERE nombre_usuario = %s AND contraseña = %s",
             (user, password)
         )
 

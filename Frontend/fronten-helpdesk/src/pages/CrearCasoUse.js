@@ -144,8 +144,12 @@ const CrearCasoUse = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("prioridad", formData.prioridad);
       formDataToSend.append("titulo", formData.titulo);
+      formDataToSend.append("solicitante", formData.solicitante);
       formDataToSend.append("descripcion", formData.descripcion);
       formDataToSend.append("origen", formData.origen);
+      formDataToSend.append("tipo", formData.tipo);
+      formDataToSend.append("categoria", formData.categoria);
+
       if (formData.archivo) {
         formDataToSend.append("archivo", formData.archivo);
       }
@@ -481,7 +485,8 @@ const CrearCasoUse = () => {
                   <option value="requerimiento">Requerimiento</option>
                 </select>
               </div>
-
+                
+                
                 {/* Campo Origen con datos dinámicos */}
                 <div className={styles.formGroupCaso}>
                   <label className={styles.casoLabel}>Origen*</label>
@@ -494,8 +499,8 @@ const CrearCasoUse = () => {
                   >
                     <option value="">Seleccione...</option>
                     {departamentos.map(depto => (
-                      <option key={depto.id} value={depto.nombre}>
-                        {depto.nombre}
+                      <option key={depto.id_entidad} value={depto.nombre_entidad}>
+                        {depto.nombre_entidad}
                       </option>
                     ))}
                   </select>
@@ -529,8 +534,8 @@ const CrearCasoUse = () => {
                   >
                     <option value="">Seleccione...</option>
                     {categorias.map(cat => (
-                      <option key={cat.id} value={cat.nombre}>
-                        {cat.nombre}
+                      <option key={cat.id_categoria} value={cat.id_categoria}>
+                        {cat.nombre_categoria}
                       </option>
                     ))}
                   </select>
@@ -559,8 +564,8 @@ const CrearCasoUse = () => {
                   >
                     <option value="">Seleccione un usuario...</option>
                     {usuarios.map(usuario => (
-                      <option key={usuario.id} value={`${usuario.nombres} ${usuario.apellidos}`}>
-                        {`${usuario.nombres} ${usuario.apellidos}`} ({usuario.email})
+                      <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                        {`${usuario.nombre_completo}`} ({usuario.correo})
                       </option>
                     ))}
                   </select>
