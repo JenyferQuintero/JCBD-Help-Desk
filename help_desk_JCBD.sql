@@ -72,6 +72,7 @@ INSERT INTO `entidades` (`id_entidad`, `nombre_entidad`, `descripcion`) VALUES
 
 CREATE TABLE `tickets` (
   `id_ticket` int(11) NOT NULL,
+  `nombre_tecnico` varchar(100) NOT NULL,
   `prioridad` varchar(100) NOT NULL,
   `estado_ticket` varchar(100) NOT NULL DEFAULT 'nuevo',
   `tipo` varchar(100) NOT NULL,
