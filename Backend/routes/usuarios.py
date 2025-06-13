@@ -210,6 +210,7 @@ def obtener_tickets():
     SELECT 
         t.id_ticket,
         t.titulo,
+        t.nombre_tecnico,
         t.descripcion,
         t.ubicacion,
         t.prioridad,
@@ -236,3 +237,64 @@ def obtener_tickets():
     except Exception as e:
         print("Error al obtener tickets:", e)
         return jsonify({"success": False, "message": "Error al obtener tickets"}), 500
+
+
+@usuarios_bp.route("/tickets/<int:id_ticket>", methods=["GET"])
+def obtener_ticket_por_id(id_ticket):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT 
+                t.id_ticket,
+                t.titulo,
+                t.nombre_tecnico,
+                t.descripcion,
+                t.ubicacion,
+                t.prioridad,
+                t.tipo,
+                t.estado_ticket,
+                t.grupo,
+                t.fecha_creacion,
+                t.fecha_actualizacion,
+                c.nombre_categoria AS categoria,
+                u.nombre_completo AS solicitante
+            FROM tickets t
+            JOIN categorias c ON t.id_categoria1 = c.id_categoria
+            JOIN usuarios_tickets ut ON t.id_ticket = ut.id_ticket1
+            JOIN usuarios u ON ut.id_usuario1 = u.id_usuario
+            WHERE t.id_ticket = %s
+        """, (id_ticket,))
+
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if row is None:
+            return jsonify({"success": False, "message": "Ticket no encontrado"}), 404
+
+       
+        ticket = {
+            "id": row["id_ticket"],
+            "titulo": row["titulo"],
+            "descripcion": row["descripcion"],
+            "solicitante": row["solicitante"],
+            "prioridad": row["prioridad"],
+            "estado": row["estado_ticket"],
+            "asignadoA": row["nombre_tecnico"],
+            "grupoAsignado": row["grupo"],
+            "categoria": row["categoria"],
+            "fechaApertura": row["fecha_creacion"].isoformat(),  # ISO 8601 para input datetime-local
+            "ultimaActualizacion": row["fecha_actualizacion"],  # Llénalo si tienes columna
+            "tipo": row["tipo"],
+            "ubicacion": row["ubicacion"],
+            "observador": "",           # Llénalo si lo manejas
+        }
+        print("Ticket obtenido:", ticket)  # Para depuración
+        return jsonify(ticket)
+
+    except Exception as e:
+        print("Error al obtener el ticket:", e)
+        return jsonify({"success": False, "message": "Error al obtener el ticket"}), 500
+

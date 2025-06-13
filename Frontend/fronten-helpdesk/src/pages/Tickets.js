@@ -809,7 +809,7 @@ const Tickets = () => {
                         {ticket.estado_ticket}
                       </span>
                     </td>
-                    <td>NO ASIGNADO</td>{" "}
+                    <td>NO ASIGNADO</td>{/*ticket.nombre_tecnico.toUpperCase()*/}
                     {/* Puedes reemplazar luego con ticket.tecnico si lo agregas */}
                     <td>SIN GRUPO</td> {/* Igual para grupo */}
                     <td>{ticket.categoria.toUpperCase()}</td>

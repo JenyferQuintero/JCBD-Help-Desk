@@ -62,8 +62,10 @@ const SolucionTickets = () => {
     const fetchAllData = async () => {
       try {
         // Obtener datos del ticket
-        const ticketRes = await axios.get(`http://localhost:5000/api/tickets/${id}`);
+        const ticketRes = await axios.get(`http://localhost:5000/usuarios/tickets/${id}`);
+        console.log("Ticket recibido:", ticketRes.data);
         setTicket(ticketRes.data);
+        
 
         // Obtener datos relacionados
         const [casosRes, seguimientosRes, categoriasRes, gruposRes] = await Promise.all([
@@ -565,7 +567,7 @@ const SolucionTickets = () => {
                   <input
                     type="datetime-local"
                     name="fechaApertura"
-                    value={formatDateTimeForInput(ticket.fechaApertura)}
+                    value={formatDateTimeForInput(ticket.fecha_creacion)}
                     onChange={handleChange}
                     disabled={!isEditing || !isAdminOrTech}
                   />
