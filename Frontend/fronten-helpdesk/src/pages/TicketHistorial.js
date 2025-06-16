@@ -319,11 +319,8 @@ const TicketHistorial = () => {
          } else {
            return '/CrearCasoUse';
          }
-       } else if (section === 'tickets') {
-         return '/Tickets';
-       } else {
-         return '/home';
-       }
+   } if (section === "tickets") return "/Tickets";
+       return "/";
      };
    
      // Renderizar menú según el rol
@@ -476,18 +473,20 @@ const TicketHistorial = () => {
                </li>
    
                <li className={styles.iconosMenu}>
+                 <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                   <FcCustomerSupport className={styles.menuIcon} />
+                   <span className={styles.menuText}>Crear Caso</span>
+                 </Link>
+               </li>
+   
+               <li className={styles.iconosMenu}>
                  <Link to="/Tickets" className={styles.linkSinSubrayado}>
                    <FcAnswers className={styles.menuIcon} />
                    <span className={styles.menuText}>Tickets</span>
                  </Link>
                </li>
    
-               <li className={styles.iconosMenu}>
-                 <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                   <FcCustomerSupport className={styles.menuIcon} />
-                   <span className={styles.menuText}>Crear Caso</span>
-                 </Link>
-               </li>
+   
              </ul>
            );
        }

@@ -32,23 +32,30 @@ import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/Tickets.module.css";
 
-// Datos de ejemplo
+// Datos de ejemplo con valores por defecto
 const initialData = Array.from({ length: 100 }, (_, i) => ({
   id: `2503290${(1000 - i).toString().padStart(3, "0")}`,
+  id_ticket: `2503290${(1000 - i).toString().padStart(3, "0")}`,
   titulo: `CREACION DE USUARIOS - PARALELO ACADEMICO ${i + 1}`,
   solicitante: "Jenyfer Quintero Calixto",
   descripcion: "ALIMENTAR EL EXCEL DE DELOGIN",
   prioridad: ["Mediana", "Alta", "Baja"][i % 3],
-  estado: ["Cerrado", "Abierto", "En Curso"][i % 3],
+  estado: ["Nuevo", "En Espera", "Cerrado", "Resuelto", "En Curso"][i % 5],
   tecnico: "Jenyfer Quintero Calixto",
   grupo: "EDQ B",
   categoria: "CREACION DE USUARIO",
   ultimaActualizacion: "2025-03-29 03:40",
+  fecha_creacion: "2025-03-29 03:19",
   fechaApertura: "2025-03-29 03:19",
 }));
 
 const Tickets = () => {
-  // Estados
+  // 1. Primero obtenemos datos del localStorage
+  const userRole = localStorage.getItem("rol") || "usuario";
+  const nombre = localStorage.getItem("nombre") || "";
+  const isAdminOrTech = ["administrador", "tecnico", "usuario"].includes(userRole);
+
+  // 2. Luego todos los hooks de estado
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -59,9 +66,16 @@ const Tickets = () => {
   const [filteredTickets, setFilteredTickets] = useState(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [usingDemoData, setUsingDemoData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [tecnicos, setTecnicos] = useState([]);
+  const [grupos, setGrupos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [ticketsData, setticketsData] = useState([]);
+  
   const [filters, setFilters] = useState({
     id: "",
     titulo: "",
@@ -72,41 +86,96 @@ const Tickets = () => {
     grupo: "",
     categoria: "",
   });
+
+  const [ticket, setTicket] = useState({
+    entidad: '',
+    titulo: '',
+    descripcion: '',
+    archivos: [],
+    id: '',
+    solicitante: '',
+    prioridad: '',
+    estado: '',
+    tecnico: '',
+    grupo: '',
+    categoria: '',
+    fechaApertura: '',
+    ultimaActualizacion: '',
+    tipo: 'incidencia',
+    ubicacion: '',
+    observador: '',
+    asignadoA: '',
+    grupoAsignado: ''
+  });
+
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    id: "",
+    tipo: "",
+    origen: "",
+    prioridad: "",
+    categoria: "",
+    titulo: "",
+    descripcion: "",
+    archivo: null,
+    solicitante: nombre,
+    elementos: "",
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
-  const userRole = localStorage.getItem("rol") || "usuario";
-  const nombre = localStorage.getItem("nombre");
+
+  // 3. Render condicional temprano
+  if (!isAdminOrTech) {
+    return (
+      <div className={styles.accessDenied}>
+        <h2>Acceso denegado</h2>
+        <p>No tienes permisos para acceder a esta página.</p>
+        <Link to="/" className={styles.returnLink}>
+          Volver al inicio
+        </Link>
+      </div>
+    );
+  }
 
   // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleExportDropdown = () =>
-    setIsExportDropdownOpen(!isExportDropdownOpen);
+  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
 
   const toggleSupport = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setIsSupportOpen(!isSupportOpen);
     setIsAdminOpen(false);
     setIsConfigOpen(false);
   };
 
   const toggleAdmin = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setIsAdminOpen(!isAdminOpen);
     setIsSupportOpen(false);
     setIsConfigOpen(false);
   };
 
   const toggleConfig = (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setIsConfigOpen(!isConfigOpen);
     setIsSupportOpen(false);
     setIsAdminOpen(false);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setTicket(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setTicket(prev => ({ ...prev, archivos: [...prev.archivos, ...files] }));
   };
 
   const roleToPath = {
@@ -115,7 +184,21 @@ const Tickets = () => {
     administrador: "/HomeAdmiPage",
   };
 
-  // Función para cargar tickets reales (opcional)
+  // Efectos
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const urlSearchTerm = searchParams.get("search");
+    if (urlSearchTerm) {
+      setSearchTerm(urlSearchTerm);
+      handleSearch(urlSearchTerm);
+    }
+  }, [location.search]);
+
+  // Funciones principales
   const fetchTickets = async () => {
     setIsLoading(true);
     setError(null);
@@ -129,10 +212,25 @@ const Tickets = () => {
           },
         }
       );
-      setTickets(response.data);
-      console.log("Datos de tickets obtenidos del servidor:", response.data);
+      
+      // Normalizar datos de la API
+      const normalizedTickets = response.data.map(ticket => ({
+        id: ticket.id_ticket || ticket.id || '',
+        id_ticket: ticket.id_ticket || ticket.id || '',
+        titulo: ticket.titulo || '',
+        solicitante: ticket.solicitante || '',
+        descripcion: ticket.descripcion || '',
+        prioridad: ticket.prioridad || '',
+        estado: ticket.estado || ticket.estado_ticket || '',
+        tecnico: ticket.tecnico || ticket.nombre_tecnico || '',
+        grupo: ticket.grupo || '',
+        categoria: ticket.categoria || ticket.nombre_categoria || '',
+        fecha_creacion: ticket.fecha_creacion || ticket.fechaApertura || '',
+        ultimaActualizacion: ticket.ultimaActualizacion || ''
+      }));
 
-      setFilteredTickets(response.data);
+      setTickets(normalizedTickets);
+      setFilteredTickets(normalizedTickets);
       setUsingDemoData(false);
     } catch (err) {
       setError("No se pudo conectar al servidor. Mostrando datos de ejemplo.");
@@ -144,22 +242,6 @@ const Tickets = () => {
     }
   };
 
-  useEffect(() => {
-    // Comentado para usar solo datos de ejemplo
-    fetchTickets();
-  }, []);
-
-  // Manejar búsqueda desde URL
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const urlSearchTerm = searchParams.get("search");
-    if (urlSearchTerm) {
-      setSearchTerm(urlSearchTerm);
-      handleSearch(urlSearchTerm);
-    }
-  }, [location.search]);
-
-  // Handlers para búsqueda
   const handleSearch = (searchValue) => {
     const term = searchValue.toLowerCase().trim();
 
@@ -190,7 +272,6 @@ const Tickets = () => {
     navigate(`/tickets?search=${encodeURIComponent(searchTerm)}`);
   };
 
-  // Handlers para filtros
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -200,9 +281,8 @@ const Tickets = () => {
     const filteredData = tickets.filter((item) => {
       return Object.keys(filters).every((key) => {
         if (!filters[key]) return true;
-        return String(item[key])
-          .toLowerCase()
-          .includes(filters[key].toLowerCase());
+        const itemValue = String(item[key] || "").toLowerCase();
+        return itemValue.includes(filters[key].toLowerCase());
       });
     });
     setFilteredTickets(filteredData);
@@ -224,7 +304,6 @@ const Tickets = () => {
     setCurrentPage(1);
   };
 
-  // Handlers para exportación
   const exportToExcel = () => {
     console.log("Exportando a Excel", filteredTickets);
     setIsExportDropdownOpen(false);
@@ -252,8 +331,7 @@ const Tickets = () => {
   const totalPages = Math.ceil(filteredTickets.length / rowsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () =>
-    currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
   const handleRowsPerPageChange = (e) => {
@@ -261,39 +339,28 @@ const Tickets = () => {
     setCurrentPage(1);
   };
 
-  // Función para manejar el clic en un ticket
   const handleTicketClick = (ticketId) => {
     navigate(`/tickets/solucion/${ticketId}`);
   };
 
   const getRouteByRole = (section) => {
     if (section === "inicio") {
-      if (userRole === "administrador") {
-        return "/HomeAdmiPage";
-      } else if (userRole === "tecnico") {
-        return "/HomeTecnicoPage";
-      } else {
-        return "/home";
-      }
-    } else if (section === "crear-caso") {
-      if (userRole === "administrador") {
-        return "/CrearCasoAdmin";
-      } else if (userRole === "tecnico") {
-        return "/CrearCasoAdmin";
-      } else {
-        return "/CrearCasoUse";
-      }
-    } else if (section === "tickets") {
-      return "/Tickets";
-    } else {
+      if (userRole === "administrador") return "/HomeAdmiPage";
+      if (userRole === "tecnico") return "/HomeTecnicoPage";
       return "/home";
     }
+    if (section === "crear-caso") {
+      if (["administrador", "tecnico"].includes(userRole)) return "/CrearCasoAdmin";
+      return "/CrearCasoUse";
+    }
+    if (section === "tickets") return "/Tickets";
+    return "/";
   };
 
-  // Renderizar menú según el rol
+ // Renderizar menú según el rol
   const renderMenuByRole = () => {
     switch (userRole) {
-      case "administrador":
+      case 'administrador':
         return (
           <ul className={styles.menuIconos}>
             <li className={styles.iconosMenu}>
@@ -308,11 +375,7 @@ const Tickets = () => {
                 <FcAssistant className={styles.menuIcon} />
                 <span className={styles.menuText}> Soporte</span>
               </div>
-              <ul
-                className={`${styles.submenu} ${
-                  isSupportOpen ? styles.showSubmenu : ""
-                }`}
-              >
+              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
                 <li>
                   <Link to="/Tickets" className={styles.submenuLink}>
                     <FcAnswers className={styles.menuIcon} />
@@ -345,11 +408,7 @@ const Tickets = () => {
                 <FcBusinessman className={styles.menuIcon} />
                 <span className={styles.menuText}> Administración</span>
               </div>
-              <ul
-                className={`${styles.submenu} ${
-                  isAdminOpen ? styles.showSubmenu : ""
-                }`}
-              >
+              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
                 <li>
                   <Link to="/Usuarios" className={styles.submenuLink}>
                     <FcPortraitMode className={styles.menuIcon} />
@@ -376,11 +435,7 @@ const Tickets = () => {
                 <FcAutomatic className={styles.menuIcon} />
                 <span className={styles.menuText}> Configuración</span>
               </div>
-              <ul
-                className={`${styles.submenu} ${
-                  isConfigOpen ? styles.showSubmenu : ""
-                }`}
-              >
+              <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
                 <li>
                   <Link to="/Categorias" className={styles.submenuLink}>
                     <FcGenealogy className={styles.menuIcon} />
@@ -392,7 +447,7 @@ const Tickets = () => {
           </ul>
         );
 
-      case "tecnico":
+      case 'tecnico':
         return (
           <ul className={styles.menuIconos}>
             <li className={styles.iconosMenu}>
@@ -407,11 +462,7 @@ const Tickets = () => {
                 <FcAssistant className={styles.menuIcon} />
                 <span className={styles.menuText}> Soporte</span>
               </div>
-              <ul
-                className={`${styles.submenu} ${
-                  isSupportOpen ? styles.showSubmenu : ""
-                }`}
-              >
+              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
                 <li>
                   <Link to="/Tickets" className={styles.submenuLink}>
                     <FcAnswers className={styles.menuIcon} />
@@ -432,11 +483,7 @@ const Tickets = () => {
                 <FcBusinessman className={styles.menuIcon} />
                 <span className={styles.menuText}> Administración</span>
               </div>
-              <ul
-                className={`${styles.submenu} ${
-                  isAdminOpen ? styles.showSubmenu : ""
-                }`}
-              >
+              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
                 <li>
                   <Link to="/Usuarios" className={styles.submenuLink}>
                     <FcPortraitMode className={styles.menuIcon} />
@@ -448,7 +495,7 @@ const Tickets = () => {
           </ul>
         );
 
-      case "usuario":
+      case 'usuario':
       default:
         return (
           <ul className={styles.menuIconos}>
@@ -460,18 +507,20 @@ const Tickets = () => {
             </li>
 
             <li className={styles.iconosMenu}>
+              <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                <FcCustomerSupport className={styles.menuIcon} />
+                <span className={styles.menuText}>Crear Caso</span>
+              </Link>
+            </li>
+
+            <li className={styles.iconosMenu}>
               <Link to="/Tickets" className={styles.linkSinSubrayado}>
                 <FcAnswers className={styles.menuIcon} />
                 <span className={styles.menuText}>Tickets</span>
               </Link>
             </li>
 
-            <li className={styles.iconosMenu}>
-              <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                <FcCustomerSupport className={styles.menuIcon} />
-                <span className={styles.menuText}>Crear Caso</span>
-              </Link>
-            </li>
+
           </ul>
         );
     }
@@ -481,9 +530,7 @@ const Tickets = () => {
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
-        className={`${styles.menuVertical} ${
-          isMenuExpanded ? styles.expanded : ""
-        }`}
+        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
         onMouseEnter={toggleMenu}
         onMouseLeave={toggleMenu}
       >
@@ -500,11 +547,7 @@ const Tickets = () => {
             <FiAlignJustify className={styles.menuIcon} />
           </button>
 
-          <div
-            className={`${styles.menuVerticalDesplegable} ${
-              isMobileMenuOpen ? styles.mobileMenuOpen : ""
-            }`}
-          >
+          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
             {renderMenuByRole()}
           </div>
 
@@ -517,12 +560,10 @@ const Tickets = () => {
       </aside>
 
       {/* Contenido principal */}
-      <div
-        style={{
-          marginLeft: isMenuExpanded ? "200px" : "60px",
-          transition: "margin-left 0.3s ease",
-        }}
-      >
+      <div style={{
+        marginLeft: isMenuExpanded ? "200px" : "60px",
+        transition: "margin-left 0.3s ease",
+      }}>
         <Outlet />
       </div>
 
@@ -532,10 +573,7 @@ const Tickets = () => {
         style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
       >
         <div className={styles.containerInicioImg}>
-          <Link
-            to={getRouteByRole("inicio")}
-            className={styles.linkSinSubrayado}
-          >
+          <Link to={getRouteByRole("inicio")} className={styles.linkSinSubrayado}>
             <span>Inicio</span>
           </Link>
         </div>
@@ -552,6 +590,7 @@ const Tickets = () => {
               className={styles.buttonBuscar}
               title="Buscar"
               disabled={isLoading || !searchTerm.trim()}
+              onClick={handleSearchSubmit}
             >
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
@@ -585,10 +624,8 @@ const Tickets = () => {
               type="text"
               placeholder="Buscar en tickets..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                handleSearch(e.target.value);
-              }}
+              onChange={handleSearchChange}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchTerm)}
             />
             <button
               type="button"
@@ -603,11 +640,13 @@ const Tickets = () => {
           <div className={styles.actions}>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={styles.actionButton}
+              className={styles.Buttonfiltros}
               title="Alternar filtros"
             >
               <FcEmptyFilter />
-              <span>{showFilters ? "Ocultar" : "Mostrar"} filtros</span>
+              <span className={styles.mostrasfiltros}>
+                {showFilters ? "Ocultar" : "Mostrar"} filtros
+              </span>
             </button>
 
             {/* Dropdown de exportación */}
@@ -624,10 +663,7 @@ const Tickets = () => {
                   className={styles.exportDropdownContent}
                   onMouseLeave={() => setIsExportDropdownOpen(false)}
                 >
-                  <button
-                    onClick={exportToExcel}
-                    className={styles.exportOption}
-                  >
+                  <button onClick={exportToExcel} className={styles.exportOption}>
                     <FaFileExcel /> Excel
                   </button>
                   <button onClick={exportToPdf} className={styles.exportOption}>
@@ -656,7 +692,6 @@ const Tickets = () => {
                   name="id"
                   value={filters.id}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por ID"
                 />
               </div>
               <div className={styles.filterGroup}>
@@ -666,78 +701,99 @@ const Tickets = () => {
                   name="titulo"
                   value={filters.titulo}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por título"
                 />
               </div>
               <div className={styles.filterGroup}>
                 <label>Solicitante</label>
-                <input
-                  type="text"
+                <select
                   name="solicitante"
                   value={filters.solicitante}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por solicitante"
-                />
+                >
+                  <option value="">Seleccione un usuario...</option>
+                  {usuarios.map(usuario => (
+                    <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                      {`${usuario.nombre_completo || ''}`} ({usuario.correo || ''})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className={styles.filterRow}>
-              <div className={styles.actionButton}>
-                <label>Prioridad</label>
-                <select
-                  name="prioridad"
+              <div className={styles.filterGroup}>
+                <label>Prioridad:</label>
+                <select 
+                  name="prioridad" 
                   value={filters.prioridad}
                   onChange={handleFilterChange}
                 >
-                  <option value="">Todas las prioridades</option>
-                  <option value="Alta">Alta</option>
-                  <option value="Mediana">Mediana</option>
-                  <option value="Baja">Baja</option>
-                </select>
-              </div>
-              <div className={styles.actionButton}>
-                <label>Estado</label>
-                <select
-                  name="estado"
-                  value={filters.estado}
-                  onChange={handleFilterChange}
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="Abierto">Abierto</option>
-                  <option value="En Curso">En Curso</option>
-                  <option value="Cerrado">Cerrado</option>
+                  <option value="">Seleccione...</option>
+                  <option value="alta">Alta</option>
+                  <option value="mediana">Mediana</option>
+                  <option value="baja">Baja</option>
                 </select>
               </div>
               <div className={styles.filterGroup}>
-                <label>Técnico</label>
-                <input
-                  type="text"
-                  name="tecnico"
+                <label>Estado:</label>
+                <select 
+                  name="estado" 
+                  value={filters.estado}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="nuevo">Nuevo</option>
+                  <option value="en curso">En curso</option>
+                  <option value="en espera">En espera</option>
+                  <option value="resuelto">Resuelto</option>
+                  <option value="cerrado">Cerrado</option>
+                </select>
+              </div>
+              <div className={styles.filterGroup}>
+                <label>Asignado a:</label>
+                <select 
+                  name="tecnico" 
                   value={filters.tecnico}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por técnico"
-                />
+                >
+                  <option value="">Seleccionar técnico</option>
+                  {tecnicos.map(tec => (
+                    <option key={tec.id_usuario} value={tec.id_usuario}>
+                      {tec.nombre_completo || ''}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className={styles.filterRow}>
               <div className={styles.filterGroup}>
-                <label>Grupo</label>
-                <input
-                  type="text"
+                <label>Grupo asignado:</label>
+                <select
                   name="grupo"
                   value={filters.grupo}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por grupo"
-                />
+                >
+                  <option value="">Seleccionar grupo</option>
+                  {grupos.map(grupo => (
+                    <option key={grupo.id_grupo} value={grupo.id_grupo}>
+                      {grupo.nombre || ''}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className={styles.filterGroup}>
-                <label>Categoría</label>
-                <input
-                  type="text"
-                  name="categoria"
+                <label>Categoría:</label>
+                <select 
+                  name="categoria" 
                   value={filters.categoria}
                   onChange={handleFilterChange}
-                  placeholder="Filtrar por categoría"
-                />
+                >
+                  <option value="">Seleccione...</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id_categoria} value={cat.id_categoria}>
+                      {cat.nombre_categoria || ''}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className={styles.filterActions}>
                 <button onClick={applyFilters} className={styles.applyButton}>
@@ -766,7 +822,7 @@ const Tickets = () => {
                 <th>Grupo</th>
                 <th>Categoría</th>
                 <th>Fecha Apertura</th>
-                <th>Fecha Ultima Actualizacion</th>
+                <th>Última Actualización</th>
               </tr>
             </thead>
             <tbody>
@@ -776,64 +832,74 @@ const Tickets = () => {
                     <td>
                       <span
                         className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id_ticket)}
+                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
                       >
-                        {ticket.id_ticket}
+                        {ticket.id || ticket.id_ticket || 'N/A'}
                       </span>
                     </td>
                     <td>
                       <span
                         className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id_ticket)}
+                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
                       >
-                        {ticket.titulo.toUpperCase()}
+                        {String(ticket.titulo || 'Sin título').toUpperCase()}
                       </span>
                     </td>
-                    <td>{ticket.solicitante.toUpperCase()}</td>
-                    <td>{ticket.descripcion.toUpperCase()}</td>
+                    <td>{String(ticket.solicitante || 'Sin solicitante').toUpperCase()}</td>
+                    <td>{String(ticket.descripcion || 'Sin descripción').toUpperCase()}</td>
                     <td>
                       <span
-                        className={`${styles.priority} ${
-                          styles[ticket.prioridad?.toLowerCase()]
-                        }`}
+                        className={`${styles.priority} ${styles[String(ticket.prioridad || '').toLowerCase()] || ''}`}
                       >
-                        {ticket.prioridad.toUpperCase()}
+                        {String(ticket.prioridad || 'Sin prioridad').toUpperCase()}
                       </span>
                     </td>
                     <td>
                       <span
-                        className={`${styles.status} ${
-                          styles[ticket.estado?.toLowerCase()] || styles.default
-                        }`}
+                        className={`${styles.status} ${styles[String(ticket.estado || '').toLowerCase()] || ''}`}
                       >
-                        {ticket.estado_ticket}
+                        {String(ticket.estado || 'Sin estado').toUpperCase()}
                       </span>
                     </td>
-                    <td>NO ASIGNADO</td>{/*ticket.nombre_tecnico.toUpperCase()*/}
-                    {/* Puedes reemplazar luego con ticket.tecnico si lo agregas */}
-                    <td>SIN GRUPO</td> {/* Igual para grupo */}
-                    <td>{ticket.categoria.toUpperCase()}</td>
+                    <td>{String(ticket.tecnico || 'No asignado').toUpperCase()}</td>
+                    <td>{String(ticket.grupo || 'Sin grupo').toUpperCase()}</td>
+                    <td>{String(ticket.categoria || 'Sin categoría').toUpperCase()}</td>
                     <td>
-                      {new Date(ticket.fecha_creacion + " -05:00") // le decimos explícitamente que es hora Colombia
-                        .toLocaleString("es-CO", {
-                          timeZone: "America/Bogota",
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })
-                        .toUpperCase()}
+                      {ticket.fecha_creacion || ticket.fechaApertura ? (
+                        new Date(`${ticket.fecha_creacion || ticket.fechaApertura} -05:00`)
+                          .toLocaleString("es-CO", {
+                            timeZone: "America/Bogota",
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .toUpperCase()
+                      ) : 'Sin fecha'}
                     </td>
-                    <td>SIN ACTUALIZACION</td>
+                    <td>
+                      {ticket.ultimaActualizacion ? (
+                        new Date(`${ticket.ultimaActualizacion} -05:00`)
+                          .toLocaleString("es-CO", {
+                            timeZone: "America/Bogota",
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .toUpperCase()
+                      ) : 'Sin actualización'}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className={styles.noResults}>
-                    No se encontraron tickets que coincidan con los criterios de
-                    búsqueda
+                  <td colSpan="11" className={styles.noResults}>
+                    No se encontraron tickets que coincidan con los criterios de búsqueda
                   </td>
                 </tr>
               )}
@@ -888,9 +954,7 @@ const Tickets = () => {
                 <button
                   key={pageNumber}
                   onClick={() => paginate(pageNumber)}
-                  className={`${styles.paginationButton} ${
-                    currentPage === pageNumber ? styles.active : ""
-                  }`}
+                  className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ""}`}
                 >
                   {pageNumber}
                 </button>
@@ -904,9 +968,7 @@ const Tickets = () => {
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <button
                 onClick={() => paginate(totalPages)}
-                className={`${styles.paginationButton} ${
-                  currentPage === totalPages ? styles.active : ""
-                }`}
+                className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ""}`}
               >
                 {totalPages}
               </button>

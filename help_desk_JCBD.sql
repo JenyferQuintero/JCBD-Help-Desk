@@ -24,7 +24,8 @@ SET time_zone = "+00:00";
 
 --
 -- Estructura de tabla para la tabla `categorias`
---
+create DATABASE help_desk_jcbd;
+USE `help_desk_jcbd`;
 
 CREATE TABLE `categorias` (
   `id_categoria` int(11) NOT NULL,

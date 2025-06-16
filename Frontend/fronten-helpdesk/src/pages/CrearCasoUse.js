@@ -213,17 +213,9 @@ const CrearCasoUse = () => {
     } else {
       return '/CrearCasoUse';
     }
-  } else if (section === 'tickets') {
-    if (userRole === 'administrador') {
-      return '/TicketsAdmin';
-    } else if (userRole === 'tecnico') {
-      return '/TicketsTecnico';
-    } else {
-      return '/Tickets';
-    }
-  } else {
-    return '/home';
-  }
+  } else if (section === "tickets") {
+    // Todos los roles van a la misma ruta de tickets en tu caso
+    return "/Tickets";}
 };
   return (
 
@@ -586,6 +578,7 @@ const CrearCasoUse = () => {
                 <label className={styles.casoLabel}>Descripción*</label>
                 <textarea
                   className={styles.casoTextarea}
+                  placeholder="Describa el caso detalladamente" 
                   name="descripcion"
                   value={formData.descripcion}
                   onChange={handleChange}

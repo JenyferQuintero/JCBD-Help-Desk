@@ -109,212 +109,211 @@ const Problemas = () => {
        } else {
          return '/CrearCasoUse';
        }
-     } else if (section === 'tickets') {
-       return '/Tickets';
-     } else {
-       return '/home';
-     }
-   };
- 
-   // Renderizar menú según el rol
-   const renderMenuByRole = () => {
-     switch (userRole) {
-       case 'administrador':
-         return (
-           <ul className={styles.menuIconos}>
-             <li className={styles.iconosMenu}>
-               <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                 <FcHome className={styles.menuIcon} />
-                 <span className={styles.menuText}>Inicio</span>
-               </Link>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                 <FcAssistant className={styles.menuIcon} />
-                 <span className={styles.menuText}> Soporte</span>
-               </div>
-               <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                 <li>
-                   <Link to="/Tickets" className={styles.submenuLink}>
-                     <FcAnswers className={styles.menuIcon} />
-                     <span className={styles.menuText}>Tickets</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                     <FcCustomerSupport className={styles.menuIcon} />
-                     <span className={styles.menuText}>Crear Caso</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/Problemas" className={styles.submenuLink}>
-                     <FcExpired className={styles.menuIcon} />
-                     <span className={styles.menuText}>Problemas</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/Estadisticas" className={styles.submenuLink}>
-                     <FcBullish className={styles.menuIcon} />
-                     <span className={styles.menuText}>Estadísticas</span>
-                   </Link>
-                 </li>
-               </ul>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                 <FcBusinessman className={styles.menuIcon} />
-                 <span className={styles.menuText}> Administración</span>
-               </div>
-               <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                 <li>
-                   <Link to="/Usuarios" className={styles.submenuLink}>
-                     <FcPortraitMode className={styles.menuIcon} />
-                     <span className={styles.menuText}> Usuarios</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/Grupos" className={styles.submenuLink}>
-                     <FcConferenceCall className={styles.menuIcon} />
-                     <span className={styles.menuText}> Grupos</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/Entidades" className={styles.submenuLink}>
-                     <FcOrganization className={styles.menuIcon} />
-                     <span className={styles.menuText}> Entidades</span>
-                   </Link>
-                 </li>
-               </ul>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                 <FcAutomatic className={styles.menuIcon} />
-                 <span className={styles.menuText}> Configuración</span>
-               </div>
-               <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                 <li>
-                   <Link to="/Categorias" className={styles.submenuLink}>
-                     <FcGenealogy className={styles.menuIcon} />
-                     <span className={styles.menuText}>Categorias</span>
-                   </Link>
-                 </li>
-               </ul>
-             </li>
-           </ul>
-         );
- 
-       case 'tecnico':
-         return (
-           <ul className={styles.menuIconos}>
-             <li className={styles.iconosMenu}>
-               <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                 <FcHome className={styles.menuIcon} />
-                 <span className={styles.menuText}>Inicio</span>
-               </Link>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                 <FcAssistant className={styles.menuIcon} />
-                 <span className={styles.menuText}> Soporte</span>
-               </div>
-               <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                 <li>
-                   <Link to="/Tickets" className={styles.submenuLink}>
-                     <FcAnswers className={styles.menuIcon} />
-                     <span className={styles.menuText}>Tickets</span>
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                     <FcCustomerSupport className={styles.menuIcon} />
-                     <span className={styles.menuText}>Crear Caso</span>
-                   </Link>
-                 </li>
-               </ul>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                 <FcBusinessman className={styles.menuIcon} />
-                 <span className={styles.menuText}> Administración</span>
-               </div>
-               <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                 <li>
-                   <Link to="/Usuarios" className={styles.submenuLink}>
-                     <FcPortraitMode className={styles.menuIcon} />
-                     <span className={styles.menuText}> Usuarios</span>
-                   </Link>
-                 </li>
-               </ul>
-             </li>
-           </ul>
-         );
- 
-       case 'usuario':
-       default:
-         return (
-           <ul className={styles.menuIconos}>
-             <li className={styles.iconosMenu}>
-               <Link to="/home" className={styles.linkSinSubrayado}>
-                 <FcHome className={styles.menuIcon} />
-                 <span className={styles.menuText}>Inicio</span>
-               </Link>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <Link to="/Tickets" className={styles.linkSinSubrayado}>
-                 <FcAnswers className={styles.menuIcon} />
-                 <span className={styles.menuText}>Tickets</span>
-               </Link>
-             </li>
- 
-             <li className={styles.iconosMenu}>
-               <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                 <FcCustomerSupport className={styles.menuIcon} />
-                 <span className={styles.menuText}>Crear Caso</span>
-               </Link>
-             </li>
-           </ul>
-         );
-     }
-   };
- 
-   return (
-     <div className={styles.containerPrincipal}>
-       {/* Menú Vertical */}
-       <aside
-         className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-         onMouseEnter={toggleMenu}
-         onMouseLeave={toggleMenu}
-       >
-         <div className={styles.containerFluidMenu}>
-           <div className={styles.logoContainer}>
-             <img src={Logo} alt="Logo" />
-           </div>
- 
-           <button
-             className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-             type="button"
-             onClick={toggleMobileMenu}
-           >
-             <FiAlignJustify className={styles.menuIcon} />
-           </button>
- 
-           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-             {renderMenuByRole()}
-           </div>
- 
-           <div className={styles.floatingContainer}>
-             <div className={styles.menuLogoEmpresarial}>
-               <img src={Logoempresarial} alt="Logo Empresarial" />
-             </div>
-           </div>
-         </div>
-       </aside>
+    } if (section === "tickets") return "/Tickets";
+        return "/";
+      };
+    
+      // Renderizar menú según el rol
+      const renderMenuByRole = () => {
+        switch (userRole) {
+          case 'administrador':
+            return (
+              <ul className={styles.menuIconos}>
+                <li className={styles.iconosMenu}>
+                  <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
+                    <FcHome className={styles.menuIcon} />
+                    <span className={styles.menuText}>Inicio</span>
+                  </Link>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                    <FcAssistant className={styles.menuIcon} />
+                    <span className={styles.menuText}> Soporte</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Tickets" className={styles.submenuLink}>
+                        <FcAnswers className={styles.menuIcon} />
+                        <span className={styles.menuText}>Tickets</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                        <FcCustomerSupport className={styles.menuIcon} />
+                        <span className={styles.menuText}>Crear Caso</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Problemas" className={styles.submenuLink}>
+                        <FcExpired className={styles.menuIcon} />
+                        <span className={styles.menuText}>Problemas</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Estadisticas" className={styles.submenuLink}>
+                        <FcBullish className={styles.menuIcon} />
+                        <span className={styles.menuText}>Estadísticas</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                    <FcBusinessman className={styles.menuIcon} />
+                    <span className={styles.menuText}> Administración</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Usuarios" className={styles.submenuLink}>
+                        <FcPortraitMode className={styles.menuIcon} />
+                        <span className={styles.menuText}> Usuarios</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Grupos" className={styles.submenuLink}>
+                        <FcConferenceCall className={styles.menuIcon} />
+                        <span className={styles.menuText}> Grupos</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Entidades" className={styles.submenuLink}>
+                        <FcOrganization className={styles.menuIcon} />
+                        <span className={styles.menuText}> Entidades</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                    <FcAutomatic className={styles.menuIcon} />
+                    <span className={styles.menuText}> Configuración</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Categorias" className={styles.submenuLink}>
+                        <FcGenealogy className={styles.menuIcon} />
+                        <span className={styles.menuText}>Categorias</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            );
+    
+          case 'tecnico':
+            return (
+              <ul className={styles.menuIconos}>
+                <li className={styles.iconosMenu}>
+                  <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
+                    <FcHome className={styles.menuIcon} />
+                    <span className={styles.menuText}>Inicio</span>
+                  </Link>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                    <FcAssistant className={styles.menuIcon} />
+                    <span className={styles.menuText}> Soporte</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Tickets" className={styles.submenuLink}>
+                        <FcAnswers className={styles.menuIcon} />
+                        <span className={styles.menuText}>Tickets</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                        <FcCustomerSupport className={styles.menuIcon} />
+                        <span className={styles.menuText}>Crear Caso</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                    <FcBusinessman className={styles.menuIcon} />
+                    <span className={styles.menuText}> Administración</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Usuarios" className={styles.submenuLink}>
+                        <FcPortraitMode className={styles.menuIcon} />
+                        <span className={styles.menuText}> Usuarios</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            );
+    
+          case 'usuario':
+          default:
+            return (
+              <ul className={styles.menuIconos}>
+                <li className={styles.iconosMenu}>
+                  <Link to="/home" className={styles.linkSinSubrayado}>
+                    <FcHome className={styles.menuIcon} />
+                    <span className={styles.menuText}>Inicio</span>
+                  </Link>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                    <FcCustomerSupport className={styles.menuIcon} />
+                    <span className={styles.menuText}>Crear Caso</span>
+                  </Link>
+                </li>
+    
+                <li className={styles.iconosMenu}>
+                  <Link to="/Tickets" className={styles.linkSinSubrayado}>
+                    <FcAnswers className={styles.menuIcon} />
+                    <span className={styles.menuText}>Tickets</span>
+                  </Link>
+                </li>
+    
+    
+              </ul>
+            );
+        }
+      };
+    
+      return (
+        <div className={styles.containerPrincipal}>
+          {/* Menú Vertical */}
+          <aside
+            className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+            onMouseEnter={toggleMenu}
+            onMouseLeave={toggleMenu}
+          >
+            <div className={styles.containerFluidMenu}>
+              <div className={styles.logoContainer}>
+                <img src={Logo} alt="Logo" />
+              </div>
+    
+              <button
+                className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+                type="button"
+                onClick={toggleMobileMenu}
+              >
+                <FiAlignJustify className={styles.menuIcon} />
+              </button>
+    
+              <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+                {renderMenuByRole()}
+              </div>
+    
+              <div className={styles.floatingContainer}>
+                <div className={styles.menuLogoEmpresarial}>
+                  <img src={Logoempresarial} alt="Logo Empresarial" />
+                </div>
+              </div>
+            </div>
+          </aside>
 
       {/* Contenido principal */}
       <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>

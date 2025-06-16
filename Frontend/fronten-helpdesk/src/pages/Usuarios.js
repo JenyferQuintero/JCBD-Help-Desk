@@ -198,24 +198,25 @@ const Usuarios = () => {
     e.preventDefault();
 
     // Validación final antes de enviar
-    let isValid = true;
-    const fieldsToValidate = ['usuario', 'nombres', 'apellidos', 'telefono', 'correo', 'entidad', 'rol'];
-    if (!editingUser) fieldsToValidate.push('contrasena');
+   let isValid = true;
+  const fieldsToValidate = ['usuario', 'nombres', 'apellidos', 'correo', 'entidad', 'rol'];
+  if (!editingUser) fieldsToValidate.push('contrasena');
 
-    fieldsToValidate.forEach(field => {
-      isValid = validateField(field, formData[field]) && isValid;
-    });
+  fieldsToValidate.forEach(field => {
+    isValid = validateField(field, formData[field]) && isValid;
+  });
 
-    if (!isValid) {
-      alert('Por favor complete todos los campos requeridos correctamente');
-      return;
-    }
+  if (!isValid) {
+    alert('Por favor complete todos los campos requeridos correctamente');
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      const url = editingUser
-        ? `http://localhost:5000/usuarios/actualizacion/${editingUser}`
-        : 'http://localhost:5000/usuarios/creacion';
+  setIsLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const url = editingUser 
+      ? `http://localhost:5000/usuarios/actualizacion/${editingUser}`
+      : 'http://localhost:5000/usuarios/creacion';
 
       const method = editingUser ? 'PUT' : 'POST';
 
@@ -386,11 +387,8 @@ const roleToPath = {
         } else {
           return '/CrearCasoUse';
         }
-      } else if (section === 'tickets') {
-        return '/Tickets';
-      } else {
-        return '/home';
-      }
+  } if (section === "tickets") return "/Tickets";
+      return "/";
     };
   
     // Renderizar menú según el rol
@@ -543,18 +541,20 @@ const roleToPath = {
               </li>
   
               <li className={styles.iconosMenu}>
+                <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                  <FcCustomerSupport className={styles.menuIcon} />
+                  <span className={styles.menuText}>Crear Caso</span>
+                </Link>
+              </li>
+  
+              <li className={styles.iconosMenu}>
                 <Link to="/Tickets" className={styles.linkSinSubrayado}>
                   <FcAnswers className={styles.menuIcon} />
                   <span className={styles.menuText}>Tickets</span>
                 </Link>
               </li>
   
-              <li className={styles.iconosMenu}>
-                <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                  <FcCustomerSupport className={styles.menuIcon} />
-                  <span className={styles.menuText}>Crear Caso</span>
-                </Link>
-              </li>
+  
             </ul>
           );
       }
@@ -592,7 +592,6 @@ const roleToPath = {
             </div>
           </div>
         </aside>
-
       {/* Contenido principal */}
       <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
         <Outlet />
