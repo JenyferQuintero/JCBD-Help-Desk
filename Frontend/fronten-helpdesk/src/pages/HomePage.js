@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from 'axios';
+import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
@@ -14,11 +14,11 @@ const Breadcrumbs = () => {
 
   // Mapeo completo de rutas a nombres legibles
   const pathNameMap = {
-    'home': 'Inicio',
-    'CrearCasoUse': 'Crear Caso',
-    'Tickets': 'Tickets',
-    'EncuestaSatisfaccion': 'Encuesta de Satisfacción',
-    'SolucionTickets': 'Solución de Tickets',
+    home: "Inicio",
+    CrearCasoUse: "Crear Caso",
+    Tickets: "Tickets",
+    EncuestaSatisfaccion: "Encuesta de Satisfacción",
+    SolucionTickets: "Solución de Tickets",
     // Agrega más rutas según necesites
   };
 
@@ -31,14 +31,13 @@ const Breadcrumbs = () => {
     if (/^\d+$/.test(crumb)) return `#${crumb}`;
 
     // Formato por defecto: reemplaza guiones y capitaliza
-    return crumb
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase());
+    return crumb.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  let currentLink = '';
-  const crumbs = location.pathname.split('/')
-    .filter(crumb => crumb !== '')
+  let currentLink = "";
+  const crumbs = location.pathname
+    .split("/")
+    .filter((crumb) => crumb !== "")
     .map((crumb, index, array) => {
       currentLink += `/${crumb}`;
 
@@ -76,12 +75,11 @@ const Breadcrumbs = () => {
   );
 };
 
-
 const HomePage = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Estado añadido
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
@@ -89,15 +87,22 @@ const HomePage = () => {
   const [completedSurveys, setCompletedSurveys] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const navigate = useNavigate();
-
-
+  const [tableData, setTableData] = useState({
+    nuevo: [],
+    enCurso: [],
+    enEspera: [],
+    resueltos: [],
+    cerrados: [],
+    borrados: [],
+    encuesta: [],
+  });
 
   const handleTicketClick = (ticket) => {
-    navigate('/CrearCasoUse', {
+    navigate("/CrearCasoUse", {
       state: {
         ticketData: ticket,
-        mode: 'edit' // Podemos usar este flag para diferenciar entre crear y editar
-      }
+        mode: "edit", // Podemos usar este flag para diferenciar entre crear y editar
+      },
     });
   };
 
@@ -126,12 +131,12 @@ const HomePage = () => {
     setError(null);
 
     try {
-      const response = await axios.get('http://localhost:5000/api/search', {
-        params: { query: searchTerm }
+      const response = await axios.get("http://localhost:5000/api/search", {
+        params: { query: searchTerm },
       });
       onSearchResults(response.data);
     } catch (err) {
-      setError('Error al buscar');
+      setError("Error al buscar");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -145,7 +150,7 @@ const HomePage = () => {
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   // Datos de ejemplo para las tablas
-  const tableData = {
+  /*const tableData = {
     nuevo: [
       { id: "2503150021", solicitante: "Julian Antonio Niño Oedoy", elementos: "General", descripcion: "ALTA MÉDICA (1 - 0)" }
     ],
@@ -173,11 +178,49 @@ const HomePage = () => {
       { id: "2503160088", solicitante: "HUN HUN Generico", elementos: "General", descripcion: "LLAMADO DE TIMBRES (1 - 0)", surveyId: "survey1" },
       { id: "2503160088", solicitante: "Wendy Johanna Alfonso Peralta", elementos: "General", descripcion: "CONFIGURAR IMPRESORA (1 - 0)", surveyId: "survey2" }
     ]
-  };
+  };*/
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/usuarios/estado_tickets");
+        const allTickets = response.data;
+
+        // Clasifica los tickets por estado
+        const agrupados = {
+          nuevo: [],
+          enCurso: [],
+          enEspera: [],
+          resueltos: [],
+          cerrados: [],
+          borrados: [],
+          encuesta: [], // Puedes llenar esto si tu backend te dice cuáles van a encuesta
+        };
+
+        allTickets.forEach((ticket) => {
+          const estado = ticket.estado_ticket?.toLowerCase();
+          if (estado && agrupados[estado] !== undefined) {
+            agrupados[estado].push({
+              id: ticket.id_ticket,
+              solicitante: ticket.solicitante,
+              elementos: ticket.tipo,
+              descripcion: ticket.descripcion,
+            });
+          }
+        });
+
+        setTableData(agrupados);
+      } catch (error) {
+        console.error("Error al obtener los tickets:", error);
+      }
+    };
+
+    fetchTickets();
+  }, []);
 
   // Filtrar encuestas no completadas
   const pendingSurveys = tableData.encuesta.filter(
-    survey => !completedSurveys.includes(survey.surveyId)
+    (survey) => !completedSurveys.includes(survey.surveyId)
   );
 
   // Función para marcar encuesta como completada
@@ -224,15 +267,56 @@ const HomePage = () => {
     );
   };
 
-
   const tickets = [
-    { label: "Nuevo", color: "green", icon: "🟢", count: tableData.nuevo.length, key: "nuevo" },
-    { label: "En curso", color: "lightgreen", icon: "⭕", count: tableData.enCurso.length, key: "enCurso" },
-    { label: "En espera", color: "orange", icon: "🟡", count: tableData.enEspera.length, key: "enEspera" },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: tableData.resueltos.length, key: "resueltos" },
-    { label: "Cerrado", color: "black", icon: "⚫", count: tableData.cerrados.length, key: "cerrados" },
-    { label: "Borrado", color: "red", icon: "🗑", count: tableData.borrados.length, key: "borrados" },
-    { label: "Encuesta de Satisfacción", color: "purple", icon: "📅", count: pendingSurveys.length, key: "encuesta" },
+    {
+      label: "Nuevo",
+      color: "green",
+      icon: "🟢",
+      count: tableData.nuevo.length,
+      key: "nuevo",
+    },
+    {
+      label: "En curso",
+      color: "lightgreen",
+      icon: "⭕",
+      count: tableData.enCurso.length,
+      key: "enCurso",
+    },
+    {
+      label: "En espera",
+      color: "orange",
+      icon: "🟡",
+      count: tableData.enEspera.length,
+      key: "enEspera",
+    },
+    {
+      label: "Resueltas",
+      color: "gray",
+      icon: "⚪",
+      count: tableData.resueltos.length,
+      key: "resueltos",
+    },
+    {
+      label: "Cerrado",
+      color: "black",
+      icon: "⚫",
+      count: tableData.cerrados.length,
+      key: "cerrados",
+    },
+    {
+      label: "Borrado",
+      color: "red",
+      icon: "🗑",
+      count: tableData.borrados.length,
+      key: "borrados",
+    },
+    {
+      label: "Encuesta de Satisfacción",
+      color: "purple",
+      icon: "📅",
+      count: pendingSurveys.length,
+      key: "encuesta",
+    },
   ];
 
   const handleTabClick = (tabKey) => {
@@ -273,43 +357,44 @@ const HomePage = () => {
   };
 
   const getRouteByRole = (section) => {
-  const userRole = localStorage.getItem("rol");
-  
-  if (section === 'inicio') {
-     if (userRole === 'administrador') {
-      return '/HomeAdmiPage';
-    } else if (userRole === 'tecnico') {
-      return '/HomeTecnicoPage';
+    const userRole = localStorage.getItem("rol");
+
+    if (section === "inicio") {
+      if (userRole === "administrador") {
+        return "/HomeAdmiPage";
+      } else if (userRole === "tecnico") {
+        return "/HomeTecnicoPage";
+      } else {
+        return "/home";
+      }
+    } else if (section === "crear-caso") {
+      if (userRole === "administrador") {
+        return "/CrearCasoAdmin";
+      } else if (userRole === "tecnico") {
+        return "/CrearCasoAdmin";
+      } else {
+        return "/CrearCasoUse";
+      }
+    } else if (section === "tickets") {
+      if (userRole === "administrador") {
+        return "/TicketsAdmin";
+      } else if (userRole === "tecnico") {
+        return "/TicketsTecnico";
+      } else {
+        return "/Tickets";
+      }
     } else {
-      return '/home';
+      return "/home";
     }
-  } else if (section === 'crear-caso') {
-    if (userRole === 'administrador') {
-      return '/CrearCasoAdmin';
-    } else if (userRole === 'tecnico') {
-      return '/CrearCasoAdmin';
-    } else {
-      return '/CrearCasoUse';
-    }
-  } else if (section === 'tickets') {
-    if (userRole === 'administrador') {
-      return '/TicketsAdmin';
-    } else if (userRole === 'tecnico') {
-      return '/TicketsTecnico';
-    } else {
-      return '/Tickets';
-    }
-  } else {
-    return '/home';
-  }
-};
+  };
 
   return (
-    
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        className={`${styles.menuVertical} ${
+          isMenuExpanded ? styles.expanded : ""
+        }`}
         onMouseEnter={toggleMenu}
         onMouseLeave={toggleMenu}
       >
@@ -326,11 +411,18 @@ const HomePage = () => {
             <FiAlignJustify className={styles.menuIcon} />
           </button>
 
-          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+          <div
+            className={`${styles.menuVerticalDesplegable} ${
+              isMobileMenuOpen ? styles.mobileMenuOpen : ""
+            }`}
+          >
             <ul className={styles.menuIconos}>
               {/* Opción Inicio - visible para todos */}
               <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('inicio')} className={styles.linkSinSubrayado}>
+                <Link
+                  to={getRouteByRole("inicio")}
+                  className={styles.linkSinSubrayado}
+                >
                   <FcHome className={styles.menuIcon} />
                   <span className={styles.menuText}>Inicio</span>
                 </Link>
@@ -338,7 +430,10 @@ const HomePage = () => {
 
               {/* Opción Crear Caso - visible para todos */}
               <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('crear-caso')} className={styles.linkSinSubrayado}>
+                <Link
+                  to={getRouteByRole("crear-caso")}
+                  className={styles.linkSinSubrayado}
+                >
                   <FcCustomerSupport className={styles.menuIcon} />
                   <span className={styles.menuText}>Crear Caso</span>
                 </Link>
@@ -346,7 +441,10 @@ const HomePage = () => {
 
               {/* Opción Tickets - visible para todos */}
               <li className={styles.iconosMenu}>
-                <Link to={getRouteByRole('tickets')} className={styles.linkSinSubrayado}>
+                <Link
+                  to={getRouteByRole("tickets")}
+                  className={styles.linkSinSubrayado}
+                >
                   <FcAnswers className={styles.menuIcon} />
                   <span className={styles.menuText}>Tickets</span>
                 </Link>
@@ -355,12 +453,19 @@ const HomePage = () => {
               {/* Menú Soporte - solo para técnicos */}
               {userRole === "tecnico" && (
                 <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                  <div
+                    className={styles.linkSinSubrayado}
+                    onClick={toggleSupport}
+                  >
                     <FcAssistant className={styles.menuIcon} />
                     <span className={styles.menuText}> Soporte</span>
                   </div>
 
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                  <ul
+                    className={`${styles.submenu} ${
+                      isSupportOpen ? styles.showSubmenu : ""
+                    }`}
+                  >
                     <li>
                       <Link to="/Tickets" className={styles.submenuLink}>
                         <FcAnswers className={styles.menuIcon} />
@@ -392,11 +497,18 @@ const HomePage = () => {
               {/* Menú Administración - solo para técnicos */}
               {userRole === "tecnico" && (
                 <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                  <div
+                    className={styles.linkSinSubrayado}
+                    onClick={toggleAdmin}
+                  >
                     <FcBusinessman className={styles.menuIcon} />
                     <span className={styles.menuText}> Administración</span>
                   </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                  <ul
+                    className={`${styles.submenu} ${
+                      isAdminOpen ? styles.showSubmenu : ""
+                    }`}
+                  >
                     <li>
                       <Link to="/Usuarios" className={styles.submenuLink}>
                         <FcPortraitMode className={styles.menuIcon} />
@@ -422,11 +534,18 @@ const HomePage = () => {
               {/* Menú Configuración - solo para técnicos */}
               {userRole === "tecnico" && (
                 <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                  <div
+                    className={styles.linkSinSubrayado}
+                    onClick={toggleConfig}
+                  >
                     <FcAutomatic className={styles.menuIcon} />
                     <span className={styles.menuText}> Configuración</span>
                   </div>
-                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                  <ul
+                    className={`${styles.submenu} ${
+                      isConfigOpen ? styles.showSubmenu : ""
+                    }`}
+                  >
                     <li>
                       <Link to="/Categorias" className={styles.submenuLink}>
                         <FcGenealogy className={styles.menuIcon} />
@@ -448,13 +567,24 @@ const HomePage = () => {
       </aside>
 
       {/* Contenido principal */}
-      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
+      <div
+        style={{
+          marginLeft: isMenuExpanded ? "200px" : "60px",
+          transition: "margin-left 0.3s ease",
+        }}
+      >
         <Outlet />
       </div>
       {/* Header */}
-      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      <header
+        className={styles.containerInicio}
+        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
+      >
         <div className={styles.containerInicioImg}>
-          <Link to={getRouteByRole('inicio')} className={styles.linkSinSubrayado}>
+          <Link
+            to={getRouteByRole("inicio")}
+            className={styles.linkSinSubrayado}
+          >
             <FcHome className={styles.menuIcon} />
             <span>Inicio</span>
           </Link>
@@ -468,7 +598,7 @@ const HomePage = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          <button
+            <button
               className={styles.buttonBuscar}
               title="Buscar"
               disabled={isLoading || !searchTerm.trim()}
@@ -479,9 +609,10 @@ const HomePage = () => {
             {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
-
           <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>
+              Bienvenido, <span id="nombreusuario">{nombre}</span>
+            </span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -491,8 +622,10 @@ const HomePage = () => {
         </div>
       </header>
 
-
-      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+      <div
+        className={styles.container}
+        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
+      >
         <div className={styles.sectionContainer}>
           <div className={styles.ticketContainer}>
             <li className={styles.creacion}>
@@ -508,7 +641,9 @@ const HomePage = () => {
             {tickets.map((ticket, index) => (
               <div
                 key={index}
-                className={`${styles.card} ${activeTab === ticket.key ? styles.activeCard : ''}`}
+                className={`${styles.card} ${
+                  activeTab === ticket.key ? styles.activeCard : ""
+                }`}
                 style={{ borderColor: ticket.color }}
                 onClick={() => handleTabClick(ticket.key)}
               >
@@ -521,17 +656,24 @@ const HomePage = () => {
         </div>
 
         {/* Mostrar la tabla correspondiente al tab activo */}
-        {activeTab === 'nuevo' && renderTable(tableData.nuevo, 'Nuevo')}
-        {activeTab === 'enCurso' && renderTable(tableData.enCurso, 'En Curso')}
-        {activeTab === 'enEspera' && renderTable(tableData.enEspera, 'En Espera')}
-        {activeTab === 'resueltos' && renderTable(tableData.resueltos, 'Resueltos')}
-        {activeTab === 'cerrados' && renderTable(tableData.cerrados, 'Cerrados')}
-        {activeTab === 'borrados' && renderTable(tableData.borrados, 'Borrados')}
-        {activeTab === 'encuesta' && renderSurveyTable(pendingSurveys, 'Encuesta de Satisfacción pendientes')}
-
+        {activeTab === "nuevo" && renderTable(tableData.nuevo, "Nuevo")}
+        {activeTab === "enCurso" && renderTable(tableData.enCurso, "En Curso")}
+        {activeTab === "enEspera" &&
+          renderTable(tableData.enEspera, "En Espera")}
+        {activeTab === "resueltos" &&
+          renderTable(tableData.resueltos, "Resueltos")}
+        {activeTab === "cerrados" &&
+          renderTable(tableData.cerrados, "Cerrados")}
+        {activeTab === "borrados" &&
+          renderTable(tableData.borrados, "Borrados")}
+        {activeTab === "encuesta" &&
+          renderSurveyTable(
+            pendingSurveys,
+            "Encuesta de Satisfacción pendientes"
+          )}
       </div>
 
-{/*chatbot*/}
+      {/*chatbot*/}
 
       <div className={styles.chatbotContainer}>
         <img

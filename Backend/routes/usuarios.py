@@ -298,3 +298,47 @@ def obtener_ticket_por_id(id_ticket):
         print("Error al obtener el ticket:", e)
         return jsonify({"success": False, "message": "Error al obtener el ticket"}), 500
 
+@usuarios_bp.route("/estado_tickets", methods=["GET"])
+def obtener_estado_tickets():
+    estado = request.args.get("estado")  
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                t.id_ticket,
+                t.titulo,
+                t.nombre_tecnico,
+                t.descripcion,
+                t.ubicacion,
+                t.prioridad,
+                t.tipo,
+                t.estado_ticket,
+                t.grupo,
+                t.fecha_creacion,
+                c.nombre_categoria AS categoria,
+                u.nombre_completo AS solicitante
+            FROM tickets t
+            JOIN categorias c ON t.id_categoria1 = c.id_categoria
+            JOIN usuarios_tickets ut ON t.id_ticket = ut.id_ticket1
+            JOIN usuarios u ON ut.id_usuario1 = u.id_usuario
+        """
+
+        # Agregar filtro por estado si se especifica
+        if estado:
+            query += " WHERE t.estado_ticket = %s"
+            cursor.execute(query, (estado,))
+        else:
+            cursor.execute(query)
+
+        tickets = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        return jsonify(tickets)
+
+    except Exception as e:
+        print("Error al obtener tickets:", e)
+        return jsonify({"success": False, "message": "Error al obtener tickets"}), 500
