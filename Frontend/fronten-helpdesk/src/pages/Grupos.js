@@ -25,56 +25,57 @@ import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
-  FaPlus,
-  FaTimes,
 } from "react-icons/fa";
 import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
-import styles from "../styles/Grupos.module.css";
+import styles from "../styles/Tickets.module.css";
 
-
+// Datos de ejemplo con valores por defecto
 const initialData = Array.from({ length: 100 }, (_, i) => ({
-  nombre: ["BASE DE DATOS, DESARROLLO Y ANALISIS DE DATOS", "REDES Y COMUNICACIONES", "SOPORTE CLINICO SISTEMAS"][i % 3],
-  entidad: ["Departamento de TI", "Recursos Humanos", "Contabilidad", "Operaciones"][i % 4],
-  comentario: "",
+  id: `2503290${(1000 - i).toString().padStart(3, "0")}`,
+  id_ticket: `2503290${(1000 - i).toString().padStart(3, "0")}`,
+  titulo: `CREACION DE USUARIOS - PARALELO ACADEMICO ${i + 1}`,
+  solicitante: "Jenyfer Quintero Calixto",
+  descripcion: "ALIMENTAR EL EXCEL DE DELOGIN",
+  prioridad: ["Mediana", "Alta", "Baja"][i % 3],
+  estado: ["Nuevo", "En Espera", "Cerrado", "Resuelto", "En Curso"][i % 5],
+  tecnico: "Jenyfer Quintero Calixto",
+  grupo: "EDQ B",
+  categoria: "CREACION DE USUARIO",
+  ultimaActualizacion: "2025-03-29 03:40",
+  fecha_creacion: "2025-03-29 03:19",
+  fechaApertura: "2025-03-29 03:19",
 }));
 
 const Grupos = () => {
-
-  // 1. Obtener datos del localStorage
+  // 1. Primero obtenemos datos del localStorage
   const userRole = localStorage.getItem("rol") || "usuario";
   const nombre = localStorage.getItem("nombre") || "";
   const isAdminOrTech = ["administrador", "tecnico", "usuario"].includes(userRole);
 
-  // 2. Estados del componente
+  // 2. Luego todos los hooks de estado
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [tickets, setTickets] = useState(initialData);
+  const [filteredTickets, setFilteredTickets] = useState(initialData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [usingDemoData, setUsingDemoData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-
-  // Estados específicos para grupos
+  const [tecnicos, setTecnicos] = useState([]);
   const [grupos, setGrupos] = useState([]);
-  const [filteredGrupos, setFilteredGrupos] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [newGrupo, setNewGrupo] = useState({
-    nombre: '',
-    entidad: '',
-    comentarios: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [usuarios, setUsuarios] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [tecnicos, setTecnicos] = useState([]);
+  const [ticketsData, setticketsData] = useState([]);
+  
   const [filters, setFilters] = useState({
     id: "",
     titulo: "",
@@ -84,11 +85,45 @@ const Grupos = () => {
     tecnico: "",
     grupo: "",
     categoria: "",
-    nombre: '',
-    entidad: '',
-    comentarios: ''
   });
 
+  const [ticket, setTicket] = useState({
+    entidad: '',
+    titulo: '',
+    descripcion: '',
+    archivos: [],
+    id: '',
+    solicitante: '',
+    prioridad: '',
+    estado: '',
+    tecnico: '',
+    grupo: '',
+    categoria: '',
+    fechaApertura: '',
+    ultimaActualizacion: '',
+    tipo: 'incidencia',
+    ubicacion: '',
+    observador: '',
+    asignadoA: '',
+    grupoAsignado: ''
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    id: "",
+    tipo: "",
+    origen: "",
+    prioridad: "",
+    categoria: "",
+    titulo: "",
+    descripcion: "",
+    archivo: null,
+    solicitante: nombre,
+    elementos: "",
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,7 +141,7 @@ const Grupos = () => {
     );
   }
 
-  // Handlers genéricos
+  // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -133,9 +168,14 @@ const Grupos = () => {
     setIsAdminOpen(false);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    navigate(`/grupos?search=${encodeURIComponent(searchTerm)}`);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setTicket(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setTicket(prev => ({ ...prev, archivos: [...prev.archivos, ...files] }));
   };
 
   const roleToPath = {
@@ -144,82 +184,10 @@ const Grupos = () => {
     administrador: "/HomeAdmiPage",
   };
 
-  // Handlers específicos para grupos
-  const fetchGrupos = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/grupos');
-      setGrupos(response.data);
-      setFilteredGrupos(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError('Error al cargar los grupos');
-      setLoading(false);
-      console.error(err);
-    }
-  };
-
-useEffect(() => {
-  fetchGrupos();
-  // Cargar datos adicionales
-  const loadAdditionalData = async () => {
-    try {
-      const [usersRes, techsRes, catsRes] = await Promise.all([
-        axios.get('/api/usuarios'),
-        axios.get('/api/tecnicos'), 
-        axios.get('/api/categorias')
-      ]);
-      setUsuarios(usersRes.data);
-      setTecnicos(techsRes.data);
-      setCategorias(catsRes.data);
-    } catch (err) {
-      console.error("Error cargando datos adicionales", err);
-    }
-  };
-  loadAdditionalData();
-}, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const response = await axios.post('/api/grupos', newGrupo);
-      setGrupos([...grupos, response.data]);
-      setFilteredGrupos([...grupos, response.data]);
-      setNewGrupo({ nombre: '', entidad: '', comentarios: '' });
-      setShowForm(false);
-      setLoading(false);
-    } catch (err) {
-      setError('Error al crear el grupo');
-      setLoading(false);
-      console.error(err);
-    }
-  };
-
-  const handleSearch = (term) => {
-    const filtered = grupos.filter(grupo =>
-      grupo.nombre.toLowerCase().includes(term.toLowerCase()) ||
-      grupo.entidad.toLowerCase().includes(term.toLowerCase()) ||
-      (grupo.comentarios && grupo.comentarios.toLowerCase().includes(term.toLowerCase()))
-    );
-    setFilteredGrupos(filtered);
-    setCurrentPage(1);
-  };
-
-  // Lógica de paginación
-  const indexOfLastRow = currentPage * rowsPerPage;
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = filteredGrupos.slice(indexOfFirstRow, indexOfLastRow);
-  const totalPages = Math.ceil(filteredGrupos.length / rowsPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
-  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
-
-  const handleRowsPerPageChange = (e) => {
-    setRowsPerPage(Number(e.target.value));
-    setCurrentPage(1);
-  };
+  // Efectos
+ /* useEffect(() => {
+    fetchTickets();
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -228,12 +196,80 @@ useEffect(() => {
       setSearchTerm(urlSearchTerm);
       handleSearch(urlSearchTerm);
     }
-  }, [location.search])
+  }, [location.search]);*/
+
+  // Funciones principales
+  const fetchTickets = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "http://localhost:5000/usuarios/tickets",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Normalizar datos de la API
+      const normalizedTickets = response.data.map(ticket => ({
+        id: ticket.id_ticket || ticket.id || '',
+        id_ticket: ticket.id_ticket || ticket.id || '',
+        titulo: ticket.titulo || '',
+        solicitante: ticket.solicitante || '',
+        descripcion: ticket.descripcion || '',
+        prioridad: ticket.prioridad || '',
+        estado: ticket.estado || ticket.estado_ticket || '',
+        tecnico: ticket.tecnico || ticket.nombre_tecnico || '',
+        grupo: ticket.grupo || '',
+        categoria: ticket.categoria || ticket.nombre_categoria || '',
+        fecha_creacion: ticket.fecha_creacion || ticket.fechaApertura || '',
+        ultimaActualizacion: ticket.ultimaActualizacion || ''
+      }));
+
+      setTickets(normalizedTickets);
+      setFilteredTickets(normalizedTickets);
+      setUsingDemoData(false);
+    } catch (err) {
+      setError("No se pudo conectar al servidor. Mostrando datos de ejemplo.");
+      setTickets(initialData);
+      setFilteredTickets(initialData);
+      setUsingDemoData(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (searchValue) => {
+    const term = searchValue.toLowerCase().trim();
+
+    if (!term) {
+      setFilteredTickets(tickets);
+      return;
+    }
+
+    const filtered = tickets.filter((item) => {
+      return Object.values(item).some((val) => {
+        if (val === null || val === undefined) return false;
+        return String(val).toLowerCase().includes(term);
+      });
+    });
+
+    setFilteredTickets(filtered);
+    setCurrentPage(1);
+  };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     handleSearch(value);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    navigate(`/tickets?search=${encodeURIComponent(searchTerm)}`);
   };
 
   const handleFilterChange = (e) => {
@@ -288,6 +324,24 @@ useEffect(() => {
     setIsExportDropdownOpen(false);
   };
 
+  // Lógica de paginación
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredTickets.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredTickets.length / rowsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleTicketClick = (ticketId) => {
+    navigate(`/tickets/solucion/${ticketId}`);
+  };
 
   const getRouteByRole = (section) => {
     if (section === "inicio") {
@@ -303,7 +357,7 @@ useEffect(() => {
     return "/";
   };
 
-  // Renderizar menú según el rol
+ // Renderizar menú según el rol
   const renderMenuByRole = () => {
     switch (userRole) {
       case 'administrador':
@@ -668,8 +722,8 @@ useEffect(() => {
             <div className={styles.filterRow}>
               <div className={styles.filterGroup}>
                 <label>Prioridad:</label>
-                <select
-                  name="prioridad"
+                <select 
+                  name="prioridad" 
                   value={filters.prioridad}
                   onChange={handleFilterChange}
                 >
@@ -681,8 +735,8 @@ useEffect(() => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Estado:</label>
-                <select
-                  name="estado"
+                <select 
+                  name="estado" 
                   value={filters.estado}
                   onChange={handleFilterChange}
                 >
@@ -696,8 +750,8 @@ useEffect(() => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Asignado a:</label>
-                <select
-                  name="tecnico"
+                <select 
+                  name="tecnico" 
                   value={filters.tecnico}
                   onChange={handleFilterChange}
                 >
@@ -728,8 +782,8 @@ useEffect(() => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Categoría:</label>
-                <select
-                  name="categoria"
+                <select 
+                  name="categoria" 
                   value={filters.categoria}
                   onChange={handleFilterChange}
                 >
@@ -753,137 +807,105 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Contenido principal - Tabla de grupos */}
-        <div
-          className={styles.containerticket}
-          style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
-        >
-          {/* Barra de herramientas */}
-          <div className={styles.toolbar}>
-            <div className={styles.searchContainer}>
-              <input
-                className={styles.search}
-                type="text"
-                placeholder="Buscar en grupos..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-              />
-              <button
-                type="button"
-                className={styles.buttonBuscar}
-                title="Buscar"
-              >
-                <FaMagnifyingGlass className={styles.searchIcon} />
-              </button>
-            </div>
-
-            <div className={styles.actions}>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className={styles.buttonPrimary}
-                disabled={loading}
-              >
-                {showForm ? (
-                  <>
-                    <FaTimes /> Cancelar
-                  </>
-                ) : (
-                  <>
-                    <FaPlus /> Nuevo Grupo
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Formulario para crear nuevo grupo */}
-          {showForm && (
-            <div className={styles.formContainer}>
-              <h3>Crear Nuevo Grupo</h3>
-              <form onSubmit={handleSubmit}>
-                <div className={styles.formGroup}>
-                  <label>Nombre:</label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={newGrupo.nombre}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Entidad:</label>
-                  <input
-                    type="text"
-                    name="entidad"
-                    value={newGrupo.entidad}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Comentarios:</label>
-                  <textarea
-                    name="comentarios"
-                    value={newGrupo.comentarios}
-                    onChange={handleInputChange}
-                    rows="3"
-                  />
-                </div>
-
-                <div className={styles.formActions}>
-                  <button
-                    type="submit"
-                    className={styles.buttonPrimary}
-                    disabled={loading}
-                  >
-                    {loading ? 'Guardando...' : 'Guardar Grupo'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Tabla de grupos */}
-    <div className={styles.tableContainer}>
-        {loading && !showForm ? (
-          <div className={styles.loadingMessage}>Cargando grupos...</div>
-        ) : error ? (
-          <div className={styles.errorMessage}>{error}</div>
-        ) : (
-          
-            <table className={styles.tableticket}>
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Entidad</th>
-                      <th>Comentarios</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentRows.length > 0 ? (
-                      currentRows.map((grupo) => (
-                        <tr key={grupo.id_grupo || grupo.nombre}>
-                          <td>{grupo.nombre}</td>
-                          <td>{grupo.entidad}</td>
-                          <td>{grupo.comentarios || '-'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className={styles.noData}>
-                          No se encontraron grupos
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-
+        {/* Tabla de tickets */}
+        <div className={styles.tableContainer}>
+          <table className={styles.tableticket}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Solicitante</th>
+                <th>Descripción</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Técnico</th>
+                <th>Grupo</th>
+                <th>Categoría</th>
+                <th>Fecha Apertura</th>
+                <th>Última Actualización</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentRows.length > 0 ? (
+                currentRows.map((ticket, index) => (
+                  <tr key={index}>
+                    <td>
+                      <span
+                        className={styles.clickableCell}
+                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
+                      >
+                        {ticket.id || ticket.id_ticket || 'N/A'}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={styles.clickableCell}
+                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
+                      >
+                        {String(ticket.titulo || 'Sin título').toUpperCase()}
+                      </span>
+                    </td>
+                    <td>{String(ticket.solicitante || 'Sin solicitante').toUpperCase()}</td>
+                    <td>{String(ticket.descripcion || 'Sin descripción').toUpperCase()}</td>
+                    <td>
+                      <span
+                        className={`${styles.priority} ${styles[String(ticket.prioridad || '').toLowerCase()] || ''}`}
+                      >
+                        {String(ticket.prioridad || 'Sin prioridad').toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.status} ${styles[String(ticket.estado || '').toLowerCase()] || ''}`}
+                      >
+                        {String(ticket.estado || 'Sin estado').toUpperCase()}
+                      </span>
+                    </td>
+                    <td>{String(ticket.tecnico || 'No asignado').toUpperCase()}</td>
+                    <td>{String(ticket.grupo || 'Sin grupo').toUpperCase()}</td>
+                    <td>{String(ticket.categoria || 'Sin categoría').toUpperCase()}</td>
+                    <td>
+                      {ticket.fecha_creacion || ticket.fechaApertura ? (
+                        new Date(`${ticket.fecha_creacion || ticket.fechaApertura} -05:00`)
+                          .toLocaleString("es-CO", {
+                            timeZone: "America/Bogota",
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .toUpperCase()
+                      ) : 'Sin fecha'}
+                    </td>
+                    <td>
+                      {ticket.ultimaActualizacion ? (
+                        new Date(`${ticket.ultimaActualizacion} -05:00`)
+                          .toLocaleString("es-CO", {
+                            timeZone: "America/Bogota",
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                          .toUpperCase()
+                      ) : 'Sin actualización'}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="11" className={styles.noResults}>
+                    No se encontraron tickets que coincidan con los criterios de búsqueda
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* Controles de paginación */}
         <div className={styles.paginationControls}>
@@ -916,75 +938,75 @@ useEffect(() => {
               <FaChevronLeft />
             </button>
 
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNumber;
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
-                      } else {
-                        pageNumber = currentPage - 2 + i;
-                      }
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
 
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => paginate(pageNumber)}
-                          className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ""}`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => paginate(pageNumber)}
+                  className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ""}`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
 
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <span className={styles.paginationEllipsis}>...</span>
-                    )}
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <span className={styles.paginationEllipsis}>...</span>
+            )}
 
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <button
-                        onClick={() => paginate(totalPages)}
-                        className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ""}`}
-                      >
-                        {totalPages}
-                      </button>
-                    )}
+            {totalPages > 5 && currentPage < totalPages - 2 && (
+              <button
+                onClick={() => paginate(totalPages)}
+                className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ""}`}
+              >
+                {totalPages}
+              </button>
+            )}
 
-                    <button
-                      onClick={nextPage}
-                      disabled={currentPage === totalPages}
-                      className={styles.paginationButton}
-                    >
-                      <FaChevronRight />
-                    </button>
-                  </div>
-                </div>
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={styles.paginationButton}
+            >
+              <FaChevronRight />
+            </button>
+          </div>
+        </div>
 
-               {/* Chatbot */}
-            <div className={styles.chatbotContainer}>
-              <img
-                src={ChatbotIcon}
-                alt="Chatbot"
-                className={styles.chatbotIcon}
-                onClick={toggleChat}
-              />
-              {isChatOpen && (
-                <div className={styles.chatWindow}>
-                  <div className={styles.chatHeader}>
-                    <h4>Chat de Soporte</h4>
-                    <button onClick={toggleChat} className={styles.closeChat}>
-                      &times;
-                    </button>
-                  </div>
-                  <div className={styles.chatBody}>
-                    <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-                  </div>
-                  <div className={styles.chatInput}>
-                    <input type="text" placeholder="Escribe un mensaje..." />
-                    <button>Enviar</button>
-                 </div>
+        {/* Chatbot */}
+        <div className={styles.chatbotContainer}>
+          <img
+            src={ChatbotIcon}
+            alt="Chatbot"
+            className={styles.chatbotIcon}
+            onClick={toggleChat}
+          />
+          {isChatOpen && (
+            <div className={styles.chatWindow}>
+              <div className={styles.chatHeader}>
+                <h4>Chat de Soporte</h4>
+                <button onClick={toggleChat} className={styles.closeChat}>
+                  &times;
+                </button>
+              </div>
+              <div className={styles.chatBody}>
+                <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
+              </div>
+              <div className={styles.chatInput}>
+                <input type="text" placeholder="Escribe un mensaje..." />
+                <button>Enviar</button>
+              </div>
             </div>
           )}
         </div>
