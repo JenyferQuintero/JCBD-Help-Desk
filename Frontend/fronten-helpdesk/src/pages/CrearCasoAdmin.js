@@ -325,12 +325,7 @@ const CrearCasoAdmin = () => {
                     <span className={styles.menuText}>Crear Caso</span>
                   </Link>
                 </li>
-                <li>
-                  <Link to="/Problemas" className={styles.submenuLink}>
-                    <FcExpired className={styles.menuIcon} />
-                    <span className={styles.menuText}>Problemas</span>
-                  </Link>
-                </li>
+
                 <li>
                   <Link to="/Estadisticas" className={styles.submenuLink}>
                     <FcBullish className={styles.menuIcon} />
@@ -740,6 +735,24 @@ const CrearCasoAdmin = () => {
                 </div>
 
                 <div className={styles.formGroup}>
+                  <label>Grupo asignado*</label>
+                  <select
+                    name="grupo asignado"
+                    value={formData.grupo_asignado}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione un grupo...</option>
+                    {grupos.map(grupo => (
+                      <option key={grupo.id_grupo} value={grupo.id_grupo}>
+                        {`${grupo.nombre_completo}`} ({usuario.correo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+
+                <div className={styles.formGroup}>
                   <label>Asignado a*</label>
                   <select
                     name="asignado_a"
@@ -756,22 +769,6 @@ const CrearCasoAdmin = () => {
                   </select>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label>Grupo asignado*</label>
-                  <select
-                    name="grupo asignado"
-                    value={formData.grupo_asignado}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione un grupo...</option>
-                    {grupos.map(grupo => (
-                      <option key={grupo.id_grupo} value={grupo.id_grupo}>
-                        {`${grupo.nombre_completo}`} ({usuario.correo})
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               {isEditing && (

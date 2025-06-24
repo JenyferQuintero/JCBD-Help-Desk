@@ -354,12 +354,7 @@ const TicketHistorial = () => {
                        <span className={styles.menuText}>Crear Caso</span>
                      </Link>
                    </li>
-                   <li>
-                     <Link to="/Problemas" className={styles.submenuLink}>
-                       <FcExpired className={styles.menuIcon} />
-                       <span className={styles.menuText}>Problemas</span>
-                     </Link>
-                   </li>
+                  
                    <li>
                      <Link to="/Estadisticas" className={styles.submenuLink}>
                        <FcBullish className={styles.menuIcon} />
