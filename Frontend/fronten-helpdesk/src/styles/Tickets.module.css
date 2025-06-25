@@ -981,75 +981,7 @@ tr:hover {
   background-color: #d32f2f;
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
-}
 
-.filterPanel {
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.filterRow {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.filterGroup {
-  flex: 1;
-}
-
-.filterGroup label {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
-  color: #555;
-}
-
-.filterGroup input {
-  width: 80%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.filterActions {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.applyButton {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.applyButton:hover {
-  background-color: #45a049;
-}
-
-.clearButton {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.clearButton:hover {
-  background-color: #d32f2f;
-}
 
 .tableContainer {
   margin-top: 20px;

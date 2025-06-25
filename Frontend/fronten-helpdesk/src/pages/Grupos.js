@@ -1,50 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link } from "react-router-dom";
-import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
-import { FaChevronLeft, FaChevronRight, FaSearch, FaFilter, FaPlus, FaSpinner } from "react-icons/fa";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { FaPowerOff, FaChevronLeft, FaChevronRight,FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv,} from "react-icons/fa";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint, } from "react-icons/fc";
 import axios from "axios";
-import styles from "../styles/Usuarios.module.css";
+import styles from "../styles/Grupos.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 
-// Componentes reutilizables
-const FormGroup = ({ label, children, error }) => (
-  <div className={styles.formGroup}>
-    {label && <label className={styles.label}>{label}</label>}
-    {children}
-    {error && <span className={styles.errorMessage}>{error}</span>}
-  </div>
-);
-
-const ActionButton = ({ onClick, children, disabled = false, isDelete = false }) => (
-  <button
-    className={`${styles.actionButton} ${isDelete ? styles.deleteButton : ''}`}
-    onClick={onClick}
-    disabled={disabled}
-  >
-    {children}
-  </button>
-);
-
-const PaginationButton = ({ onClick, children, disabled = false, isActive = false }) => (
-  <button
-    className={`${styles.paginationButton} ${isActive ? styles.active : ''}`}
-    onClick={onClick}
-    disabled={disabled}
-  >
-    {children}
-  </button>
-);
-
-// Componente principal
 const Grupos = () => {
   // Estados para UI
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [menuState, setMenuState] = useState({
     support: false,
     admin: false,
@@ -53,8 +24,8 @@ const Grupos = () => {
 
   // Estados para datos
   const [showForm, setShowForm] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [grupos, setGrupos] = useState([]);
+  const [filteredGrupos, setFilteredGrupos] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("nombre");
   const [additionalFilters, setAdditionalFilters] = useState([]);
@@ -80,44 +51,77 @@ const Grupos = () => {
 
   // Efectos
   useEffect(() => {
-    fetchUsers();
+    fetchGrupos();
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [searchField, searchTerm, additionalFilters, users]);
+  }, [searchField, searchTerm, additionalFilters, grupos]);
 
   // Funciones de ayuda
   const applyFilters = () => {
-    let result = [...users];
+    let result = [...grupos];
 
     if (searchField && searchTerm) {
-      result = result.filter(user => {
-        const value = user[searchField];
+      result = result.filter(grupo => {
+        const value = grupo[searchField];
         return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
 
     additionalFilters.forEach(filter => {
       if (filter.field && filter.value) {
-        result = result.filter(user => {
-          const value = user[filter.field];
+        result = result.filter(grupo => {
+          const value = grupo[filter.field];
           return value?.toString().toLowerCase().includes(filter.value.toLowerCase());
         });
       }
     });
 
-    setFilteredUsers(result);
+    setFilteredGrupos(result);
     setCurrentPage(1);
   };
 
+  const toggleMenu = (menu) => {
+    setMenuState(prev => {
+      const newState = { support: false, admin: false, config: false };
+      if (menu) newState[menu] = !prev[menu];
+      return newState;
+    });
+  };
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+
+  // Funciones de exportación
+  const exportToExcel = () => {
+    console.log("Exportando a Excel", filteredGrupos);
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToPdf = () => {
+    console.log("Exportando a PDF", filteredGrupos);
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToCsv = () => {
+    console.log("Exportando a CSV", filteredGrupos);
+    setIsExportDropdownOpen(false);
+  };
+
+  const printTable = () => {
+    window.print();
+    setIsExportDropdownOpen(false);
+  };
+
   // Funciones de API
-  const fetchUsers = async () => {
+  const fetchGrupos = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get("http://localhost:5000/grupos/obtener");
-      setUsers(response.data);
-      setFilteredUsers(response.data);
+      setGrupos(response.data);
+      setFilteredGrupos(response.data);
     } catch (error) {
       console.error("Error al cargar grupos:", error);
     } finally {
@@ -132,16 +136,16 @@ const Grupos = () => {
     setIsLoading(true);
     try {
       const method = editingId ? 'PUT' : 'POST';
-      const url = editingId 
+      const url = editingId
         ? `http://localhost:5000/grupos/actualizacion/${editingId}`
         : 'http://localhost:5000/grupos/creacion';
 
       const response = await axios[method.toLowerCase()](url, formData);
-      
+
       if (response.data.success) {
         alert(editingId ? 'Grupo actualizado' : 'Grupo creado');
         resetForm();
-        fetchUsers();
+        fetchGrupos();
       }
     } catch (error) {
       console.error('Error:', error);
@@ -157,7 +161,7 @@ const Grupos = () => {
       const response = await axios.delete(`http://localhost:5000/grupos/eliminar/${id}`);
       if (response.data.success) {
         alert("Grupo eliminado");
-        fetchUsers();
+        fetchGrupos();
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
@@ -167,7 +171,7 @@ const Grupos = () => {
   // Funciones de formulario
   const validateField = (name, value) => {
     const newErrors = { ...formErrors };
-    
+
     if (!value?.trim()) {
       newErrors[name] = `${name} es requerido`;
     } else {
@@ -206,14 +210,14 @@ const Grupos = () => {
     setShowForm(false);
   };
 
-  const handleEdit = (group) => {
+  const handleEdit = (grupo) => {
     setFormData({
-      nombre: group.nombre,
-      entidad: group.entidad,
-      activo: group.activo,
-      descripcion: group.descripcion
+      nombre: grupo.nombre,
+      entidad: grupo.entidad,
+      activo: grupo.activo,
+      descripcion: grupo.descripcion
     });
-    setEditingId(group.id_grupo);
+    setEditingId(grupo.id_grupo);
     setShowForm(true);
   };
 
@@ -237,23 +241,14 @@ const Grupos = () => {
   const resetSearch = () => {
     setSearchTerm("");
     setAdditionalFilters([]);
-    fetchUsers();
-  };
-
-  // Funciones de UI
-  const toggleMenu = (menu) => {
-    setMenuState(prev => {
-      const newState = { support: false, admin: false, config: false };
-      if (menu) newState[menu] = !prev[menu];
-      return newState;
-    });
+    fetchGrupos();
   };
 
   // Funciones de paginación
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = filteredUsers.slice(indexOfFirstRow, indexOfLastRow);
-  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
+  const currentRows = filteredGrupos.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredGrupos.length / rowsPerPage);
 
   const paginate = (page) => setCurrentPage(page);
   const nextPage = () => currentPage < totalPages && setCurrentPage(p => p + 1);
@@ -278,43 +273,235 @@ const Grupos = () => {
   return (
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
-      <MenuVertical 
-        isMenuExpanded={isMenuExpanded}
-        isMobileMenuOpen={isMobileMenuOpen}
-        menuState={menuState}
-        toggleMenu={toggleMenu}
-        toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        toggleMainMenu={() => setIsMenuExpanded(!isMenuExpanded)}
-        userRole={userRole}
-      />
+      <aside
+        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        onMouseEnter={toggleMainMenu}
+        onMouseLeave={toggleMainMenu}
+      >
+        <div className={styles.containerFluidMenu}>
+          <div className={styles.logoContainer}>
+            <img src={Logo} alt="Logo" />
+          </div>
+
+          <button
+            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+            type="button"
+            onClick={toggleMobileMenu}
+          >
+            <FiAlignJustify className={styles.menuIcon} />
+          </button>
+
+          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+            <ul className={styles.menuIconos}>
+              {userRole === 'administrador' ? (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                      <FcAssistant className={styles.menuIcon} />
+                      <span className={styles.menuText}> Soporte</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Tickets" className={styles.submenuLink}>
+                          <FcAnswers className={styles.menuIcon} />
+                          <span className={styles.menuText}>Tickets</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                          <FcCustomerSupport className={styles.menuIcon} />
+                          <span className={styles.menuText}>Crear Caso</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Estadisticas" className={styles.submenuLink}>
+                          <FcBullish className={styles.menuIcon} />
+                          <span className={styles.menuText}>Estadísticas</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                      <FcBusinessman className={styles.menuIcon} />
+                      <span className={styles.menuText}> Administración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Usuarios" className={styles.submenuLink}>
+                          <FcPortraitMode className={styles.menuIcon} />
+                          <span className={styles.menuText}> Usuarios</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Grupos" className={styles.submenuLink}>
+                          <FcConferenceCall className={styles.menuIcon} />
+                          <span className={styles.menuText}> Grupos</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Entidades" className={styles.submenuLink}>
+                          <FcOrganization className={styles.menuIcon} />
+                          <span className={styles.menuText}> Entidades</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('config')}>
+                      <FcAutomatic className={styles.menuIcon} />
+                      <span className={styles.menuText}> Configuración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.config ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Categorias" className={styles.submenuLink}>
+                          <FcGenealogy className={styles.menuIcon} />
+                          <span className={styles.menuText}>Categorias</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                </>
+              ) : userRole === 'tecnico' ? (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                      <FcAssistant className={styles.menuIcon} />
+                      <span className={styles.menuText}> Soporte</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Tickets" className={styles.submenuLink}>
+                          <FcAnswers className={styles.menuIcon} />
+                          <span className={styles.menuText}>Tickets</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                          <FcCustomerSupport className={styles.menuIcon} />
+                          <span className={styles.menuText}>Crear Caso</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                      <FcBusinessman className={styles.menuIcon} />
+                      <span className={styles.menuText}> Administración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Usuarios" className={styles.submenuLink}>
+                          <FcPortraitMode className={styles.menuIcon} />
+                          <span className={styles.menuText}> Usuarios</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/home" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                      <FcCustomerSupport className={styles.menuIcon} />
+                      <span className={styles.menuText}>Crear Caso</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/Tickets" className={styles.linkSinSubrayado}>
+                      <FcAnswers className={styles.menuIcon} />
+                      <span className={styles.menuText}>Tickets</span>
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          <div className={styles.floatingContainer}>
+            <div className={styles.menuLogoEmpresarial}>
+              <img src={Logoempresarial} alt="Logo Empresarial" />
+            </div>
+          </div>
+        </div>
+      </aside>
 
       {/* Contenido principal */}
-      <div style={{ 
-        marginLeft: isMenuExpanded ? "200px" : "60px", 
-        transition: "margin-left 0.3s ease" 
+      <div style={{
+        marginLeft: isMenuExpanded ? "200px" : "60px",
+        transition: "margin-left 0.3s ease"
       }}>
         <Outlet />
       </div>
 
       {/* Header */}
-      <Header 
-        userRole={userRole}
-        nombre={nombre}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        isLoading={isLoading}
-        isMenuExpanded={isMenuExpanded}
-      />
+      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+        <div className={styles.containerInicioImg}>
+          <Link to={userRole === 'administrador' ? '/HomeAdmiPage' : userRole === 'tecnico' ? '/HomeTecnicoPage' : '/home'} className={styles.linkSinSubrayado}>
+            <span>Inicio</span>
+          </Link>
+        </div>
+        <div className={styles.inputContainer}>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.search}
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button
+              className={styles.buttonBuscar}
+              title="Buscar"
+              disabled={isLoading || !searchTerm.trim()}
+            >
+              <FaMagnifyingGlass className={styles.searchIcon} />
+            </button>
+            {isLoading && <span className={styles.loading}>Buscando...</span>}
+          </div>
+
+          <div className={styles.userContainer}>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <div className={styles.iconContainer}>
+              <Link to="/">
+                <FaPowerOff className={styles.icon} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Contenido */}
-      <div className={styles.container} style={{ 
-        marginLeft: isMenuExpanded ? "200px" : "60px" 
+      <div className={styles.container} style={{
+        marginLeft: isMenuExpanded ? "200px" : "60px"
       }}>
-        {isLoading && <LoadingOverlay />}
+        {isLoading && (
+          <div className={styles.loadingOverlay}>
+            <FaSpinner className={styles.spinner} />
+          </div>
+        )}
 
         <div className={styles.topControls}>
-          <button 
-            onClick={() => { resetForm(); setShowForm(!showForm); }} 
+          <button
+            onClick={() => { resetForm(); setShowForm(!showForm); }}
             className={styles.addButton}
           >
             <FaPlus /> {showForm ? 'Ver Grupos' : 'Agregar Grupo'}
@@ -322,557 +509,319 @@ const Grupos = () => {
         </div>
 
         {showForm ? (
-          <GroupForm 
-            formData={formData}
-            formErrors={formErrors}
-            editingId={editingId}
-            isLoading={isLoading}
-            handleChange={handleChange}
-            handleSubmit={handleSubmit}
-            resetForm={resetForm}
-          />
+          <div className={styles.containerUsuarios}>
+            <h2 className={styles.titulo}>
+              {editingId ? 'Editar Grupo' : 'Formulario de Creación de Grupo'}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <div className={styles.gridContainerUsuarios}>
+                <div className={styles.columna}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Nombre del Grupo</label>
+                    <input
+                      type="text"
+                      className={`${styles.input} ${formErrors.nombre ? styles.inputError : ''}`}
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleChange}
+                      required
+                    />
+                    {formErrors.nombre && <span className={styles.errorMessage}>{formErrors.nombre}</span>}
+                  </div>
+
+                  <div className={styles.selectsContainer}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Activo</label>
+                      <select
+                        className={styles.select}
+                        name="activo"
+                        value={formData.activo}
+                        onChange={handleChange}
+                      >
+                        <option value="si">Sí</option>
+                        <option value="no">No</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Entidad</label>
+                      <select
+                        className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
+                        name="entidad"
+                        value={formData.entidad}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">Seleccione...</option>
+                        <option value="tic">TIC</option>
+                        <option value="mantenimiento">Mantenimiento</option>
+                        <option value="financiera">Financiera</option>
+                        <option value="compras">Compras</option>
+                        <option value="almacen">Almacén</option>
+                      </select>
+                      {formErrors.entidad && <span className={styles.errorMessage}>{formErrors.entidad}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                    <label className={styles.label}>Descripción</label>
+                    <input
+                      type="text"
+                      className={`${styles.input} ${formErrors.descripcion ? styles.inputError : ''}`}
+                      name="descripcion"
+                      value={formData.descripcion}
+                      onChange={handleChange}
+                      required
+                    />
+                    
+                  </div>
+                  </div>
+
+                  <div className={styles.botonesContainer}>
+                    <button type="submit" className={styles.boton} disabled={isLoading}>
+                      {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
+                    </button>
+                    <button type="button" onClick={resetForm} className={styles.botonCancelar}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
         ) : (
           <>
-            <SearchSection
-              searchField={searchField}
-              searchTerm={searchTerm}
-              additionalFilters={additionalFilters}
-              isLoading={isLoading}
-              setSearchField={setSearchField}
-              setSearchTerm={setSearchTerm}
-              handleFilterChange={handleFilterChange}
-              removeFilter={removeFilter}
-              addFilterField={addFilterField}
-              resetSearch={resetSearch}
-            />
+            <div className={styles.searchSection}>
+              <h2 className={styles.sectionTitle}>Buscar Grupo</h2>
+              <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
+                <div className={styles.mainSearch}>
+                  <div className={styles.searchFieldGroup}>
+                    <select
+                      className={styles.searchSelect}
+                      value={searchField}
+                      onChange={(e) => setSearchField(e.target.value)}
+                    >
+                      <option value="nombre">Nombre</option>
+                      <option value="entidad">Entidad</option>
+                    </select>
+                    <input
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder={`Buscar por ${searchField}...`}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
 
-            <GroupsTable 
-              currentRows={currentRows}
-              isLoading={isLoading}
-              handleEdit={handleEdit}
-              handleDelete={handleDelete}
-            />
+                  <button type="submit" className={styles.searchButton} disabled={isLoading}>
+                    {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
+                  </button>
+                  <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
+                    Grupos
+                  </button>
+                  <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
+                    <FaFilter /> Agregar Filtro
+                  </button>
+                </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              rowsPerPage={rowsPerPage}
-              filteredUsers={filteredUsers}
-              indexOfFirstRow={indexOfFirstRow}
-              indexOfLastRow={indexOfLastRow}
-              handleRowsPerPageChange={handleRowsPerPageChange}
-              paginate={paginate}
-              prevPage={prevPage}
-              nextPage={nextPage}
-              isLoading={isLoading}
-            />
+                {additionalFilters.map((filter, index) => (
+                  <div key={index} className={styles.additionalFilter}>
+                    <select
+                      className={styles.searchSelect}
+                      value={filter.field}
+                      onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
+                    >
+                      <option value="nombre">Nombre</option>
+                      <option value="entidad">Entidad</option>
+                      <option value="activo">Activo</option>
+                    </select>
+                    <input
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder={`Filtrar por ${filter.field}...`}
+                      value={filter.value}
+                      onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeFilter(index)}
+                      className={styles.removeFilterButton}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                <div className={styles.exportDropdown}>
+                  <button
+                    onClick={toggleExportDropdown}
+                    className={styles.exportButton}
+                    title="Opciones de exportación"
+                  >
+                    Exportar <FaChevronDown className={styles.dropdownIcon} />
+                  </button>
+                  {isExportDropdownOpen && (
+                    <div
+                      className={styles.exportDropdownContent}
+                      onMouseLeave={() => setIsExportDropdownOpen(false)}
+                    >
+                      <button onClick={exportToExcel} className={styles.exportOption}>
+                        <FaFileExcel /> Excel
+                      </button>
+                      <button onClick={exportToPdf} className={styles.exportOption}>
+                        <FaFilePdf /> PDF
+                      </button>
+                      <button onClick={exportToCsv} className={styles.exportOption}>
+                        <FaFileCsv /> CSV
+                      </button>
+                      <button onClick={printTable} className={styles.exportOption}>
+                        <FcPrint /> Imprimir
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className={styles.usersTableContainer}>
+              <h2 className={styles.sectionTitle}>Grupos Registrados ({filteredGrupos.length})</h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.usersTable}>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Entidad</th>
+                      <th>Activo</th>
+                      <th>Descripción</th>
+                    
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="5" className={styles.loadingCell}>
+                          <FaSpinner className={styles.spinner} /> Cargando grupos...
+                        </td>
+                      </tr>
+                    ) : currentRows.length > 0 ? (
+                      currentRows.map((grupo) => (
+                        <tr key={grupo.id_grupo}>
+                          <td>{grupo.nombre}</td>
+                          <td>{grupo.entidad}</td>
+                          <td>{grupo.activo === 'si' ? 'Sí' : 'No'}</td>
+                          <td>{grupo.descripcion || '-'}</td>
+                          <td>
+                            <button
+                              className={styles.actionButton}
+                              onClick={() => handleEdit(grupo)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className={`${styles.actionButton} ${styles.deleteButton}`}
+                              onClick={() => handleDelete(grupo.id_grupo)}
+                            >
+                              Eliminar
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className={styles.noUsers}>No se encontraron grupos</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className={styles.paginationControls}>
+              <div className={styles.rowsPerPageSelector}>
+                <span>Filas por página:</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={handleRowsPerPageChange}
+                  className={styles.rowsSelect}
+                  disabled={isLoading}
+                >
+                  {[15, 30, 50, 100].map(num => (
+                    <option key={num} value={num}>{num}</option>
+                  ))}
+                </select>
+                <span className={styles.rowsInfo}>
+                  Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredGrupos.length)} de {filteredGrupos.length} registros
+                </span>
+              </div>
+
+              <div className={styles.pagination}>
+                <button
+                  className={`${styles.paginationButton} ${currentPage === 1 || isLoading ? styles.disabled : ''}`}
+                  onClick={prevPage}
+                  disabled={currentPage === 1 || isLoading}
+                >
+                  <FaChevronLeft />
+                </button>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNumber = i + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
+                      onClick={() => paginate(pageNumber)}
+                      disabled={isLoading}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <>
+                    <span className={styles.paginationEllipsis}>...</span>
+                    <button
+                      className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
+                      onClick={() => paginate(totalPages)}
+                      disabled={isLoading}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+
+                <button
+                  className={`${styles.paginationButton} ${currentPage === totalPages || isLoading ? styles.disabled : ''}`}
+                  onClick={nextPage}
+                  disabled={currentPage === totalPages || isLoading}
+                >
+                  <FaChevronRight />
+                </button>
+              </div>
+            </div>
           </>
         )}
 
-        <Chatbot 
-          isChatOpen={isChatOpen}
-          toggleChat={() => setIsChatOpen(!isChatOpen)}
-        />
-      </div>
-    </div>
-  );
-};
-
-// Componentes reutilizables separados
-const MenuVertical = ({ isMenuExpanded, isMobileMenuOpen, menuState, toggleMenu, toggleMobileMenu, toggleMainMenu, userRole }) => {
-  const menuItems = {
-    administrador: [
-      { path: "/HomeAdmiPage", icon: <FcHome />, text: "Inicio" },
-      { 
-        text: "Soporte", 
-        icon: <FcAssistant />,
-        subItems: [
-          { path: "/Tickets", icon: <FcAnswers />, text: "Tickets" },
-          { path: "/CrearCasoAdmin", icon: <FcCustomerSupport />, text: "Crear Caso" },
-          { path: "/Estadisticas", icon: <FcBullish />, text: "Estadísticas" }
-        ]
-      },
-      {
-        text: "Administración",
-        icon: <FcBusinessman />,
-        subItems: [
-          { path: "/Usuarios", icon: <FcPortraitMode />, text: "Usuarios" },
-          { path: "/Grupos", icon: <FcConferenceCall />, text: "Grupos" },
-          { path: "/Entidades", icon: <FcOrganization />, text: "Entidades" }
-        ]
-      },
-      {
-        text: "Configuración",
-        icon: <FcAutomatic />,
-        subItems: [
-          { path: "/Categorias", icon: <FcGenealogy />, text: "Categorias" }
-        ]
-      }
-    ],
-    tecnico: [
-      { path: "/HomeTecnicoPage", icon: <FcHome />, text: "Inicio" },
-      {
-        text: "Soporte",
-        icon: <FcAssistant />,
-        subItems: [
-          { path: "/Tickets", icon: <FcAnswers />, text: "Tickets" },
-          { path: "/CrearCasoAdmin", icon: <FcCustomerSupport />, text: "Crear Caso" }
-        ]
-      },
-      {
-        text: "Administración",
-        icon: <FcBusinessman />,
-        subItems: [
-          { path: "/Usuarios", icon: <FcPortraitMode />, text: "Usuarios" }
-        ]
-      }
-    ],
-    usuario: [
-      { path: "/home", icon: <FcHome />, text: "Inicio" },
-      { path: "/CrearCasoUse", icon: <FcCustomerSupport />, text: "Crear Caso" },
-      { path: "/Tickets", icon: <FcAnswers />, text: "Tickets" }
-    ]
-  };
-
-  return (
-    <aside
-      className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-      onMouseEnter={toggleMainMenu}
-      onMouseLeave={toggleMainMenu}
-    >
-      <div className={styles.containerFluidMenu}>
-        <div className={styles.logoContainer}>
-          <img src={Logo} alt="Logo" />
-        </div>
-
-        <button
-          className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-          type="button"
-          onClick={toggleMobileMenu}
-        >
-          <FiAlignJustify className={styles.menuIcon} />
-        </button>
-
-        <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-          <ul className={styles.menuIconos}>
-            {menuItems[userRole]?.map((item, index) => (
-              <MenuItem 
-                key={index}
-                item={item}
-                menuState={menuState}
-                toggleMenu={toggleMenu}
-              />
-            ))}
-          </ul>
-        </div>
-
-        <div className={styles.floatingContainer}>
-          <div className={styles.menuLogoEmpresarial}>
-            <img src={Logoempresarial} alt="Logo Empresarial" />
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-};
-
-const MenuItem = ({ item, menuState, toggleMenu }) => {
-  if (item.path) {
-    return (
-      <li className={styles.iconosMenu}>
-        <Link to={item.path} className={styles.linkSinSubrayado}>
-          {item.icon}
-          <span className={styles.menuText}>{item.text}</span>
-        </Link>
-      </li>
-    );
-  }
-
-  return (
-    <li className={styles.iconosMenu}>
-      <div 
-        className={styles.linkSinSubrayado} 
-        onClick={() => toggleMenu(item.text.toLowerCase())}
-      >
-        {item.icon}
-        <span className={styles.menuText}>{item.text}</span>
-      </div>
-      {item.subItems && (
-        <ul className={`${styles.submenu} ${menuState[item.text.toLowerCase()] ? styles.showSubmenu : ''}`}>
-          {item.subItems.map((subItem, subIndex) => (
-            <li key={subIndex}>
-              <Link to={subItem.path} className={styles.submenuLink}>
-                {subItem.icon}
-                <span className={styles.menuText}>{subItem.text}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-};
-
-const Header = ({ userRole, nombre, searchTerm, setSearchTerm, isLoading, isMenuExpanded }) => {
-  const roleToPath = {
-    usuario: '/home',
-    tecnico: '/HomeTecnicoPage',
-    administrador: '/HomeAdmiPage'
-  };
-
-  return (
-    <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-      <div className={styles.containerInicioImg}>
-        <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
-          <span>Inicio</span>
-        </Link>
-      </div>
-      <div className={styles.inputContainer}>
-        <div className={styles.searchContainer}>
-          <input
-            className={styles.search}
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            className={styles.buttonBuscar}
-            title="Buscar"
-            disabled={isLoading || !searchTerm.trim()}
-          >
-            <FaMagnifyingGlass className={styles.searchIcon} />
-          </button>
-          {isLoading && <span className={styles.loading}>Buscando...</span>}
-        </div>
-
-        <div className={styles.userContainer}>
-          <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
-          <div className={styles.iconContainer}>
-            <Link to="/">
-              <FaPowerOff className={styles.icon} />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
-const LoadingOverlay = () => (
-  <div className={styles.loadingOverlay}>
-    <FaSpinner className={styles.spinner} />
-  </div>
-);
-
-const GroupForm = ({ formData, formErrors, editingId, isLoading, handleChange, handleSubmit, resetForm }) => (
-  <div className={styles.containerUsuarios}>
-    <h2 className={styles.titulo}>
-      {editingId ? 'Editar Grupo' : 'Formulario de Creación de Grupo'}
-    </h2>
-    <form onSubmit={handleSubmit}>
-      <div className={styles.gridContainerUsuarios}>
-        <div className={styles.columna}>
-          <FormGroup label="Nombre del Grupo" error={formErrors.nombre}>
-            <input
-              type="text"
-              className={`${styles.input} ${formErrors.nombre ? styles.inputError : ''}`}
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              required
-            />
-          </FormGroup>
-
-          <div className={styles.selectsContainer}>
-            <FormGroup label="Activo">
-              <select 
-                className={styles.select} 
-                name="activo" 
-                value={formData.activo} 
-                onChange={handleChange}
-              >
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-            </FormGroup>
-
-            <FormGroup label="Entidad" error={formErrors.entidad}>
-              <select
-                className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
-                name="entidad"
-                value={formData.entidad}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccione...</option>
-                <option value="tic">TIC</option>
-                <option value="mantenimiento">Mantenimiento</option>
-                <option value="financiera">Financiera</option>
-                <option value="compras">Compras</option>
-                <option value="almacen">Almacén</option>
-              </select>
-            </FormGroup>
-          </div>
-
-          <div className={styles.botonesContainer}>
-            <button type="submit" className={styles.boton} disabled={isLoading}>
-              {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
-            </button>
-            <button type="button" onClick={resetForm} className={styles.botonCancelar}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
-    </form>
-  </div>
-);
-
-const SearchSection = ({
-  searchField,
-  searchTerm,
-  additionalFilters,
-  isLoading,
-  setSearchField,
-  setSearchTerm,
-  handleFilterChange,
-  removeFilter,
-  addFilterField,
-  resetSearch
-}) => (
-  <div className={styles.searchSection}>
-    <h2 className={styles.sectionTitle}>Buscar Grupo</h2>
-    <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
-      <div className={styles.mainSearch}>
-        <div className={styles.searchFieldGroup}>
-          <select 
-            className={styles.searchSelect} 
-            value={searchField} 
-            onChange={(e) => setSearchField(e.target.value)}
-          >
-            <option value="nombre">Nombre</option>
-            <option value="entidad">Entidad</option>
-          </select>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder={`Buscar por ${searchField}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <button type="submit" className={styles.searchButton} disabled={isLoading}>
-          {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
-        </button>
-        <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
-          Grupos
-        </button>
-        <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
-          <FaFilter /> Agregar Filtro
-        </button>
-      </div>
-
-      {additionalFilters.map((filter, index) => (
-        <div key={index} className={styles.additionalFilter}>
-          <select
-            className={styles.searchSelect}
-            value={filter.field}
-            onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
-          >
-            <option value="nombre">Nombre</option>
-            <option value="entidad">Entidad</option>
-            <option value="activo">Activo</option>
-          </select>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder={`Filtrar por ${filter.field}...`}
-            value={filter.value}
-            onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
-          />
-          <button 
-            type="button" 
-            onClick={() => removeFilter(index)} 
-            className={styles.removeFilterButton}
-          >
-            ×
-          </button>
-        </div>
-      ))}
-    </form>
-  </div>
-);
-
-const GroupsTable = ({ currentRows, isLoading, handleEdit, handleDelete }) => (
-  <div className={styles.usersTableContainer}>
-    <h2 className={styles.sectionTitle}>Grupos Registrados ({currentRows.length})</h2>
-    <div className={styles.tableWrapper}>
-      <table className={styles.usersTable}>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Entidad</th>
-            <th>Activo</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {isLoading ? (
-            <tr>
-              <td colSpan="5" className={styles.loadingCell}>
-                <FaSpinner className={styles.spinner} /> Cargando grupos...
-              </td>
-            </tr>
-          ) : currentRows.length > 0 ? (
-            currentRows.map((group) => (
-              <tr key={group.id_grupo}>
-                <td>{group.nombre}</td>
-                <td>{group.entidad}</td>
-                <td>{group.activo === 'si' ? 'Sí' : 'No'}</td>
-                <td>{group.descripcion || '-'}</td>
-                <td>
-                  <ActionButton onClick={() => handleEdit(group)}>
-                    Editar
-                  </ActionButton>
-                  <ActionButton onClick={() => handleDelete(group.id_grupo)} isDelete>
-                    Eliminar
-                  </ActionButton>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className={styles.noUsers}>No se encontraron grupos</td>
-            </tr>
+        <div className={styles.chatbotContainer}>
+          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={() => setIsChatOpen(!isChatOpen)} />
+          {isChatOpen && (
+            <div className={styles.chatWindow}>
+              <div className={styles.chatHeader}>
+                <h4>Chat de Soporte</h4>
+                <button onClick={() => setIsChatOpen(false)} className={styles.closeChat}>&times;</button>
+              </div>
+              <div className={styles.chatBody}>
+                <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
+              </div>
+              <div className={styles.chatInput}>
+                <input type="text" placeholder="Escribe un mensaje..." />
+                <button>Enviar</button>
+              </div>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const Pagination = ({
-  currentPage,
-  totalPages,
-  rowsPerPage,
-  filteredUsers,
-  indexOfFirstRow,
-  indexOfLastRow,
-  handleRowsPerPageChange,
-  paginate,
-  prevPage,
-  nextPage,
-  isLoading
-}) => {
-  const renderPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      const half = Math.floor(maxVisiblePages / 2);
-      let start = Math.max(1, currentPage - half);
-      let end = Math.min(totalPages, start + maxVisiblePages - 1);
-      
-      if (end - start + 1 < maxVisiblePages) {
-        start = Math.max(1, end - maxVisiblePages + 1);
-      }
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages.map(number => (
-      <PaginationButton
-        key={number}
-        onClick={() => paginate(number)}
-        disabled={isLoading}
-        isActive={currentPage === number}
-      >
-        {number}
-      </PaginationButton>
-    ));
-  };
-
-  return (
-    <div className={styles.paginationControls}>
-      <div className={styles.rowsPerPageSelector}>
-        <span>Filas por página:</span>
-        <select
-          value={rowsPerPage}
-          onChange={handleRowsPerPageChange}
-          className={styles.rowsSelect}
-          disabled={isLoading}
-        >
-          {[15, 30, 50, 100].map(num => (
-            <option key={num} value={num}>{num}</option>
-          ))}
-        </select>
-        <span className={styles.rowsInfo}>
-          Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredUsers.length)} de {filteredUsers.length} registros
-        </span>
-      </div>
-
-      <div className={styles.pagination}>
-        <PaginationButton 
-          onClick={prevPage} 
-          disabled={currentPage === 1 || isLoading}
-        >
-          <FaChevronLeft />
-        </PaginationButton>
-
-        {renderPageNumbers()}
-
-        {totalPages > 5 && currentPage < totalPages - 2 && (
-          <>
-            <span className={styles.paginationEllipsis}>...</span>
-            <PaginationButton
-              onClick={() => paginate(totalPages)}
-              disabled={isLoading}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationButton>
-          </>
-        )}
-
-        <PaginationButton
-          onClick={nextPage}
-          disabled={currentPage === totalPages || isLoading}
-        >
-          <FaChevronRight />
-        </PaginationButton>
+        </div>
       </div>
     </div>
   );
 };
-
-const Chatbot = ({ isChatOpen, toggleChat }) => (
-  <div className={styles.chatbotContainer}>
-    <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={toggleChat} />
-    {isChatOpen && (
-      <div className={styles.chatWindow}>
-        <div className={styles.chatHeader}>
-          <h4>Chat de Soporte</h4>
-          <button onClick={toggleChat} className={styles.closeChat}>&times;</button>
-        </div>
-        <div className={styles.chatBody}>
-          <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-        </div>
-        <div className={styles.chatInput}>
-          <input type="text" placeholder="Escribe un mensaje..." />
-          <button>Enviar</button>
-        </div>
-      </div>
-    )}
-  </div>
-);
 
 export default Grupos;

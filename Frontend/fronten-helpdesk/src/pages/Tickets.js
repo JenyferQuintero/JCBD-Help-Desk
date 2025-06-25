@@ -75,7 +75,7 @@ const Tickets = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [ticketsData, setticketsData] = useState([]);
-  
+
   const [filters, setFilters] = useState({
     id: "",
     titulo: "",
@@ -111,7 +111,7 @@ const Tickets = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     id: "",
     tipo: "",
@@ -212,7 +212,7 @@ const Tickets = () => {
           },
         }
       );
-      
+
       // Normalizar datos de la API
       const normalizedTickets = response.data.map(ticket => ({
         id: ticket.id_ticket || ticket.id || '',
@@ -357,7 +357,7 @@ const Tickets = () => {
     return "/";
   };
 
- // Renderizar menú según el rol
+  // Renderizar menú según el rol
   const renderMenuByRole = () => {
     switch (userRole) {
       case 'administrador':
@@ -388,7 +388,7 @@ const Tickets = () => {
                     <span className={styles.menuText}>Crear Caso</span>
                   </Link>
                 </li>
-               
+
                 <li>
                   <Link to="/Estadisticas" className={styles.submenuLink}>
                     <FcBullish className={styles.menuIcon} />
@@ -594,8 +594,7 @@ const Tickets = () => {
           </div>
 
           <div className={styles.userContainer}>
-            <span className={styles.username}>
-              Bienvenido, <span id="nombreusuario">{nombre}</span>
+            <span className={styles.username}> Bienvenido, <span id="nombreusuario">{nombre}</span>
             </span>
             <div className={styles.iconContainer}>
               <Link to="/">
@@ -610,7 +609,7 @@ const Tickets = () => {
       <div
         className={styles.containerticket}
         style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
-      >
+       >
         {/* Barra de herramientas */}
         <div className={styles.toolbar}>
           <div className={styles.searchContainer}>
@@ -717,8 +716,8 @@ const Tickets = () => {
             <div className={styles.filterRow}>
               <div className={styles.filterGroup}>
                 <label>Prioridad:</label>
-                <select 
-                  name="prioridad" 
+                <select
+                  name="prioridad"
                   value={filters.prioridad}
                   onChange={handleFilterChange}
                 >
@@ -730,8 +729,8 @@ const Tickets = () => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Estado:</label>
-                <select 
-                  name="estado" 
+                <select
+                  name="estado"
                   value={filters.estado}
                   onChange={handleFilterChange}
                 >
@@ -745,8 +744,8 @@ const Tickets = () => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Asignado a:</label>
-                <select 
-                  name="tecnico" 
+                <select
+                  name="tecnico"
                   value={filters.tecnico}
                   onChange={handleFilterChange}
                 >
@@ -777,8 +776,8 @@ const Tickets = () => {
               </div>
               <div className={styles.filterGroup}>
                 <label>Categoría:</label>
-                <select 
-                  name="categoria" 
+                <select
+                  name="categoria"
                   value={filters.categoria}
                   onChange={handleFilterChange}
                 >
