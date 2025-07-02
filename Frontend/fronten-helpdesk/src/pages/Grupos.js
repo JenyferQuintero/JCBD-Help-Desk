@@ -692,6 +692,7 @@ const Grupos = () => {
                       <th>Entidad</th>
                       <th>Activo</th>
                       <th>Descripción</th>
+                      <th>Acciones</th>
                     
                     </tr>
                   </thead>

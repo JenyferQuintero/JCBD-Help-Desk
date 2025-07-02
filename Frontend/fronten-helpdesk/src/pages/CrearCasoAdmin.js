@@ -14,22 +14,6 @@ const CrearCasoAdmin = () => {
   const userRole = localStorage.getItem("rol") || "";
   const nombre = localStorage.getItem("nombre") || "";
 
-  // Verificación de rol
-  const isAdminOrTech = userRole === "administrador" || userRole === "tecnico";
-
-  if (!isAdminOrTech) {
-    return (
-      <div className={styles.accessDenied}>
-        <h2>Acceso denegado</h2>
-        <p>No tienes permisos para acceder a esta página.</p>
-        <Link to="/" className={styles.returnLink}>
-          Volver al inicio
-        </Link>
-      </div>
-    );
-  }
-
-
   // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
@@ -72,7 +56,20 @@ const CrearCasoAdmin = () => {
   const [createdTicketId, setCreatedTicketId] = useState(null);
   const navigate = useNavigate();
 
+  // Verificación de rol
+  const isAdminOrTech = userRole === "administrador" || userRole === "tecnico";
 
+  if (!isAdminOrTech) {
+    return (
+      <div className={styles.accessDenied}>
+        <h2>Acceso denegado</h2>
+        <p>No tienes permisos para acceder a esta página.</p>
+        <Link to="/" className={styles.returnLink}>
+          Volver al inicio
+        </Link>
+      </div>
+    );
+  }
 
   // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
