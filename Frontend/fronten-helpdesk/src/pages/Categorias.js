@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { FaPowerOff, FaChevronLeft, FaChevronRight,FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv,} from "react-icons/fa";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint, } from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
-import styles from "../styles/Categorias.module.css";
+import styles from "../styles/Usuarios.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
@@ -27,7 +27,7 @@ const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [filteredCategorias, setFilteredCategorias] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("nombre");
+  const [searchField, setSearchField] = useState("nombre_categoria");
   const [additionalFilters, setAdditionalFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -43,9 +43,7 @@ const Categorias = () => {
 
   // Datos del formulario
   const [formData, setFormData] = useState({
-    nombre: '',
-    entidad: '',
-    activo: 'si',
+    nombre_categoria: '',
     descripcion: ''
   });
 
@@ -155,7 +153,7 @@ const Categorias = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Eliminar este grupo?")) return;
+    if (!window.confirm("¿Eliminar esta categoría?")) return;
 
     try {
       const response = await axios.delete(`http://localhost:5000/categorias/eliminar/${id}`);
@@ -183,7 +181,7 @@ const Categorias = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['nombre', 'entidad'];
+    const requiredFields = ['nombre_categoria'];
     const isValid = requiredFields.every(field => {
       validateField(field, formData[field]);
       return formData[field]?.trim();
@@ -200,9 +198,7 @@ const Categorias = () => {
 
   const resetForm = () => {
     setFormData({
-      nombre: '',
-      entidad: '',
-      activo: 'si',
+      nombre_categoria: '',
       descripcion: ''
     });
     setEditingId(null);
@@ -210,20 +206,18 @@ const Categorias = () => {
     setShowForm(false);
   };
 
-  const handleEdit = (categorias) => {
+  const handleEdit = (categoria) => {
     setFormData({
-      nombre: categorias.nombre,
-      entidad: categorias.entidad,
-      activo: categorias.activo,
-      descripcion: categorias.descripcion
+      nombre_categoria: categoria.nombre_categoria,
+      descripcion: categoria.descripcion || ''
     });
-    setEditingId(categorias.id_categoria);
+    setEditingId(categoria.id_categoria);
     setShowForm(true);
   };
 
   // Funciones de filtrado
   const addFilterField = () => {
-    setAdditionalFilters([...additionalFilters, { field: 'nombre', value: '' }]);
+    setAdditionalFilters([...additionalFilters, { field: 'nombre_categoria', value: '' }]);
   };
 
   const handleFilterChange = (index, field, value) => {
@@ -504,7 +498,7 @@ const Categorias = () => {
             onClick={() => { resetForm(); setShowForm(!showForm); }}
             className={styles.addButton}
           >
-            <FaPlus /> {showForm ? 'Ver Grupos' : 'Agregar Categoría'}
+            <FaPlus /> {showForm ? 'Ver Categorías' : 'Agregar Categoría'}
           </button>
         </div>
 
@@ -520,60 +514,24 @@ const Categorias = () => {
                     <label className={styles.label}>Nombre de la Categoría</label>
                     <input
                       type="text"
-                      className={`${styles.input} ${formErrors.nombre ? styles.inputError : ''}`}
-                      name="nombre"
-                      value={formData.nombre}
+                      className={`${styles.input} ${formErrors.nombre_categoria ? styles.inputError : ''}`}
+                      name="nombre_categoria"
+                      value={formData.nombre_categoria}
                       onChange={handleChange}
                       required
                     />
-                    {formErrors.nombre && <span className={styles.errorMessage}>{formErrors.nombre}</span>}
+                    {formErrors.nombre_categoria && <span className={styles.errorMessage}>{formErrors.nombre_categoria}</span>}
                   </div>
 
-                  <div className={styles.selectsContainer}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Activo</label>
-                      <select
-                        className={styles.select}
-                        name="activo"
-                        value={formData.activo}
-                        onChange={handleChange}
-                      >
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Entidad</label>
-                      <select
-                        className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
-                        name="entidad"
-                        value={formData.entidad}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione...</option>
-                        <option value="tic">TIC</option>
-                        <option value="mantenimiento">Mantenimiento</option>
-                        <option value="financiera">Financiera</option>
-                        <option value="compras">Compras</option>
-                        <option value="almacen">Almacén</option>
-                      </select>
-                      {formErrors.entidad && <span className={styles.errorMessage}>{formErrors.entidad}</span>}
-                    </div>
-
-                    <div className={styles.formGroup}>
+                  <div className={styles.formGroup}>
                     <label className={styles.label}>Descripción</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.descripcion ? styles.inputError : ''}`}
+                    <textarea
+                      className={styles.input}
                       name="descripcion"
                       value={formData.descripcion}
                       onChange={handleChange}
-                      required
+                      rows="3"
                     />
-                    
-                  </div>
                   </div>
 
                   <div className={styles.botonesContainer}>
@@ -591,7 +549,7 @@ const Categorias = () => {
         ) : (
           <>
             <div className={styles.searchSection}>
-              <h2 className={styles.sectionTitle}>Buscar Categoría</h2>
+              <h2 className={styles.sectionTitle}>Buscar Categorías</h2>
               <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
                 <div className={styles.mainSearch}>
                   <div className={styles.searchFieldGroup}>
@@ -600,8 +558,8 @@ const Categorias = () => {
                       value={searchField}
                       onChange={(e) => setSearchField(e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
+                      <option value="nombre_categoria">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
@@ -616,7 +574,7 @@ const Categorias = () => {
                     {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
                   </button>
                   <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
-                    Categoría
+                    Categorías
                   </button>
                   <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
                     <FaFilter /> Agregar Filtro
@@ -630,9 +588,8 @@ const Categorias = () => {
                       value={filter.field}
                       onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
-                      <option value="activo">Activo</option>
+                      <option value="nombre_categoria">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
@@ -683,31 +640,27 @@ const Categorias = () => {
             </div>
 
             <div className={styles.usersTableContainer}>
-              <h2 className={styles.sectionTitle}>Categorias Registrados ({filteredCategorias.length})</h2>
+              <h2 className={styles.sectionTitle}>Categorías Registradas ({filteredCategorias.length})</h2>
               <div className={styles.tableWrapper}>
                 <table className={styles.usersTable}>
                   <thead>
                     <tr>
                       <th>Nombre</th>
-                      <th>Entidad</th>
-                      <th>Activo</th>
                       <th>Descripción</th>
-                    
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td colSpan="5" className={styles.loadingCell}>
+                        <td colSpan="3" className={styles.loadingCell}>
                           <FaSpinner className={styles.spinner} /> Cargando categorías...
                         </td>
                       </tr>
                     ) : currentRows.length > 0 ? (
                       currentRows.map((categoria) => (
                         <tr key={categoria.id_categoria}>
-                          <td>{categoria.nombre}</td>
-                          <td>{categoria.entidad}</td>
-                          <td>{categoria.activo === 'si' ? 'Sí' : 'No'}</td>
+                          <td>{categoria.nombre_categoria}</td>
                           <td>{categoria.descripcion || '-'}</td>
                           <td>
                             <button
@@ -727,7 +680,7 @@ const Categorias = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className={styles.noUsers}>No se encontraron categorías</td>
+                        <td colSpan="3" className={styles.noUsers}>No se encontraron categorías</td>
                       </tr>
                     )}
                   </tbody>
