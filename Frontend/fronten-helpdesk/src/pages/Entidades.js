@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { FaPowerOff, FaChevronLeft, FaChevronRight,FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv,} from "react-icons/fa";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint, } from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
-import styles from "../styles/Entidades.module.css"; 
+import styles from "../styles/Usuarios.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
@@ -27,7 +27,7 @@ const Entidades = () => {
   const [entidades, setEntidades] = useState([]);
   const [filteredEntidades, setFilteredEntidades] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("nombre");
+  const [searchField, setSearchField] = useState("nombre_entidad");
   const [additionalFilters, setAdditionalFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -43,9 +43,7 @@ const Entidades = () => {
 
   // Datos del formulario
   const [formData, setFormData] = useState({
-    nombre: '',
-    entidad: '',
-    activo: 'si',
+    nombre_entidad: '',
     descripcion: ''
   });
 
@@ -149,22 +147,26 @@ const Entidades = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      alert(error.response?.data?.message || 'Error al procesar la solicitud');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Eliminar este grupo?")) return;
+    if (!window.confirm("¿Estás seguro de eliminar esta entidad?")) return;
 
     try {
       const response = await axios.delete(`http://localhost:5000/entidades/eliminar/${id}`);
       if (response.data.success) {
-        alert("Entidad eliminada");
+        alert("Entidad eliminada correctamente");
         fetchEntidades();
+      } else {
+        alert(response.data.message || "Error al eliminar la entidad");
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
+      alert(error.response?.data?.message || "Error al eliminar la entidad");
     }
   };
 
@@ -183,7 +185,7 @@ const Entidades = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['nombre', 'entidad'];
+    const requiredFields = ['nombre_entidad'];
     const isValid = requiredFields.every(field => {
       validateField(field, formData[field]);
       return formData[field]?.trim();
@@ -200,9 +202,7 @@ const Entidades = () => {
 
   const resetForm = () => {
     setFormData({
-      nombre: '',
-      entidad: '',
-      activo: 'si',
+      nombre_entidad: '',
       descripcion: ''
     });
     setEditingId(null);
@@ -210,20 +210,18 @@ const Entidades = () => {
     setShowForm(false);
   };
 
-  const handleEdit = (categorias) => {
+  const handleEdit = (entidad) => {
     setFormData({
-      nombre: categorias.nombre,
-      entidad: categorias.entidad,
-      activo: categorias.activo,
-      descripcion: categorias.descripcion
+      nombre_entidad: entidad.nombre_entidad,
+      descripcion: entidad.descripcion || ''
     });
-    setEditingId(categorias.id_categoria);
+    setEditingId(entidad.id_entidad);
     setShowForm(true);
   };
 
   // Funciones de filtrado
   const addFilterField = () => {
-    setAdditionalFilters([...additionalFilters, { field: 'nombre', value: '' }]);
+    setAdditionalFilters([...additionalFilters, { field: 'nombre_entidad', value: '' }]);
   };
 
   const handleFilterChange = (index, field, value) => {
@@ -262,10 +260,12 @@ const Entidades = () => {
   // Renderizado condicional
   if (!['administrador', 'tecnico'].includes(userRole)) {
     return (
-      <div className={styles.accessDenied}>
-        <h2>Acceso restringido</h2>
-        <p>No tienes permisos para acceder a esta sección.</p>
-        <Link to="/" className={styles.returnLink}>Volver al inicio</Link>
+      <div className={styles.containerPrincipal}>
+        <div className={styles.accessDenied}>
+          <h2>Acceso restringido</h2>
+          <p>No tienes permisos para acceder a esta sección.</p>
+          <Link to="/" className={styles.returnLink}>Volver al inicio</Link>
+        </div>
       </div>
     );
   }
@@ -520,60 +520,24 @@ const Entidades = () => {
                     <label className={styles.label}>Nombre de la Entidad</label>
                     <input
                       type="text"
-                      className={`${styles.input} ${formErrors.nombre ? styles.inputError : ''}`}
-                      name="nombre"
-                      value={formData.nombre}
+                      className={`${styles.input} ${formErrors.nombre_entidad ? styles.inputError : ''}`}
+                      name="nombre_entidad"
+                      value={formData.nombre_entidad}
                       onChange={handleChange}
                       required
                     />
-                    {formErrors.nombre && <span className={styles.errorMessage}>{formErrors.nombre}</span>}
+                    {formErrors.nombre_entidad && <span className={styles.errorMessage}>{formErrors.nombre_entidad}</span>}
                   </div>
 
-                  <div className={styles.selectsContainer}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Activo</label>
-                      <select
-                        className={styles.select}
-                        name="activo"
-                        value={formData.activo}
-                        onChange={handleChange}
-                      >
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Entidad</label>
-                      <select
-                        className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
-                        name="entidad"
-                        value={formData.entidad}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione...</option>
-                        <option value="tic">TIC</option>
-                        <option value="mantenimiento">Mantenimiento</option>
-                        <option value="financiera">Financiera</option>
-                        <option value="compras">Compras</option>
-                        <option value="almacen">Almacén</option>
-                      </select>
-                      {formErrors.entidad && <span className={styles.errorMessage}>{formErrors.entidad}</span>}
-                    </div>
-
-                    <div className={styles.formGroup}>
+                  <div className={styles.formGroup}>
                     <label className={styles.label}>Descripción</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.descripcion ? styles.inputError : ''}`}
+                    <textarea
+                      className={styles.input}
                       name="descripcion"
                       value={formData.descripcion}
                       onChange={handleChange}
-                      required
+                      rows="3"
                     />
-                    
-                  </div>
                   </div>
 
                   <div className={styles.botonesContainer}>
@@ -591,7 +555,7 @@ const Entidades = () => {
         ) : (
           <>
             <div className={styles.searchSection}>
-              <h2 className={styles.sectionTitle}>Buscar Entidad</h2>
+              <h2 className={styles.sectionTitle}>Buscar Entidades</h2>
               <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
                 <div className={styles.mainSearch}>
                   <div className={styles.searchFieldGroup}>
@@ -600,13 +564,13 @@ const Entidades = () => {
                       value={searchField}
                       onChange={(e) => setSearchField(e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
+                      <option value="nombre_entidad">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder={`Buscar por ${searchField}...`}
+                      placeholder={`Buscar por ${searchField === 'nombre_entidad' ? 'nombre' : 'descripción'}...`}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -616,7 +580,7 @@ const Entidades = () => {
                     {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
                   </button>
                   <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
-                    Categoría
+                    Limpiar
                   </button>
                   <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
                     <FaFilter /> Agregar Filtro
@@ -630,14 +594,13 @@ const Entidades = () => {
                       value={filter.field}
                       onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
-                      <option value="activo">Activo</option>
+                      <option value="nombre_entidad">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
                       className={styles.searchInput}
-                      placeholder={`Filtrar por ${filter.field}...`}
+                      placeholder={`Filtrar por ${filter.field === 'nombre_entidad' ? 'nombre' : 'descripción'}...`}
                       value={filter.value}
                       onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
                     />
@@ -688,25 +651,24 @@ const Entidades = () => {
                 <table className={styles.usersTable}>
                   <thead>
                     <tr>
-                     
-                      <th>Entidad</th>
-                      <th>Activo</th>
+                      <th>ID</th>
+                      <th>Nombre</th>
                       <th>Descripción</th>
-                    
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td colSpan="5" className={styles.loadingCell}>
+                        <td colSpan="4" className={styles.loadingCell}>
                           <FaSpinner className={styles.spinner} /> Cargando Entidades...
                         </td>
                       </tr>
                     ) : currentRows.length > 0 ? (
                       currentRows.map((entidad) => (
                         <tr key={entidad.id_entidad}>
-                          <td>{entidad.nombre}</td>
-                          <td>{entidad.activo === 'si' ? 'Sí' : 'No'}</td>
+                          <td>{entidad.id_entidad}</td>
+                          <td>{entidad.nombre_entidad}</td>
                           <td>{entidad.descripcion || '-'}</td>
                           <td>
                             <button
@@ -726,7 +688,7 @@ const Entidades = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className={styles.noUsers}>No se encontraron entidades</td>
+                        <td colSpan="4" className={styles.noUsers}>No se encontraron entidades</td>
                       </tr>
                     )}
                   </tbody>
