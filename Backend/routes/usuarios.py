@@ -3,147 +3,352 @@ from database import get_db_connection
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
-
 @usuarios_bp.route("/creacion", methods=["POST"])
 def crear_usuario():
     try:
         data = request.get_json()
-        usuario = data.get("usuario")
-        nombres = data.get("nombres")
-        apellidos = data.get("apellidos")
+        nombre_usuario = data.get("nombre_usuario")
+        nombre_completo = data.get("nombre_completo")
         telefono = data.get("telefono")
         correo = data.get("correo")
-        # entidad = data.get("entidad")
+        id_entidad = data.get("id_entidad")
         rol = data.get("rol")
         contrasena = data.get("contrasena")
+        estado = data.get("estado", "activo")  # Valor por defecto "activo"
 
-        if not all([usuario, nombres, apellidos, telefono, correo, rol, contrasena]):
-            return jsonify({"success": False, "message": "Faltan campos requeridos"}), 400
+        # Validar campos requeridos
+        campos_requeridos = [
+            nombre_usuario, 
+            nombre_completo, 
+            telefono, 
+            correo, 
+            rol, 
+            contrasena
+        ]
+        
+        if not all(campos_requeridos):
+            return jsonify({
+                "success": False, 
+                "message": "Faltan campos requeridos"
+            }), 400
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Verificar si el nombre de usuario ya existe
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE nombre_usuario = %s", (nombre_usuario,))
+        if cursor.fetchone():
+            return jsonify({
+                "success": False, 
+                "message": "El nombre de usuario ya existe"
+            }), 400
+
+        # Verificar si el correo ya existe
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE correo = %s", (correo,))
+        if cursor.fetchone():
+            return jsonify({
+                "success": False, 
+                "message": "El correo ya está registrado"
+            }), 400
+
         query = """
-            INSERT INTO usuarios (nombres, apellidos, correo, telefono, nombre_usuario, contraseña, rol)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO usuarios (
+                nombre_usuario, 
+                nombre_completo, 
+                correo, 
+                telefono, 
+                contraseña, 
+                rol, 
+                estado, 
+                id_entidad1
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (nombres, apellidos, correo,
-                       telefono, usuario, contrasena, rol))
+        cursor.execute(query, (
+            nombre_usuario, 
+            nombre_completo, 
+            correo, 
+            telefono, 
+            contrasena, 
+            rol, 
+            estado, 
+            id_entidad
+        ))
         conn.commit()
+
+        nuevo_id = cursor.lastrowid
 
         cursor.close()
         conn.close()
 
-        return jsonify({"success": True, "message": "Usuario creado correctamente"}), 201
+        return jsonify({
+            "success": True, 
+            "message": "Usuario creado correctamente",
+            "id_usuario": nuevo_id
+        }), 201
 
     except Exception as e:
         print("Error al crear usuario:", e)
-        return jsonify({"success": False, "message": "Error interno del servidor"}), 500
-
+        return jsonify({
+            "success": False, 
+            "message": "Error interno del servidor"
+        }), 500
 
 @usuarios_bp.route("/actualizacion/<int:usuario_id>", methods=["PUT"])
 def actualizar_usuario(usuario_id):
     try:
         data = request.get_json()
-        usuario = data.get("usuario")
-        nombres = data.get("nombres")
-        apellidos = data.get("apellidos")
+        nombre_usuario = data.get("nombre_usuario")
+        nombre_completo = data.get("nombre_completo")
         telefono = data.get("telefono")
         correo = data.get("correo")
-        entidad = data.get("entidad")
+        id_entidad = data.get("id_entidad")
         rol = data.get("rol")
         contrasena = data.get("contrasena")
+        estado = data.get("estado", "activo")
 
-        if not all([usuario, nombres, apellidos, telefono, correo, entidad, rol]):
-            return jsonify({"success": False, "message": "Faltan campos requeridos"}), 400
+        # Validar campos requeridos
+        campos_requeridos = [
+            nombre_usuario, 
+            nombre_completo, 
+            telefono, 
+            correo, 
+            rol
+        ]
+        
+        if not all(campos_requeridos):
+            return jsonify({
+                "success": False, 
+                "message": "Faltan campos requeridos"
+            }), 400
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Verificar si el usuario existe
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE id_usuario = %s", (usuario_id,))
+        if not cursor.fetchone():
+            return jsonify({
+                "success": False, 
+                "message": "Usuario no encontrado"
+            }), 404
+
+        # Verificar si el nuevo nombre de usuario ya existe (excluyendo el actual)
+        cursor.execute(
+            "SELECT id_usuario FROM usuarios WHERE nombre_usuario = %s AND id_usuario != %s", 
+            (nombre_usuario, usuario_id)
+        )
+        if cursor.fetchone():
+            return jsonify({
+                "success": False, 
+                "message": "El nombre de usuario ya está en uso"
+            }), 400
+
+        # Verificar si el nuevo correo ya existe (excluyendo el actual)
+        cursor.execute(
+            "SELECT id_usuario FROM usuarios WHERE correo = %s AND id_usuario != %s", 
+            (correo, usuario_id)
+        )
+        if cursor.fetchone():
+            return jsonify({
+                "success": False, 
+                "message": "El correo ya está registrado"
+            }), 400
+
+        # Construir la consulta según si se actualiza contraseña o no
         if contrasena:
             query = """
                 UPDATE usuarios
-                SET nombres = %s, apellidos = %s, correo = %s, telefono = %s,
-                    nombre_usuario = %s, contraseña = %s, rol = %s
+                SET nombre_usuario = %s, 
+                    nombre_completo = %s, 
+                    correo = %s, 
+                    telefono = %s, 
+                    contraseña = %s, 
+                    rol = %s, 
+                    estado = %s, 
+                    id_entidad1 = %s
                 WHERE id_usuario = %s
             """
-            params = (nombres, apellidos, correo, telefono,
-                      usuario, contrasena, rol, usuario_id)
+            params = (
+                nombre_usuario, 
+                nombre_completo, 
+                correo, 
+                telefono,
+                contrasena, 
+                rol, 
+                estado, 
+                id_entidad, 
+                usuario_id
+            )
         else:
             query = """
                 UPDATE usuarios
-                SET nombres = %s, apellidos = %s, correo = %s, telefono = %s,
-                    nombre_usuario = %s, rol = %s
+                SET nombre_usuario = %s, 
+                    nombre_completo = %s, 
+                    correo = %s, 
+                    telefono = %s, 
+                    rol = %s, 
+                    estado = %s, 
+                    id_entidad1 = %s
                 WHERE id_usuario = %s
             """
-            params = (nombres, apellidos, correo,
-                      telefono, usuario, rol, usuario_id)
+            params = (
+                nombre_usuario, 
+                nombre_completo, 
+                correo,
+                telefono, 
+                rol, 
+                estado, 
+                id_entidad, 
+                usuario_id
+            )
 
         cursor.execute(query, params)
         conn.commit()
 
         if cursor.rowcount == 0:
-            return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
+            return jsonify({
+                "success": False, 
+                "message": "No se realizaron cambios"
+            }), 400
 
         cursor.close()
         conn.close()
 
-        return jsonify({"success": True, "message": "Usuario actualizado correctamente"}), 200
+        return jsonify({
+            "success": True, 
+            "message": "Usuario actualizado correctamente"
+        }), 200
 
     except Exception as e:
         print("Error al actualizar usuario:", e)
-        return jsonify({"success": False, "message": "Error interno del servidor"}), 500
-
+        return jsonify({
+            "success": False, 
+            "message": "Error interno del servidor"
+        }), 500
 
 @usuarios_bp.route("/obtener", methods=["GET"])
 def obtener_usuarios():
     try:
         conn = get_db_connection()
-        # Usa cursor tipo diccionario
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM usuarios")
+        
+        # Obtener usuarios con información de entidad
+        query = """
+            SELECT 
+                u.id_usuario,
+                u.nombre_usuario,
+                u.nombre_completo,
+                u.correo,
+                u.telefono,
+                u.rol,
+                u.estado,
+                u.fecha_registro,
+                u.fecha_actualizacion,
+                e.nombre_entidad AS entidad,
+                u.id_entidad1
+            FROM usuarios u
+            LEFT JOIN entidades e ON u.id_entidad1 = e.id_entidad
+        """
+        cursor.execute(query)
         usuarios = cursor.fetchall()
+        
         cursor.close()
         conn.close()
         return jsonify(usuarios)
     except Exception as e:
         print("Error al obtener usuarios:", e)
-        return jsonify({"success": False, "message": "Error al obtener usuarios"}), 500
-
+        return jsonify({
+            "success": False, 
+            "message": "Error al obtener usuarios"
+        }), 500
 
 @usuarios_bp.route("/eliminar/<int:usuario_id>", methods=["DELETE"])
 def eliminar_usuario(usuario_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "DELETE FROM usuarios WHERE id_usuario = %s", (usuario_id,))
+        # Verificar si el usuario existe
+        cursor.execute("SELECT id_usuario FROM usuarios WHERE id_usuario = %s", (usuario_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            return jsonify({
+                "success": False, 
+                "message": "Usuario no encontrado"
+            }), 404
+
+        # Evitar que el usuario se elimine a sí mismo
+        # (En un sistema real deberías tener más controles)
+        
+        # Eliminar el usuario
+        cursor.execute("DELETE FROM usuarios WHERE id_usuario = %s", (usuario_id,))
         conn.commit()
-        return jsonify({"success": True, "message": "Usuario eliminado correctamente"}), 200
+
+        if cursor.rowcount == 0:
+            return jsonify({
+                "success": False, 
+                "message": "No se pudo eliminar el usuario"
+            }), 400
+
+        return jsonify({
+            "success": True, 
+            "message": "Usuario eliminado correctamente"
+        }), 200
+        
     except Exception as e:
         print("Error al eliminar usuario:", e)
-        return jsonify({"success": False, "message": "Error al eliminar el usuario"}), 500
+        conn.rollback()
+        return jsonify({
+            "success": False, 
+            "message": "Error al eliminar el usuario"
+        }), 500
+        
     finally:
         cursor.close()
         conn.close()
-
 
 @usuarios_bp.route("/obtenerEntidades", methods=["GET"])
 def obtener_entidades():
     try:
         conn = get_db_connection()
-        # Usa cursor tipo diccionario
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM entidades")
-        usuarios = cursor.fetchall()
+        entidades = cursor.fetchall()
         cursor.close()
         conn.close()
-        return jsonify(usuarios)
+        return jsonify(entidades)
     except Exception as e:
-        print("Error al obtener usuarios:", e)
-        return jsonify({"success": False, "message": "Error al obtener usuarios"}), 500
+        print("Error al obtener entidades:", e)
+        return jsonify({
+            "success": False, 
+            "message": "Error al obtener entidades"
+        }), 500
 
+@usuarios_bp.route("/verificar-estado/<string:nombre_usuario>", methods=["GET"])
+def verificar_estado_usuario(nombre_usuario):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT estado FROM usuarios WHERE nombre_usuario = %s", (nombre_usuario,))
+        usuario = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if not usuario:
+            return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
+            
+        return jsonify({
+            "success": True,
+            "estado": usuario['estado']
+        }), 200
+        
+    except Exception as e:
+        print("Error al verificar estado:", e)
+        return jsonify({"success": False, "message": "Error interno del servidor"}), 500
 
+# ticket
 @usuarios_bp.route("/obtenerCategorias", methods=["GET"])
 def obtener_categorias():
     try:
