@@ -17,11 +17,13 @@ import Categorias from "./pages/Categorias";
 import SolucionTickets from "./pages/SolucionTickets";
 import EncuestaSatisfaccion from "./pages/EncuestaSatisfaccion";
 import TicketHistorial from "./pages/TicketHistorial";
+import UserStatusChecker from "./pages/UserStatusChecker";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <UserStatusChecker />
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -39,7 +41,7 @@ function App() {
           <Route path="/tickets/solucion/:id" element={<SolucionTickets />} />
           <Route path="/EncuestaSatisfaccion/:surveyId" element={<EncuestaSatisfaccion />} />
           <Route path="/tickets/:id/historial" element={<TicketHistorial />} />
-          {/* Rutas protegidas */}
+          
           <Route path="/HomeAdmiPage" element={
             <ProtectedRoute allowedRoles={['administrador']}>
               <HomeAdmiPage />
@@ -57,7 +59,6 @@ function App() {
               <HomePage />
             </ProtectedRoute>
           } />
-
         </Routes>
       </Router>
     </AuthProvider>
@@ -65,5 +66,3 @@ function App() {
 }
 
 export default App;
-
-
