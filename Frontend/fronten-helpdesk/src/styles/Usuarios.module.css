@@ -1207,3 +1207,18 @@
     display: none;
   }
 }
+/* Agregar al final del archivo */
+.statusBadge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  color: white;
+}
+
+.active {
+  background-color: #4CAF50;
+}
+
+.inactive {
+  background-color: #f44336;
+}

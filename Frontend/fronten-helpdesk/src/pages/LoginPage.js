@@ -17,41 +17,58 @@ const Login = () => {
     setMessage("");
 
     try {
+      // 1. Verificar estado del usuario
+      const estadoResponse = await axios.get(
+        `http://localhost:5000/usuarios/verificar-estado/${usuario}`
+      );
+      
+      if (estadoResponse.data.estado === 'inactivo') {
+        setMessage('Este usuario está inactivo. Contacte al administrador.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Si está activo, proceder con el login
       const response = await axios.post("http://127.0.0.1:5000/auth/login", {
         usuario,
         password,
       });
+      
       if (response.status === 200) {
-        const { nombre, usuario, rol, usuario_id } = response.data;
-        localStorage.setItem("id_usuario", usuario_id );
+        const { nombre, usuario, rol, id_usuario } = response.data;
+        localStorage.setItem("id_usuario", id_usuario);
         localStorage.setItem("nombre", nombre);
-        console.log(nombre);
         localStorage.setItem("usuario", usuario);
         localStorage.setItem("rol", rol);
-        console.log(rol);
+        localStorage.setItem("nombre_usuario", usuario); // Para verificación periódica
 
         if (rol === "usuario") {
           navigate("/home");
         } else if (rol === "administrador") {
           navigate("/HomeAdmiPage");
         } else if (rol === "tecnico") {
-          navigate ("/HomeTecnicoPage")
-        }else {
+          navigate("/HomeTecnicoPage");
+        } else {
           alert("Sin rol para ingresar");
           window.location.reload();
         }
       }
-      setMessage(response.data.mensaje);
     } catch (error) {
-      setMessage(error.response?.data?.error || "Usuario o Contraseña incorrecta");
+      // Manejo de errores
+      if (error.response?.status === 403) {
+        setMessage('Usuario inactivo. Contacte al administrador.');
+      } else if (error.response?.status === 401) {
+        setMessage("Usuario o contraseña incorrectos");
+      } else {
+        setMessage("Error al conectar con el servidor");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-   
-    <div className={styles.Login}> {/* Usar clases del módulo */}
+    <div className={styles.Login}>
       <header>
         <img src={Imagen} alt="Logo" className={styles.empresarial} />
         <h1>BIENVENIDOS A HELP DESK JCBD</h1>
@@ -60,9 +77,8 @@ const Login = () => {
       <div className={styles.row}>
         <form className={styles.loginForm} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-           
             <input
-              className={styles.inicio} // Aplicar la clase .inicio
+              className={styles.inicio}
               type="text"
               placeholder="USUARIO"
               value={usuario}
@@ -72,9 +88,8 @@ const Login = () => {
           </div>
 
           <div className={styles.formGroup}>
-          
             <input
-              className={styles.inicio} // Aplicar la clase .inicio
+              className={styles.inicio}
               type="password"
               placeholder="CONTRASEÑA"
               value={password}
@@ -88,7 +103,6 @@ const Login = () => {
               type="submit"
               className={styles.buttonLogin}
               disabled={loading}
-              onClick={handleSubmit}
             >
               {loading ? "Cargando..." : "Aceptar"}
             </button>
@@ -99,7 +113,6 @@ const Login = () => {
       </div>
       <p>Transformando la atención al cliente con inteligencia y eficiencia.</p>
     </div>
-  
   );
 };
 

@@ -1,53 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { FaPowerOff, FaChevronLeft, FaChevronRight,FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv,} from "react-icons/fa";
+import { Outlet, Link } from "react-router-dom";
+import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint, } from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
-import styles from "../styles/Grupos.module.css";
+import styles from "../styles/Usuarios.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 
 const Grupos = () => {
-  // Estados para UI
+  // Estados para el menú y UI
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-  const [menuState, setMenuState] = useState({
-    support: false,
-    admin: false,
-    config: false
-  });
+  const [error, setError] = useState(null);
 
-  // Estados para datos
+  // Estados para gestión de grupos
   const [showForm, setShowForm] = useState(false);
   const [grupos, setGrupos] = useState([]);
-  const [filteredGrupos, setFilteredGrupos] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("nombre");
+  const [searchField, setSearchField] = useState("nombre_grupo");
   const [additionalFilters, setAdditionalFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
+  const [filteredGrupos, setFilteredGrupos] = useState([]);
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
-
-  // Datos del usuario
+  // Obtener datos del usuario
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol") || "";
 
-  // Datos del formulario
+  // Estado para el formulario
   const [formData, setFormData] = useState({
-    nombre: '',
-    entidad: '',
-    activo: 'si',
+    nombre_grupo: '',
     descripcion: ''
   });
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
 
   // Efectos
   useEffect(() => {
@@ -82,17 +79,140 @@ const Grupos = () => {
     setCurrentPage(1);
   };
 
-  const toggleMenu = (menu) => {
-    setMenuState(prev => {
-      const newState = { support: false, admin: false, config: false };
-      if (menu) newState[menu] = !prev[menu];
-      return newState;
-    });
+  // Funciones de API
+  const fetchGrupos = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get("http://localhost:5000/grupos/obtener");
+      setGrupos(response.data);
+      setFilteredGrupos(response.data);
+    } catch (error) {
+      console.error("Error al cargar grupos:", error);
+      setError("Error al cargar grupos");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId 
+        ? `http://localhost:5000/grupos/actualizacion/${editingId}`
+        : 'http://localhost:5000/grupos/creacion';
+
+      const response = await axios[method.toLowerCase()](url, formData);
+
+      if (response.data.success) {
+        alert(editingId ? 'Grupo actualizado correctamente' : 'Grupo creado correctamente');
+        resetForm();
+        fetchGrupos();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al guardar el grupo');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este grupo?")) return;
+
+    try {
+      const response = await axios.delete(`http://localhost:5000/grupos/eliminar/${id}`);
+      if (response.data.success) {
+        alert("Grupo eliminado correctamente");
+        fetchGrupos();
+      }
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      alert("Ocurrió un error al intentar eliminar el grupo.");
+    }
+  };
+
+  // Funciones de formulario
+  const validateField = (name, value) => {
+    const errors = { ...formErrors };
+
+    switch (name) {
+      case 'nombre_grupo':
+        if (!value.trim()) errors.nombre_grupo = 'Nombre del grupo es requerido';
+        else if (value.length < 3) errors.nombre_grupo = 'Mínimo 3 caracteres';
+        else delete errors.nombre_grupo;
+        break;
+      default:
+        break;
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateForm = () => {
+    const requiredFields = ['nombre_grupo'];
+    const isValid = requiredFields.every(field => {
+      validateField(field, formData[field]);
+      return formData[field]?.trim();
+    });
+
+    return isValid;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+    validateField(name, value);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      nombre_grupo: '',
+      descripcion: ''
+    });
+    setEditingId(null);
+    setFormErrors({});
+    setShowForm(false);
+  };
+
+  const handleEdit = (grupo) => {
+    setFormData({
+      nombre_grupo: grupo.nombre_grupo,
+      descripcion: grupo.descripcion || ''
+    });
+    setEditingId(grupo.id_grupo);
+    setShowForm(true);
+  };
+
+  // Funciones de filtrado
+  const addFilterField = () => {
+    setAdditionalFilters([...additionalFilters, { field: 'nombre_grupo', value: '' }]);
+  };
+
+  const handleFilterChange = (index, field, value) => {
+    const updated = [...additionalFilters];
+    updated[index] = { ...updated[index], [field]: value };
+    setAdditionalFilters(updated);
+  };
+
+  const removeFilter = (index) => {
+    const updated = [...additionalFilters];
+    updated.splice(index, 1);
+    setAdditionalFilters(updated);
+  };
+
+  const resetSearch = () => {
+    setSearchTerm("");
+    setAdditionalFilters([]);
+    fetchGrupos();
+  };
 
   // Funciones de exportación
   const exportToExcel = () => {
@@ -115,135 +235,6 @@ const Grupos = () => {
     setIsExportDropdownOpen(false);
   };
 
-  // Funciones de API
-  const fetchGrupos = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get("http://localhost:5000/grupos/obtener");
-      setGrupos(response.data);
-      setFilteredGrupos(response.data);
-    } catch (error) {
-      console.error("Error al cargar grupos:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    try {
-      const method = editingId ? 'PUT' : 'POST';
-      const url = editingId
-        ? `http://localhost:5000/grupos/actualizacion/${editingId}`
-        : 'http://localhost:5000/grupos/creacion';
-
-      const response = await axios[method.toLowerCase()](url, formData);
-
-      if (response.data.success) {
-        alert(editingId ? 'Grupo actualizado' : 'Grupo creado');
-        resetForm();
-        fetchGrupos();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Eliminar este grupo?")) return;
-
-    try {
-      const response = await axios.delete(`http://localhost:5000/grupos/eliminar/${id}`);
-      if (response.data.success) {
-        alert("Grupo eliminado");
-        fetchGrupos();
-      }
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-    }
-  };
-
-  // Funciones de formulario
-  const validateField = (name, value) => {
-    const newErrors = { ...formErrors };
-
-    if (!value?.trim()) {
-      newErrors[name] = `${name} es requerido`;
-    } else {
-      delete newErrors[name];
-    }
-
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateForm = () => {
-    const requiredFields = ['nombre', 'entidad'];
-    const isValid = requiredFields.every(field => {
-      validateField(field, formData[field]);
-      return formData[field]?.trim();
-    });
-
-    return isValid;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    validateField(name, value);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      nombre: '',
-      entidad: '',
-      activo: 'si',
-      descripcion: ''
-    });
-    setEditingId(null);
-    setFormErrors({});
-    setShowForm(false);
-  };
-
-  const handleEdit = (grupo) => {
-    setFormData({
-      nombre: grupo.nombre,
-      entidad: grupo.entidad,
-      activo: grupo.activo,
-      descripcion: grupo.descripcion
-    });
-    setEditingId(grupo.id_grupo);
-    setShowForm(true);
-  };
-
-  // Funciones de filtrado
-  const addFilterField = () => {
-    setAdditionalFilters([...additionalFilters, { field: 'nombre', value: '' }]);
-  };
-
-  const handleFilterChange = (index, field, value) => {
-    const updated = [...additionalFilters];
-    updated[index] = { ...updated[index], [field]: value };
-    setAdditionalFilters(updated);
-  };
-
-  const removeFilter = (index) => {
-    const updated = [...additionalFilters];
-    updated.splice(index, 1);
-    setAdditionalFilters(updated);
-  };
-
-  const resetSearch = () => {
-    setSearchTerm("");
-    setAdditionalFilters([]);
-    fetchGrupos();
-  };
-
   // Funciones de paginación
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
@@ -259,7 +250,37 @@ const Grupos = () => {
     setCurrentPage(1);
   };
 
-  // Renderizado condicional
+  // Handlers para el menú
+  const toggleChat = () => setIsChatOpen(!isChatOpen);
+  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+
+  const toggleSupport = () => {
+    setIsSupportOpen(!isSupportOpen);
+    setIsAdminOpen(false);
+    setIsConfigOpen(false);
+  };
+
+  const toggleAdmin = () => {
+    setIsAdminOpen(!isAdminOpen);
+    setIsSupportOpen(false);
+    setIsConfigOpen(false);
+  };
+
+  const toggleConfig = () => {
+    setIsConfigOpen(!isConfigOpen);
+    setIsSupportOpen(false);
+    setIsAdminOpen(false);
+  };
+
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
+  // Renderizado condicional para acceso
   if (!['administrador', 'tecnico'].includes(userRole)) {
     return (
       <div className={styles.accessDenied}>
@@ -275,8 +296,8 @@ const Grupos = () => {
       {/* Menú Vertical */}
       <aside
         className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMainMenu}
-        onMouseLeave={toggleMainMenu}
+        onMouseEnter={toggleMenu}
+        onMouseLeave={toggleMenu}
       >
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
@@ -302,11 +323,11 @@ const Grupos = () => {
                     </Link>
                   </li>
                   <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                    <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
                       <FcAssistant className={styles.menuIcon} />
                       <span className={styles.menuText}> Soporte</span>
                     </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                    <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
                       <li>
                         <Link to="/Tickets" className={styles.submenuLink}>
                           <FcAnswers className={styles.menuIcon} />
@@ -328,11 +349,11 @@ const Grupos = () => {
                     </ul>
                   </li>
                   <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                    <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
                       <FcBusinessman className={styles.menuIcon} />
                       <span className={styles.menuText}> Administración</span>
                     </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                    <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
                       <li>
                         <Link to="/Usuarios" className={styles.submenuLink}>
                           <FcPortraitMode className={styles.menuIcon} />
@@ -354,11 +375,11 @@ const Grupos = () => {
                     </ul>
                   </li>
                   <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('config')}>
+                    <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
                       <FcAutomatic className={styles.menuIcon} />
                       <span className={styles.menuText}> Configuración</span>
                     </div>
-                    <ul className={`${styles.submenu} ${menuState.config ? styles.showSubmenu : ''}`}>
+                    <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
                       <li>
                         <Link to="/Categorias" className={styles.submenuLink}>
                           <FcGenealogy className={styles.menuIcon} />
@@ -377,11 +398,11 @@ const Grupos = () => {
                     </Link>
                   </li>
                   <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                    <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
                       <FcAssistant className={styles.menuIcon} />
                       <span className={styles.menuText}> Soporte</span>
                     </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                    <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
                       <li>
                         <Link to="/Tickets" className={styles.submenuLink}>
                           <FcAnswers className={styles.menuIcon} />
@@ -397,15 +418,21 @@ const Grupos = () => {
                     </ul>
                   </li>
                   <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                    <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
                       <FcBusinessman className={styles.menuIcon} />
                       <span className={styles.menuText}> Administración</span>
                     </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                    <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
                       <li>
                         <Link to="/Usuarios" className={styles.submenuLink}>
                           <FcPortraitMode className={styles.menuIcon} />
                           <span className={styles.menuText}> Usuarios</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Grupos" className={styles.submenuLink}>
+                          <FcConferenceCall className={styles.menuIcon} />
+                          <span className={styles.menuText}> Grupos</span>
                         </Link>
                       </li>
                     </ul>
@@ -445,17 +472,14 @@ const Grupos = () => {
       </aside>
 
       {/* Contenido principal */}
-      <div style={{
-        marginLeft: isMenuExpanded ? "200px" : "60px",
-        transition: "margin-left 0.3s ease"
-      }}>
+      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
         <Outlet />
       </div>
 
       {/* Header */}
       <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <div className={styles.containerInicioImg}>
-          <Link to={userRole === 'administrador' ? '/HomeAdmiPage' : userRole === 'tecnico' ? '/HomeTecnicoPage' : '/home'} className={styles.linkSinSubrayado}>
+          <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
             <span>Inicio</span>
           </Link>
         </div>
@@ -476,6 +500,7 @@ const Grupos = () => {
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
             {isLoading && <span className={styles.loading}>Buscando...</span>}
+            {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
           <div className={styles.userContainer}>
@@ -490,9 +515,7 @@ const Grupos = () => {
       </header>
 
       {/* Contenido */}
-      <div className={styles.container} style={{
-        marginLeft: isMenuExpanded ? "200px" : "60px"
-      }}>
+      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         {isLoading && (
           <div className={styles.loadingOverlay}>
             <FaSpinner className={styles.spinner} />
@@ -520,60 +543,24 @@ const Grupos = () => {
                     <label className={styles.label}>Nombre del Grupo</label>
                     <input
                       type="text"
-                      className={`${styles.input} ${formErrors.nombre ? styles.inputError : ''}`}
-                      name="nombre"
-                      value={formData.nombre}
+                      className={`${styles.input} ${formErrors.nombre_grupo ? styles.inputError : ''}`}
+                      name="nombre_grupo"
+                      value={formData.nombre_grupo}
                       onChange={handleChange}
                       required
                     />
-                    {formErrors.nombre && <span className={styles.errorMessage}>{formErrors.nombre}</span>}
+                    {formErrors.nombre_grupo && <span className={styles.errorMessage}>{formErrors.nombre_grupo}</span>}
                   </div>
 
-                  <div className={styles.selectsContainer}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Activo</label>
-                      <select
-                        className={styles.select}
-                        name="activo"
-                        value={formData.activo}
-                        onChange={handleChange}
-                      >
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Entidad</label>
-                      <select
-                        className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
-                        name="entidad"
-                        value={formData.entidad}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione...</option>
-                        <option value="tic">TIC</option>
-                        <option value="mantenimiento">Mantenimiento</option>
-                        <option value="financiera">Financiera</option>
-                        <option value="compras">Compras</option>
-                        <option value="almacen">Almacén</option>
-                      </select>
-                      {formErrors.entidad && <span className={styles.errorMessage}>{formErrors.entidad}</span>}
-                    </div>
-
-                    <div className={styles.formGroup}>
+                  <div className={styles.formGroup}>
                     <label className={styles.label}>Descripción</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.descripcion ? styles.inputError : ''}`}
+                    <textarea
+                      className={styles.input}
                       name="descripcion"
                       value={formData.descripcion}
                       onChange={handleChange}
-                      required
+                      rows="3"
                     />
-                    
-                  </div>
                   </div>
 
                   <div className={styles.botonesContainer}>
@@ -591,7 +578,7 @@ const Grupos = () => {
         ) : (
           <>
             <div className={styles.searchSection}>
-              <h2 className={styles.sectionTitle}>Buscar Grupo</h2>
+              <h2 className={styles.sectionTitle}>Buscar Grupos</h2>
               <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
                 <div className={styles.mainSearch}>
                   <div className={styles.searchFieldGroup}>
@@ -600,8 +587,8 @@ const Grupos = () => {
                       value={searchField}
                       onChange={(e) => setSearchField(e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
+                      <option value="nombre_grupo">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
@@ -630,9 +617,8 @@ const Grupos = () => {
                       value={filter.field}
                       onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
                     >
-                      <option value="nombre">Nombre</option>
-                      <option value="entidad">Entidad</option>
-                      <option value="activo">Activo</option>
+                      <option value="nombre_grupo">Nombre</option>
+                      <option value="descripcion">Descripción</option>
                     </select>
                     <input
                       type="text"
@@ -689,26 +675,21 @@ const Grupos = () => {
                   <thead>
                     <tr>
                       <th>Nombre</th>
-                      <th>Entidad</th>
-                      <th>Activo</th>
                       <th>Descripción</th>
                       <th>Acciones</th>
-                    
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td colSpan="5" className={styles.loadingCell}>
+                        <td colSpan="3" className={styles.loadingCell}>
                           <FaSpinner className={styles.spinner} /> Cargando grupos...
                         </td>
                       </tr>
                     ) : currentRows.length > 0 ? (
                       currentRows.map((grupo) => (
                         <tr key={grupo.id_grupo}>
-                          <td>{grupo.nombre}</td>
-                          <td>{grupo.entidad}</td>
-                          <td>{grupo.activo === 'si' ? 'Sí' : 'No'}</td>
+                          <td>{grupo.nombre_grupo}</td>
                           <td>{grupo.descripcion || '-'}</td>
                           <td>
                             <button
@@ -728,7 +709,7 @@ const Grupos = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className={styles.noUsers}>No se encontraron grupos</td>
+                        <td colSpan="3" className={styles.noUsers}>No se encontraron grupos</td>
                       </tr>
                     )}
                   </tbody>
@@ -803,12 +784,12 @@ const Grupos = () => {
         )}
 
         <div className={styles.chatbotContainer}>
-          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={() => setIsChatOpen(!isChatOpen)} />
+          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={toggleChat} />
           {isChatOpen && (
             <div className={styles.chatWindow}>
               <div className={styles.chatHeader}>
                 <h4>Chat de Soporte</h4>
-                <button onClick={() => setIsChatOpen(false)} className={styles.closeChat}>&times;</button>
+                <button onClick={toggleChat} className={styles.closeChat}>&times;</button>
               </div>
               <div className={styles.chatBody}>
                 <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>

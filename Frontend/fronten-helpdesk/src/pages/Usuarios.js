@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
-import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv, } from "react-icons/fa";
-import { FaMagnifyingGlass } from "react-icons/fa6";
+import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight, FaSearch, FaFilter, FaPlus, FaSpinner } from "react-icons/fa";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint, } from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
 import styles from "../styles/Usuarios.module.css";
 import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
-
 
 const Usuarios = () => {
   // Estados para el menú y UI
@@ -25,29 +24,27 @@ const Usuarios = () => {
   const [showForm, setShowForm] = useState(false);
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchField, setSearchField] = useState("usuario");
+  const [searchField, setSearchField] = useState("nombre_usuario");
   const [additionalFilters, setAdditionalFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formErrors, setFormErrors] = useState({});
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [entidad, setEntidad] = useState([]);
-  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [entidades, setEntidades] = useState([]);
 
   // Obtener datos del usuario
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol") || "";
 
-  // Estado para el formulario
+  // Estado para el formulario - ajustado a la BD
   const [formData, setFormData] = useState({
-    usuario: '',
-    nombres: '',
-    apellidos: '',
+    nombre_usuario: '',
+    nombre_completo: '',
     correo: '',
     telefono: '',
     contrasena: '',
-    activo: 'si',
-    entidad: '',
+    estado: 'activo',
+    id_entidad: '',
     rol: ''
   });
 
@@ -60,18 +57,14 @@ const Usuarios = () => {
     const errors = { ...formErrors };
 
     switch (name) {
-      case 'usuario':
-        if (!value.trim()) errors.usuario = 'Usuario es requerido';
-        else if (value.length < 3) errors.usuario = 'Mínimo 3 caracteres';
-        else delete errors.usuario;
+      case 'nombre_usuario':
+        if (!value.trim()) errors.nombre_usuario = 'Nombre de usuario es requerido';
+        else if (value.length < 3) errors.nombre_usuario = 'Mínimo 3 caracteres';
+        else delete errors.nombre_usuario;
         break;
-      case 'nombres':
-        if (!value.trim()) errors.nombres = 'Nombres son requeridos';
-        else delete errors.nombres;
-        break;
-      case 'apellidos':
-        if (!value.trim()) errors.apellidos = 'Apellidos son requeridos';
-        else delete errors.apellidos;
+      case 'nombre_completo':
+        if (!value.trim()) errors.nombre_completo = 'Nombre completo es requerido';
+        else delete errors.nombre_completo;
         break;
       case 'correo':
         if (!value.trim()) errors.correo = 'Correo es requerido';
@@ -87,12 +80,12 @@ const Usuarios = () => {
         else if (value && value.length < 6) errors.contrasena = 'Mínimo 6 caracteres';
         else delete errors.contrasena;
         break;
-      case 'entidad':
-        if (!value.trim()) errors.entidad = 'Entidad es requerida';
-        else delete errors.entidad;
+      case 'id_entidad':
+        if (!value) errors.id_entidad = 'Entidad es requerida';
+        else delete errors.id_entidad;
         break;
       case 'rol':
-        if (!value.trim()) errors.rol = 'Rol es requerido';
+        if (!value) errors.rol = 'Rol es requerido';
         else delete errors.rol;
         break;
       default:
@@ -113,19 +106,47 @@ const Usuarios = () => {
     validateField(name, value);
   };
 
-  // Cargar usuarios al montar el componente
+  useEffect(() => {
+    const applyFilters = () => {
+      let result = [...users];
+
+      // Filtro principal (superior)
+      if (searchField && searchTerm) {
+        result = result.filter((user) => {
+          const value = user[searchField];
+          return value && value.toString().toLowerCase().includes(searchTerm.toLowerCase());
+        });
+      }
+
+      // Filtros adicionales
+      additionalFilters.forEach((filter) => {
+        if (filter.field && filter.value) {
+          result = result.filter((user) => {
+            const value = user[filter.field];
+            return value && value.toString().toLowerCase().includes(filter.value.toLowerCase());
+          });
+        }
+      });
+
+      setFilteredUsers(result);
+    };
+
+    applyFilters();
+  }, [searchField, searchTerm, additionalFilters, users]);
+
+  // Cargar usuarios y entidades al montar el componente
   useEffect(() => {
     fetchUsers();
-  }, [])
+    fetchEntidades();
+  }, []); // Solo al montar el componente
 
-  
   // Función para obtener usuarios
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get("http://localhost:5000/usuarios/obtener");
       const data = response.data;
-      setUsers(data); // directamente, porque es un array
+      setUsers(data);
       setFilteredUsers(data);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
@@ -133,19 +154,28 @@ const Usuarios = () => {
       setIsLoading(false);
     }
   };
-  console.log(users[0]);
+
+  // Función para obtener entidades
+  const fetchEntidades = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/usuarios/obtenerEntidades");
+      setEntidades(response.data);
+    } catch (error) {
+      console.error("Error al cargar entidades:", error);
+    }
+  };
+
   // Preparar formulario para edición
   const handleEdit = (user) => {
     setEditingUser(user.id_usuario);
     setFormData({
-      usuario: user.usuario,
-      nombres: user.nombres,
-      apellidos: user.apellidos,
+      nombre_usuario: user.nombre_usuario,
+      nombre_completo: user.nombre_completo,
       correo: user.correo,
       telefono: user.telefono,
       contrasena: '', // No mostramos la contraseña por seguridad
-      activo: user.activo,
-      entidad: user.entidad,
+      estado: user.estado,
+      id_entidad: user.id_entidad1 || '',
       rol: user.rol
     });
     setShowForm(true);
@@ -168,13 +198,14 @@ const Usuarios = () => {
       alert("Ocurrió un error al intentar eliminar el usuario.");
     }
   };
+
   // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validación final antes de enviar
     let isValid = true;
-    const fieldsToValidate = ['usuario', 'nombres', 'apellidos', 'correo', 'entidad', 'rol'];
+    const fieldsToValidate = ['nombre_usuario', 'nombre_completo', 'telefono', 'correo', 'id_entidad', 'rol'];
     if (!editingUser) fieldsToValidate.push('contrasena');
 
     fieldsToValidate.forEach(field => {
@@ -188,7 +219,6 @@ const Usuarios = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const url = editingUser
         ? `http://localhost:5000/usuarios/actualizacion/${editingUser}`
         : 'http://localhost:5000/usuarios/creacion';
@@ -223,14 +253,13 @@ const Usuarios = () => {
   // Resetear formulario
   const resetForm = () => {
     setFormData({
-      usuario: '',
-      nombres: '',
-      apellidos: '',
+      nombre_usuario: '',
+      nombre_completo: '',
       correo: '',
       telefono: '',
       contrasena: '',
-      activo: 'si',
-      entidad: '',
+      estado: 'activo',
+      id_entidad: '',
       rol: ''
     });
     setFormErrors({});
@@ -238,41 +267,9 @@ const Usuarios = () => {
     setShowForm(false);
   };
 
-  // Manejar búsqueda de usuarios
-  /*const handleSearch = (e) => {
-    e.preventDefault();
-  
-    // Aplica los filtros al frontend sin llamar al backend
-    const applyFilters = () => {
-      let result = [...users];
-  
-      if (searchField && searchTerm) {
-        result = result.filter((user) => {
-          const value = user[searchField];
-          return value && value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-        });
-      }
-  
-      additionalFilters.forEach((filter) => {
-        if (filter.field && filter.value) {
-          result = result.filter((user) => {
-            const value = user[filter.field];
-            return value && value.toString().toLowerCase().includes(filter.value.toLowerCase());
-          });
-        }
-      });
-  
-      setFilteredUsers(result);
-      setCurrentPage(1); // Reinicia a la primera página
-    };
-  
-    applyFilters();
-  };*/
-
-
   // Manejar filtros adicionales
   const addFilterField = () => {
-    setAdditionalFilters([...additionalFilters, { field: 'usuario', value: '' }]);
+    setAdditionalFilters([...additionalFilters, { field: 'nombre_usuario', value: '' }]);
   };
 
   const handleFilterChange = (index, field, value) => {
@@ -302,6 +299,7 @@ const Usuarios = () => {
   // Handlers para el menú
   const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   const toggleSupport = () => {
     setIsSupportOpen(!isSupportOpen);
@@ -319,31 +317,6 @@ const Usuarios = () => {
     setIsConfigOpen(!isConfigOpen);
     setIsSupportOpen(false);
     setIsAdminOpen(false);
-  };
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
-
-  // Funciones de exportación
-  const exportToExcel = () => {
-    console.log("Exportando a Excel", filteredUsuarios);
-    setIsExportDropdownOpen(false);
-  };
-
-  const exportToPdf = () => {
-    console.log("Exportando a PDF", filteredUsuarios);
-    setIsExportDropdownOpen(false);
-  };
-
-  const exportToCsv = () => {
-    console.log("Exportando a CSV", filteredUsuarios);
-    setIsExportDropdownOpen(false);
-  };
-
-  const printTable = () => {
-    window.print();
-    setIsExportDropdownOpen(false);
   };
 
   // Lógica de paginación
@@ -368,8 +341,9 @@ const Usuarios = () => {
     administrador: '/HomeAdmiPage'
   };
 
-
   const getRouteByRole = (section) => {
+    const userRole = localStorage.getItem("rol");
+
     if (section === 'inicio') {
       if (userRole === 'administrador') {
         return '/HomeAdmiPage';
@@ -386,171 +360,16 @@ const Usuarios = () => {
       } else {
         return '/CrearCasoUse';
       }
-    } if (section === "tickets") return "/Tickets";
-    return "/";
-  };
-
-  // Renderizar menú según el rol
-  const renderMenuByRole = () => {
-    switch (userRole) {
-      case 'administrador':
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                <FcAssistant className={styles.menuIcon} />
-                <span className={styles.menuText}> Soporte</span>
-              </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Tickets" className={styles.submenuLink}>
-                    <FcAnswers className={styles.menuIcon} />
-                    <span className={styles.menuText}>Tickets</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                    <FcCustomerSupport className={styles.menuIcon} />
-                    <span className={styles.menuText}>Crear Caso</span>
-                  </Link>
-                </li>
-
-                <li>
-                  <Link to="/Estadisticas" className={styles.submenuLink}>
-                    <FcBullish className={styles.menuIcon} />
-                    <span className={styles.menuText}>Estadísticas</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                <FcBusinessman className={styles.menuIcon} />
-                <span className={styles.menuText}> Administración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Usuarios" className={styles.submenuLink}>
-                    <FcPortraitMode className={styles.menuIcon} />
-                    <span className={styles.menuText}> Usuarios</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/Grupos" className={styles.submenuLink}>
-                    <FcConferenceCall className={styles.menuIcon} />
-                    <span className={styles.menuText}> Grupos</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/Entidades" className={styles.submenuLink}>
-                    <FcOrganization className={styles.menuIcon} />
-                    <span className={styles.menuText}> Entidades</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                <FcAutomatic className={styles.menuIcon} />
-                <span className={styles.menuText}> Configuración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Categorias" className={styles.submenuLink}>
-                    <FcGenealogy className={styles.menuIcon} />
-                    <span className={styles.menuText}>Categorias</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        );
-
-      case 'tecnico':
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                <FcAssistant className={styles.menuIcon} />
-                <span className={styles.menuText}> Soporte</span>
-              </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Tickets" className={styles.submenuLink}>
-                    <FcAnswers className={styles.menuIcon} />
-                    <span className={styles.menuText}>Tickets</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                    <FcCustomerSupport className={styles.menuIcon} />
-                    <span className={styles.menuText}>Crear Caso</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                <FcBusinessman className={styles.menuIcon} />
-                <span className={styles.menuText}> Administración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Usuarios" className={styles.submenuLink}>
-                    <FcPortraitMode className={styles.menuIcon} />
-                    <span className={styles.menuText}> Usuarios</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        );
-
-      case 'usuario':
-      default:
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/home" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                <FcCustomerSupport className={styles.menuIcon} />
-                <span className={styles.menuText}>Crear Caso</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <Link to="/Tickets" className={styles.linkSinSubrayado}>
-                <FcAnswers className={styles.menuIcon} />
-                <span className={styles.menuText}>Tickets</span>
-              </Link>
-            </li>
-
-
-          </ul>
-        );
+    } else if (section === 'tickets') {
+      if (userRole === 'administrador') {
+        return '/TicketsAdmin';
+      } else if (userRole === 'tecnico') {
+        return '/TicketsTecnico';
+      } else {
+        return '/Tickets';
+      }
+    } else {
+      return '/home';
     }
   };
 
@@ -576,7 +395,100 @@ const Usuarios = () => {
           </button>
 
           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-            {renderMenuByRole()}
+            <ul className={styles.menuIconos}>
+              {/* Opción Inicio - visible para todos */}
+              <li className={styles.iconosMenu}>
+                <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
+                  <FcHome className={styles.menuIcon} />
+                  <span className={styles.menuText}>Inicio</span>
+                </Link>
+              </li>
+
+              {/* Menú Soporte - solo para técnicos */}
+              {userRole === "tecnico" && (
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                    <FcAssistant className={styles.menuIcon} />
+                    <span className={styles.menuText}> Soporte</span>
+                  </div>
+
+                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Tickets" className={styles.submenuLink}>
+                        <FcAnswers className={styles.menuIcon} />
+                        <span className={styles.menuText}>Tickets</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                        <FcCustomerSupport className={styles.menuIcon} />
+                        <span className={styles.menuText}>Crear Caso</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Problemas" className={styles.submenuLink}>
+                        <FcExpired className={styles.menuIcon} />
+                        <span className={styles.menuText}>Problemas</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Estadisticas" className={styles.submenuLink}>
+                        <FcBullish className={styles.menuIcon} />
+                        <span className={styles.menuText}>Estadísticas</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              )}
+
+              {/* Menú Administración - solo para técnicos */}
+              {userRole === "tecnico" && (
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                    <FcBusinessman className={styles.menuIcon} />
+                    <span className={styles.menuText}> Administración</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Usuarios" className={styles.submenuLink}>
+                        <FcPortraitMode className={styles.menuIcon} />
+                        <span className={styles.menuText}> Usuarios</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Grupos" className={styles.submenuLink}>
+                        <FcConferenceCall className={styles.menuIcon} />
+                        <span className={styles.menuText}> Grupos</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Entidades" className={styles.submenuLink}>
+                        <FcOrganization className={styles.menuIcon} />
+                        <span className={styles.menuText}> Entidades</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              )}
+
+              {/* Menú Configuración - solo para técnicos */}
+              {userRole === "tecnico" && (
+                <li className={styles.iconosMenu}>
+                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                    <FcAutomatic className={styles.menuIcon} />
+                    <span className={styles.menuText}> Configuración</span>
+                  </div>
+                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                    <li>
+                      <Link to="/Categorias" className={styles.submenuLink}>
+                        <FcGenealogy className={styles.menuIcon} />
+                        <span className={styles.menuText}>Categorias</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </li>
+              )}
+            </ul>
           </div>
 
           <div className={styles.floatingContainer}>
@@ -618,7 +530,6 @@ const Usuarios = () => {
             {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
-
           <div className={styles.userContainer}>
             <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
             <div className={styles.iconContainer}>
@@ -659,44 +570,29 @@ const Usuarios = () => {
               <div className={styles.gridContainerUsuarios}>
                 <div className={styles.columna}>
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Usuario</label>
+                    <label className={styles.label}>Nombre de usuario</label>
                     <input
                       type="text"
-                      className={`${styles.input} ${formErrors.usuario ? styles.inputError : ''}`}
-                      name="usuario"
-                      value={formData.usuario}
+                      className={`${styles.input} ${formErrors.nombre_usuario ? styles.inputError : ''}`}
+                      name="nombre_usuario"
+                      value={formData.nombre_usuario}
                       onChange={handleChange}
                       required
                     />
-                    {formErrors.usuario && <span className={styles.errorMessage}>{formErrors.usuario}</span>}
+                    {formErrors.nombre_usuario && <span className={styles.errorMessage}>{formErrors.nombre_usuario}</span>}
                   </div>
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Nombre(s)</label>
+                    <label className={styles.label}>Nombre completo</label>
                     <input
                       type="text"
-                      className={`${styles.input} ${formErrors.nombres ? styles.inputError : ''}`}
-                      name="nombres"
-                      value={formData.nombres}
+                      className={`${styles.input} ${formErrors.nombre_completo ? styles.inputError : ''}`}
+                      name="nombre_completo"
+                      value={formData.nombre_completo}
                       onChange={handleChange}
                       required
                     />
-                    {formErrors.nombres && <span className={styles.errorMessage}>{formErrors.nombres}</span>}
+                    {formErrors.nombre_completo && <span className={styles.errorMessage}>{formErrors.nombre_completo}</span>}
                   </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Apellido(s)</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.apellidos ? styles.inputError : ''}`}
-                      name="apellidos"
-                      value={formData.apellidos}
-                      onChange={handleChange}
-                      required
-                    />
-                    {formErrors.apellidos && <span className={styles.errorMessage}>{formErrors.apellidos}</span>}
-                  </div>
-                </div>
-
-                <div className={styles.columna}>
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Correo</label>
                     <input
@@ -709,6 +605,9 @@ const Usuarios = () => {
                     />
                     {formErrors.correo && <span className={styles.errorMessage}>{formErrors.correo}</span>}
                   </div>
+                </div>
+
+                <div className={styles.columna}>
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Teléfono</label>
                     <input
@@ -733,34 +632,34 @@ const Usuarios = () => {
                     />
                     {formErrors.contrasena && <span className={styles.errorMessage}>{formErrors.contrasena}</span>}
                   </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Estado</label>
+                    <select className={styles.select} name="estado" value={formData.estado} onChange={handleChange} required>
+                      <option value="activo">Activo</option>
+                      <option value="inactivo">Inactivo</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div className={styles.selectsContainer}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Activo</label>
-                  <select className={styles.select} name="activo" value={formData.activo} onChange={handleChange} required>
-                    <option value="si">Sí</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
                   <label className={styles.label}>Entidades</label>
                   <select
-                    className={`${styles.select} ${formErrors.entidad ? styles.inputError : ''}`}
-                    name="entidad"
-                    value={formData.entidad}
+                    className={`${styles.select} ${formErrors.id_entidad ? styles.inputError : ''}`}
+                    name="id_entidad"
+                    value={formData.id_entidad}
                     onChange={handleChange}
                     required
                   >
                     <option value="">Seleccione...</option>
-                    <option value="tic">TIC</option>
-                    <option value="mantenimiento">Mantenimiento</option>
-                    <option value="financiera">Financiera</option>
-                    <option value="compras">Compras</option>
-                    <option value="almacen">Almacén</option>
+                    {entidades.map(entidad => (
+                      <option key={entidad.id_entidad} value={entidad.id_entidad}>
+                        {entidad.nombre_entidad}
+                      </option>
+                    ))}
                   </select>
-                  {formErrors.entidad && <span className={styles.errorMessage}>{formErrors.entidad}</span>}
+                  {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Rol</label>
@@ -805,11 +704,10 @@ const Usuarios = () => {
                   <div className={styles.searchFieldGroup}>
                     <select className={styles.searchSelect} value={searchField} onChange={(e) => setSearchField(e.target.value)}>
                       <option value="nombre_usuario">Usuario</option>
-                      <option value="nombres">Nombre</option>
-                      <option value="apellidos">Apellidos</option>
+                      <option value="nombre_completo">Nombre completo</option>
                       <option value="correo">Correo</option>
                       <option value="rol">Rol</option>
-                      <option value="entidad">Entidad</option>
+                      <option value="estado">Estado</option>
                     </select>
                     <input
                       type="text"
@@ -835,16 +733,14 @@ const Usuarios = () => {
                   <div key={index} className={styles.additionalFilter}>
                     <select
                       className={styles.searchSelect}
-                      value={searchField}
-                      onChange={(e) => setSearchField(e.target.value)}
+                      value={filter.field}
+                      onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
                     >
                       <option value="nombre_usuario">Usuario</option>
-                      <option value="nombres">Nombre</option>
-                      <option value="apellidos">Apellidos</option>
+                      <option value="nombre_completo">Nombre completo</option>
                       <option value="correo">Correo</option>
                       <option value="rol">Rol</option>
-                      <option value="entidad">Entidad</option>
-                      <option value="activo">Activo</option>
+                      <option value="estado">Estado</option>
                     </select>
                     <input
                       type="text"
@@ -856,52 +752,23 @@ const Usuarios = () => {
                     <button type="button" onClick={() => removeFilter(index)} className={styles.removeFilterButton}>×</button>
                   </div>
                 ))}
-
-                <div className={styles.exportDropdown}>
-                  <button
-                    onClick={toggleExportDropdown}
-                    className={styles.exportButton}
-                    title="Opciones de exportación"
-                  >
-                    Exportar <FaChevronDown className={styles.dropdownIcon} />
-                  </button>
-                  {isExportDropdownOpen && (
-                    <div
-                      className={styles.exportDropdownContent}
-                      onMouseLeave={() => setIsExportDropdownOpen(false)}
-                    >
-                      <button onClick={exportToExcel} className={styles.exportOption}>
-                        <FaFileExcel /> Excel
-                      </button>
-                      <button onClick={exportToPdf} className={styles.exportOption}>
-                        <FaFilePdf /> PDF
-                      </button>
-                      <button onClick={exportToCsv} className={styles.exportOption}>
-                        <FaFileCsv /> CSV
-                      </button>
-                      <button onClick={printTable} className={styles.exportOption}>
-                        <FcPrint /> Imprimir
-                      </button>
-                    </div>
-                  )}
-                </div>
               </form>
             </div>
 
             {/* Tabla de usuarios */}
             <div className={styles.usersTableContainer}>
-              <h2 className={styles.sectionTitle}>Usuarios Registrados ({users.length})</h2>
+              <h2 className={styles.sectionTitle}>Usuarios Registrados ({filteredUsers.length})</h2>
               <div className={styles.tableWrapper}>
                 <table className={styles.usersTable}>
                   <thead>
                     <tr>
                       <th>Usuario</th>
-                      <th>Nombre(s)</th>
-                      <th>Apellido(s)</th>
+                      <th>Nombre completo</th>
                       <th>Correo</th>
                       <th>Teléfono</th>
                       <th>Rol</th>
-                      <th>Activo</th>
+                      <th>Estado</th>
+                      <th>Entidad</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -916,12 +783,20 @@ const Usuarios = () => {
                       currentRows.map((user) => (
                         <tr key={user.id_usuario}>
                           <td>{user.nombre_usuario}</td>
-                          <td>{user.nombres}</td>
-                          <td>{user.apellidos}</td>
+                          <td>{user.nombre_completo}</td>
                           <td>{user.correo}</td>
                           <td>{user.telefono}</td>
                           <td>{user.rol}</td>
-                          <td>{user.activo === 'si' ? 'Sí' : 'No'}</td>
+                          <td>
+                            <span 
+                              className={`${styles.statusBadge} ${
+                                user.estado === 'activo' ? styles.active : styles.inactive
+                              }`}
+                            >
+                              {user.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td>{user.entidad || 'Sin entidad'}</td>
                           <td>
                             <button
                               className={styles.actionButton}
@@ -963,7 +838,7 @@ const Usuarios = () => {
                   ))}
                 </select>
                 <span className={styles.rowsInfo}>
-                  Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, users.length)} de {users.length} registros
+                  Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredUsers.length)} de {filteredUsers.length} registros
                 </span>
               </div>
 
@@ -1048,7 +923,5 @@ const Usuarios = () => {
     </div>
   );
 };
-
-
 
 export default Usuarios;
