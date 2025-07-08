@@ -1,42 +1,48 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link } from "react-router-dom";
-import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
-import { FaChevronLeft, FaChevronRight, FaSearch, FaFilter, FaPlus, FaSpinner } from "react-icons/fa";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv } from "react-icons/fa";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
-import styles from "../styles/Usuarios.module.css";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
+import styles from "../styles/Usuarios.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
 
 const Usuarios = () => {
-  // Estados para el menú y UI
+  // Estados para UI
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [error, setError] = useState(null);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [menuState, setMenuState] = useState({
+    support: false,
+    admin: false,
+    config: false
+  });
 
-  // Estados para gestión de usuarios
+  // Estados para datos
   const [showForm, setShowForm] = useState(false);
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("nombre_usuario");
   const [additionalFilters, setAdditionalFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [entidades, setEntidades] = useState([]);
 
-  // Obtener datos del usuario
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+
+  // Datos del usuario
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol") || "";
 
-  // Estado para el formulario - ajustado a la BD
+  // Datos del formulario
   const [formData, setFormData] = useState({
     nombre_usuario: '',
     nombre_completo: '',
@@ -48,106 +54,80 @@ const Usuarios = () => {
     rol: ''
   });
 
-  // Estados para paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
-
-  // Validación del formulario en tiempo real
-  const validateField = (name, value) => {
-    const errors = { ...formErrors };
-
-    switch (name) {
-      case 'nombre_usuario':
-        if (!value.trim()) errors.nombre_usuario = 'Nombre de usuario es requerido';
-        else if (value.length < 3) errors.nombre_usuario = 'Mínimo 3 caracteres';
-        else delete errors.nombre_usuario;
-        break;
-      case 'nombre_completo':
-        if (!value.trim()) errors.nombre_completo = 'Nombre completo es requerido';
-        else delete errors.nombre_completo;
-        break;
-      case 'correo':
-        if (!value.trim()) errors.correo = 'Correo es requerido';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errors.correo = 'Correo inválido';
-        else delete errors.correo;
-        break;
-      case 'telefono':
-        if (value && !/^\d{7,15}$/.test(value)) errors.telefono = 'Teléfono inválido';
-        else delete errors.telefono;
-        break;
-      case 'contrasena':
-        if (!editingUser && !value.trim()) errors.contrasena = 'Contraseña es requerida';
-        else if (value && value.length < 6) errors.contrasena = 'Mínimo 6 caracteres';
-        else delete errors.contrasena;
-        break;
-      case 'id_entidad':
-        if (!value) errors.id_entidad = 'Entidad es requerida';
-        else delete errors.id_entidad;
-        break;
-      case 'rol':
-        if (!value) errors.rol = 'Rol es requerido';
-        else delete errors.rol;
-        break;
-      default:
-        break;
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Manejar cambios en el formulario con validación
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    validateField(name, value);
-  };
-
-  useEffect(() => {
-    const applyFilters = () => {
-      let result = [...users];
-
-      // Filtro principal (superior)
-      if (searchField && searchTerm) {
-        result = result.filter((user) => {
-          const value = user[searchField];
-          return value && value.toString().toLowerCase().includes(searchTerm.toLowerCase());
-        });
-      }
-
-      // Filtros adicionales
-      additionalFilters.forEach((filter) => {
-        if (filter.field && filter.value) {
-          result = result.filter((user) => {
-            const value = user[filter.field];
-            return value && value.toString().toLowerCase().includes(filter.value.toLowerCase());
-          });
-        }
-      });
-
-      setFilteredUsers(result);
-    };
-
-    applyFilters();
-  }, [searchField, searchTerm, additionalFilters, users]);
-
-  // Cargar usuarios y entidades al montar el componente
+  // Efectos
   useEffect(() => {
     fetchUsers();
     fetchEntidades();
-  }, []); // Solo al montar el componente
+  }, []);
 
-  // Función para obtener usuarios
+  useEffect(() => {
+    applyFilters();
+  }, [searchField, searchTerm, additionalFilters, users]);
+
+  // Funciones de ayuda
+  const applyFilters = () => {
+    let result = [...users];
+
+    if (searchField && searchTerm) {
+      result = result.filter(user => {
+        const value = user[searchField];
+        return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+      });
+    }
+
+    additionalFilters.forEach(filter => {
+      if (filter.field && filter.value) {
+        result = result.filter(user => {
+          const value = user[filter.field];
+          return value?.toString().toLowerCase().includes(filter.value.toLowerCase());
+        });
+      }
+    });
+
+    setFilteredUsers(result);
+    setCurrentPage(1);
+  };
+
+  const toggleMenu = (menu) => {
+    setMenuState(prev => {
+      const newState = { support: false, admin: false, config: false };
+      if (menu) newState[menu] = !prev[menu];
+      return newState;
+    });
+  };
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+
+  // Funciones de exportación
+  const exportToExcel = () => {
+    console.log("Exportando a Excel", filteredUsers);
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToPdf = () => {
+    console.log("Exportando a PDF", filteredUsers);
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToCsv = () => {
+    console.log("Exportando a CSV", filteredUsers);
+    setIsExportDropdownOpen(false);
+  };
+
+  const printTable = () => {
+    window.print();
+    setIsExportDropdownOpen(false);
+  };
+
+  // Funciones de API
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get("http://localhost:5000/usuarios/obtener");
-      const data = response.data;
-      setUsers(data);
-      setFilteredUsers(data);
+      setUsers(response.data);
+      setFilteredUsers(response.data);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
     } finally {
@@ -155,7 +135,6 @@ const Usuarios = () => {
     }
   };
 
-  // Función para obtener entidades
   const fetchEntidades = async () => {
     try {
       const response = await axios.get("http://localhost:5000/usuarios/obtenerEntidades");
@@ -165,92 +144,155 @@ const Usuarios = () => {
     }
   };
 
-  // Preparar formulario para edición
-  const handleEdit = (user) => {
-    setEditingUser(user.id_usuario);
-    setFormData({
-      nombre_usuario: user.nombre_usuario,
-      nombre_completo: user.nombre_completo,
-      correo: user.correo,
-      telefono: user.telefono,
-      contrasena: '', // No mostramos la contraseña por seguridad
-      estado: user.estado,
-      id_entidad: user.id_entidad1 || '',
-      rol: user.rol
-    });
-    setShowForm(true);
-  };
+  // Funciones de validación corregidas
+  const validateField = (name, value) => {
+    const newErrors = { ...formErrors };
 
-  const handleDelete = async (id_usuario) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) return;
-
-    try {
-      const response = await axios.delete(`http://localhost:5000/usuarios/eliminar/${id_usuario}`);
-
-      if (response.data.success) {
-        alert("Usuario eliminado correctamente");
-        fetchUsers(); // recarga los usuarios
-      } else {
-        alert("Error al eliminar el usuario");
-      }
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-      alert("Ocurrió un error al intentar eliminar el usuario.");
+    switch (name) {
+      case 'nombre_usuario':
+        if (!value) {
+          newErrors[name] = 'Nombre de usuario es requerido';
+        } else if (typeof value === 'string' && value.trim().length < 3) {
+          newErrors[name] = 'Mínimo 3 caracteres';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'nombre_completo':
+        if (!value) {
+          newErrors[name] = 'Nombre completo es requerido';
+        } else if (typeof value === 'string' && value.trim().length === 0) {
+          newErrors[name] = 'Nombre completo no puede estar vacío';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'correo':
+        if (!value) {
+          newErrors[name] = 'Correo es requerido';
+        } else if (typeof value === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+          newErrors[name] = 'Correo inválido';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'telefono':
+        if (value && typeof value === 'string' && !/^\d{7,15}$/.test(value.trim())) {
+          newErrors[name] = 'Teléfono inválido';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'contrasena':
+        if (!editingId && !value) {
+          newErrors[name] = 'Contraseña es requerida';
+        } else if (value && typeof value === 'string' && value.length < 6) {
+          newErrors[name] = 'Mínimo 6 caracteres';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'id_entidad':
+        if (value === '' || value === null || value === undefined) {
+          newErrors[name] = 'Entidad es requerida';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      case 'rol':
+        if (!value) {
+          newErrors[name] = 'Rol es requerido';
+        } else {
+          delete newErrors[name];
+        }
+        break;
+      
+      default:
+        break;
     }
+
+    setFormErrors(newErrors);
+    return !newErrors[name];
   };
 
-  // Manejar envío del formulario
+  const validateForm = () => {
+    const requiredFields = ['nombre_usuario', 'nombre_completo', 'correo', 'id_entidad', 'rol'];
+    if (!editingId) requiredFields.push('contrasena');
+    
+    const isValid = requiredFields.every(field => {
+      const value = formData[field];
+      validateField(field, value);
+      
+      if (value === null || value === undefined || value === '') {
+        return false;
+      }
+      
+      if (typeof value === 'string') {
+        return value.trim() !== '';
+      }
+      
+      if (typeof value === 'number') {
+        return true;
+      }
+      
+      return true;
+    });
+
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validación final antes de enviar
-    let isValid = true;
-    const fieldsToValidate = ['nombre_usuario', 'nombre_completo', 'telefono', 'correo', 'id_entidad', 'rol'];
-    if (!editingUser) fieldsToValidate.push('contrasena');
-
-    fieldsToValidate.forEach(field => {
-      isValid = validateField(field, formData[field]) && isValid;
-    });
-
-    if (!isValid) {
-      alert('Por favor complete todos los campos requeridos correctamente');
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
     try {
-      const url = editingUser
-        ? `http://localhost:5000/usuarios/actualizacion/${editingUser}`
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId
+        ? `http://localhost:5000/usuarios/actualizacion/${editingId}`
         : 'http://localhost:5000/usuarios/creacion';
 
-      const method = editingUser ? 'PUT' : 'POST';
+      const response = await axios[method.toLowerCase()](url, formData);
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert(editingUser ? 'Usuario actualizado correctamente' : 'Usuario guardado correctamente');
+      if (response.data.success) {
+        alert(editingId ? 'Usuario actualizado' : 'Usuario creado');
         resetForm();
         fetchUsers();
-      } else {
-        alert('Error al guardar: ' + data.message);
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al conectar con el servidor');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Resetear formulario
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Eliminar este usuario?")) return;
+
+    try {
+      const response = await axios.delete(`http://localhost:5000/usuarios/eliminar/${id}`);
+      if (response.data.success) {
+        alert("Usuario eliminado");
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+    }
+  };
+
+  // Funciones de formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
   const resetForm = () => {
     setFormData({
       nombre_usuario: '',
@@ -262,124 +304,82 @@ const Usuarios = () => {
       id_entidad: '',
       rol: ''
     });
+    setEditingId(null);
     setFormErrors({});
-    setEditingUser(null);
     setShowForm(false);
   };
 
-  // Manejar filtros adicionales
+  const handleEdit = (user) => {
+    setFormData({
+      nombre_usuario: user.nombre_usuario,
+      nombre_completo: user.nombre_completo,
+      correo: user.correo,
+      telefono: user.telefono,
+      contrasena: '',
+      estado: user.estado,
+      id_entidad: user.id_entidad1 || '',
+      rol: user.rol
+    });
+    setEditingId(user.id_usuario);
+    setShowForm(true);
+  };
+
+  // Funciones de filtrado
   const addFilterField = () => {
     setAdditionalFilters([...additionalFilters, { field: 'nombre_usuario', value: '' }]);
   };
 
   const handleFilterChange = (index, field, value) => {
-    const updatedFilters = [...additionalFilters];
-    updatedFilters[index] = { ...updatedFilters[index], [field]: value };
-    setAdditionalFilters(updatedFilters);
+    const updated = [...additionalFilters];
+    updated[index] = { ...updated[index], [field]: value };
+    setAdditionalFilters(updated);
   };
 
   const removeFilter = (index) => {
-    const updatedFilters = [...additionalFilters];
-    updatedFilters.splice(index, 1);
-    setAdditionalFilters(updatedFilters);
+    const updated = [...additionalFilters];
+    updated.splice(index, 1);
+    setAdditionalFilters(updated);
   };
 
-  // Resetear búsqueda y mostrar lista de usuarios
-  const resetSearch = async () => {
+  const resetSearch = () => {
     setSearchTerm("");
     setAdditionalFilters([]);
-    setIsLoading(true);
-    try {
-      await fetchUsers();
-    } finally {
-      setIsLoading(false);
-    }
+    fetchUsers();
   };
 
-  // Handlers para el menú
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
-
-  // Lógica de paginación
+  // Funciones de paginación
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = filteredUsers.slice(indexOfFirstRow, indexOfLastRow);
-
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
-  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+  const paginate = (page) => setCurrentPage(page);
+  const nextPage = () => currentPage < totalPages && setCurrentPage(p => p + 1);
+  const prevPage = () => currentPage > 1 && setCurrentPage(p => p - 1);
 
   const handleRowsPerPageChange = (e) => {
     setRowsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
 
-  const roleToPath = {
-    usuario: '/home',
-    tecnico: '/HomeTecnicoPage',
-    administrador: '/HomeAdmiPage'
-  };
-
-  const getRouteByRole = (section) => {
-    const userRole = localStorage.getItem("rol");
-
-    if (section === 'inicio') {
-      if (userRole === 'administrador') {
-        return '/HomeAdmiPage';
-      } else if (userRole === 'tecnico') {
-        return '/HomeTecnicoPage';
-      } else {
-        return '/home';
-      }
-    } else if (section === 'crear-caso') {
-      if (userRole === 'administrador') {
-        return '/CrearCasoAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/CrearCasoAdmin';
-      } else {
-        return '/CrearCasoUse';
-      }
-    } else if (section === 'tickets') {
-      if (userRole === 'administrador') {
-        return '/TicketsAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/TicketsTecnico';
-      } else {
-        return '/Tickets';
-      }
-    } else {
-      return '/home';
-    }
-  };
+  // Renderizado condicional
+  if (!['administrador', 'tecnico'].includes(userRole)) {
+    return (
+      <div className={styles.accessDenied}>
+        <h2>Acceso restringido</h2>
+        <p>No tienes permisos para acceder a esta sección.</p>
+        <Link to="/" className={styles.returnLink}>Volver al inicio</Link>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
         className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMenu}
-        onMouseLeave={toggleMenu}
+        onMouseEnter={toggleMainMenu}
+        onMouseLeave={toggleMainMenu}
       >
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
@@ -396,97 +396,145 @@ const Usuarios = () => {
 
           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
             <ul className={styles.menuIconos}>
-              {/* Opción Inicio - visible para todos */}
-              <li className={styles.iconosMenu}>
-                <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
-                  <FcHome className={styles.menuIcon} />
-                  <span className={styles.menuText}>Inicio</span>
-                </Link>
-              </li>
-
-              {/* Menú Soporte - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                    <FcAssistant className={styles.menuIcon} />
-                    <span className={styles.menuText}> Soporte</span>
-                  </div>
-
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Tickets" className={styles.submenuLink}>
-                        <FcAnswers className={styles.menuIcon} />
-                        <span className={styles.menuText}>Tickets</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                        <FcCustomerSupport className={styles.menuIcon} />
-                        <span className={styles.menuText}>Crear Caso</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Problemas" className={styles.submenuLink}>
-                        <FcExpired className={styles.menuIcon} />
-                        <span className={styles.menuText}>Problemas</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Estadisticas" className={styles.submenuLink}>
-                        <FcBullish className={styles.menuIcon} />
-                        <span className={styles.menuText}>Estadísticas</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              {/* Menú Administración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                    <FcBusinessman className={styles.menuIcon} />
-                    <span className={styles.menuText}> Administración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Usuarios" className={styles.submenuLink}>
-                        <FcPortraitMode className={styles.menuIcon} />
-                        <span className={styles.menuText}> Usuarios</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Grupos" className={styles.submenuLink}>
-                        <FcConferenceCall className={styles.menuIcon} />
-                        <span className={styles.menuText}> Grupos</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Entidades" className={styles.submenuLink}>
-                        <FcOrganization className={styles.menuIcon} />
-                        <span className={styles.menuText}> Entidades</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              )}
-
-              {/* Menú Configuración - solo para técnicos */}
-              {userRole === "tecnico" && (
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                    <FcAutomatic className={styles.menuIcon} />
-                    <span className={styles.menuText}> Configuración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Categorias" className={styles.submenuLink}>
-                        <FcGenealogy className={styles.menuIcon} />
-                        <span className={styles.menuText}>Categorias</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
+              {userRole === 'administrador' ? (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                      <FcAssistant className={styles.menuIcon} />
+                      <span className={styles.menuText}> Soporte</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Tickets" className={styles.submenuLink}>
+                          <FcAnswers className={styles.menuIcon} />
+                          <span className={styles.menuText}>Tickets</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                          <FcCustomerSupport className={styles.menuIcon} />
+                          <span className={styles.menuText}>Crear Caso</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Estadisticas" className={styles.submenuLink}>
+                          <FcBullish className={styles.menuIcon} />
+                          <span className={styles.menuText}>Estadísticas</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                      <FcBusinessman className={styles.menuIcon} />
+                      <span className={styles.menuText}> Administración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Usuarios" className={styles.submenuLink}>
+                          <FcPortraitMode className={styles.menuIcon} />
+                          <span className={styles.menuText}> Usuarios</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Grupos" className={styles.submenuLink}>
+                          <FcConferenceCall className={styles.menuIcon} />
+                          <span className={styles.menuText}> Grupos</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/Entidades" className={styles.submenuLink}>
+                          <FcOrganization className={styles.menuIcon} />
+                          <span className={styles.menuText}> Entidades</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('config')}>
+                      <FcAutomatic className={styles.menuIcon} />
+                      <span className={styles.menuText}> Configuración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.config ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Categorias" className={styles.submenuLink}>
+                          <FcGenealogy className={styles.menuIcon} />
+                          <span className={styles.menuText}>Categorias</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                </>
+              ) : userRole === 'tecnico' ? (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
+                      <FcAssistant className={styles.menuIcon} />
+                      <span className={styles.menuText}> Soporte</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Tickets" className={styles.submenuLink}>
+                          <FcAnswers className={styles.menuIcon} />
+                          <span className={styles.menuText}>Tickets</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                          <FcCustomerSupport className={styles.menuIcon} />
+                          <span className={styles.menuText}>Crear Caso</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
+                      <FcBusinessman className={styles.menuIcon} />
+                      <span className={styles.menuText}> Administración</span>
+                    </div>
+                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
+                      <li>
+                        <Link to="/Usuarios" className={styles.submenuLink}>
+                          <FcPortraitMode className={styles.menuIcon} />
+                          <span className={styles.menuText}> Usuarios</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/home" className={styles.linkSinSubrayado}>
+                      <FcHome className={styles.menuIcon} />
+                      <span className={styles.menuText}>Inicio</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                      <FcCustomerSupport className={styles.menuIcon} />
+                      <span className={styles.menuText}>Crear Caso</span>
+                    </Link>
+                  </li>
+                  <li className={styles.iconosMenu}>
+                    <Link to="/Tickets" className={styles.linkSinSubrayado}>
+                      <FcAnswers className={styles.menuIcon} />
+                      <span className={styles.menuText}>Tickets</span>
+                    </Link>
+                  </li>
+                </>
               )}
             </ul>
           </div>
@@ -500,13 +548,17 @@ const Usuarios = () => {
       </aside>
 
       {/* Contenido principal */}
-      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
+      <div style={{
+        marginLeft: isMenuExpanded ? "200px" : "60px",
+        transition: "margin-left 0.3s ease"
+      }}>
         <Outlet />
       </div>
+
       {/* Header */}
       <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <div className={styles.containerInicioImg}>
-          <Link to={roleToPath[userRole] || '/home'} className={styles.linkSinSubrayado}>
+          <Link to={userRole === 'administrador' ? '/HomeAdmiPage' : userRole === 'tecnico' ? '/HomeTecnicoPage' : '/home'} className={styles.linkSinSubrayado}>
             <span>Inicio</span>
           </Link>
         </div>
@@ -527,7 +579,6 @@ const Usuarios = () => {
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
             {isLoading && <span className={styles.loading}>Buscando...</span>}
-            {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
           <div className={styles.userContainer}>
@@ -541,30 +592,29 @@ const Usuarios = () => {
         </div>
       </header>
 
-      <div className={styles.container} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-        {/* Spinner de carga */}
+      {/* Contenido */}
+      <div className={styles.container} style={{
+        marginLeft: isMenuExpanded ? "200px" : "60px"
+      }}>
         {isLoading && (
           <div className={styles.loadingOverlay}>
             <FaSpinner className={styles.spinner} />
           </div>
         )}
 
-        {/* Controles superiores */}
         <div className={styles.topControls}>
-          <button onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }} className={styles.addButton}>
+          <button
+            onClick={() => { resetForm(); setShowForm(!showForm); }}
+            className={styles.addButton}
+          >
             <FaPlus /> {showForm ? 'Ver Usuarios' : 'Agregar Usuario'}
           </button>
         </div>
 
-        {/* Contenido alternado */}
         {showForm ? (
-          // FORMULARIO DE CREACIÓN/EDICIÓN DE USUARIO
           <div className={styles.containerUsuarios}>
             <h2 className={styles.titulo}>
-              {editingUser ? 'Editar Usuario' : 'Formulario de Creación de Usuario'}
+              {editingId ? 'Editar Usuario' : 'Formulario de Creación de Usuario'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className={styles.gridContainerUsuarios}>
@@ -581,6 +631,7 @@ const Usuarios = () => {
                     />
                     {formErrors.nombre_usuario && <span className={styles.errorMessage}>{formErrors.nombre_usuario}</span>}
                   </div>
+
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Nombre completo</label>
                     <input
@@ -593,8 +644,9 @@ const Usuarios = () => {
                     />
                     {formErrors.nombre_completo && <span className={styles.errorMessage}>{formErrors.nombre_completo}</span>}
                   </div>
+
                   <div className={styles.formGroup}>
-                    <label className={styles.label}>Correo</label>
+                    <label className={styles.label}>Correo electrónico</label>
                     <input
                       type="email"
                       className={`${styles.input} ${formErrors.correo ? styles.inputError : ''}`}
@@ -619,6 +671,7 @@ const Usuarios = () => {
                     />
                     {formErrors.telefono && <span className={styles.errorMessage}>{formErrors.telefono}</span>}
                   </div>
+
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Contraseña</label>
                     <input
@@ -627,14 +680,20 @@ const Usuarios = () => {
                       name="contrasena"
                       value={formData.contrasena}
                       onChange={handleChange}
-                      placeholder={editingUser ? "Dejar en blanco para no cambiar" : ""}
-                      required={!editingUser}
+                      placeholder={editingId ? "Dejar en blanco para no cambiar" : ""}
+                      required={!editingId}
                     />
                     {formErrors.contrasena && <span className={styles.errorMessage}>{formErrors.contrasena}</span>}
                   </div>
+
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Estado</label>
-                    <select className={styles.select} name="estado" value={formData.estado} onChange={handleChange} required>
+                    <select
+                      className={styles.select}
+                      name="estado"
+                      value={formData.estado}
+                      onChange={handleChange}
+                    >
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
@@ -644,7 +703,7 @@ const Usuarios = () => {
 
               <div className={styles.selectsContainer}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Entidades</label>
+                  <label className={styles.label}>Entidad</label>
                   <select
                     className={`${styles.select} ${formErrors.id_entidad ? styles.inputError : ''}`}
                     name="id_entidad"
@@ -652,7 +711,7 @@ const Usuarios = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Seleccione...</option>
+                    <option value="">Seleccione una entidad</option>
                     {entidades.map(entidad => (
                       <option key={entidad.id_entidad} value={entidad.id_entidad}>
                         {entidad.nombre_entidad}
@@ -661,6 +720,7 @@ const Usuarios = () => {
                   </select>
                   {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
                 </div>
+
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Rol</label>
                   <select
@@ -670,7 +730,7 @@ const Usuarios = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="">Seleccione...</option>
+                    <option value="">Seleccione un rol</option>
                     <option value="administrador">Administrador</option>
                     <option value="tecnico">Técnico</option>
                     <option value="usuario">Usuario</option>
@@ -680,29 +740,27 @@ const Usuarios = () => {
               </div>
 
               <div className={styles.botonesContainer}>
-                <div>
-                  <button type="submit" className={styles.boton} disabled={isLoading}>
-                    {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
-                  </button>
-                </div>
-                <div>
-                  <button type="button" onClick={resetForm} className={styles.botonCancelar}>
-                    Cancelar
-                  </button>
-                </div>
+                <button type="submit" className={styles.boton} disabled={isLoading}>
+                  {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
+                </button>
+                <button type="button" onClick={resetForm} className={styles.botonCancelar}>
+                  Cancelar
+                </button>
               </div>
             </form>
           </div>
         ) : (
-          // LISTA DE USUARIOS
           <>
-            {/* Sistema de búsqueda */}
             <div className={styles.searchSection}>
               <h2 className={styles.sectionTitle}>Buscar Usuarios</h2>
-              <form className={styles.searchForm}>
+              <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
                 <div className={styles.mainSearch}>
                   <div className={styles.searchFieldGroup}>
-                    <select className={styles.searchSelect} value={searchField} onChange={(e) => setSearchField(e.target.value)}>
+                    <select
+                      className={styles.searchSelect}
+                      value={searchField}
+                      onChange={(e) => setSearchField(e.target.value)}
+                    >
                       <option value="nombre_usuario">Usuario</option>
                       <option value="nombre_completo">Nombre completo</option>
                       <option value="correo">Correo</option>
@@ -749,13 +807,47 @@ const Usuarios = () => {
                       value={filter.value}
                       onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
                     />
-                    <button type="button" onClick={() => removeFilter(index)} className={styles.removeFilterButton}>×</button>
+                    <button
+                      type="button"
+                      onClick={() => removeFilter(index)}
+                      className={styles.removeFilterButton}
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
+
+                <div className={styles.exportDropdown}>
+                  <button
+                    onClick={toggleExportDropdown}
+                    className={styles.exportButton}
+                    title="Opciones de exportación"
+                  >
+                    Exportar <FaChevronDown className={styles.dropdownIcon} />
+                  </button>
+                  {isExportDropdownOpen && (
+                    <div
+                      className={styles.exportDropdownContent}
+                      onMouseLeave={() => setIsExportDropdownOpen(false)}
+                    >
+                      <button onClick={exportToExcel} className={styles.exportOption}>
+                        <FaFileExcel /> Excel
+                      </button>
+                      <button onClick={exportToPdf} className={styles.exportOption}>
+                        <FaFilePdf /> PDF
+                      </button>
+                      <button onClick={exportToCsv} className={styles.exportOption}>
+                        <FaFileCsv /> CSV
+                      </button>
+                      <button onClick={printTable} className={styles.exportOption}>
+                        <FcPrint /> Imprimir
+                      </button>
+                    </div>
+                  )}
+                </div>
               </form>
             </div>
 
-            {/* Tabla de usuarios */}
             <div className={styles.usersTableContainer}>
               <h2 className={styles.sectionTitle}>Usuarios Registrados ({filteredUsers.length})</h2>
               <div className={styles.tableWrapper}>
@@ -785,18 +877,14 @@ const Usuarios = () => {
                           <td>{user.nombre_usuario}</td>
                           <td>{user.nombre_completo}</td>
                           <td>{user.correo}</td>
-                          <td>{user.telefono}</td>
+                          <td>{user.telefono || '-'}</td>
                           <td>{user.rol}</td>
                           <td>
-                            <span 
-                              className={`${styles.statusBadge} ${
-                                user.estado === 'activo' ? styles.active : styles.inactive
-                              }`}
-                            >
+                            <span className={`${styles.statusBadge} ${user.estado === 'activo' ? styles.active : styles.inactive}`}>
                               {user.estado === 'activo' ? 'Activo' : 'Inactivo'}
                             </span>
                           </td>
-                          <td>{user.entidad || 'Sin entidad'}</td>
+                          <td>{user.entidad || '-'}</td>
                           <td>
                             <button
                               className={styles.actionButton}
@@ -823,7 +911,6 @@ const Usuarios = () => {
               </div>
             </div>
 
-            {/* Paginación */}
             <div className={styles.paginationControls}>
               <div className={styles.rowsPerPageSelector}>
                 <span>Filas por página:</span>
@@ -833,7 +920,7 @@ const Usuarios = () => {
                   className={styles.rowsSelect}
                   disabled={isLoading}
                 >
-                  {[15, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000].map(num => (
+                  {[15, 30, 50, 100].map(num => (
                     <option key={num} value={num}>{num}</option>
                   ))}
                 </select>
@@ -844,31 +931,21 @@ const Usuarios = () => {
 
               <div className={styles.pagination}>
                 <button
+                  className={`${styles.paginationButton} ${currentPage === 1 || isLoading ? styles.disabled : ''}`}
                   onClick={prevPage}
                   disabled={currentPage === 1 || isLoading}
-                  className={styles.paginationButton}
                 >
                   <FaChevronLeft />
                 </button>
 
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
-
+                  const pageNumber = i + 1;
                   return (
                     <button
                       key={pageNumber}
+                      className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
                       onClick={() => paginate(pageNumber)}
                       disabled={isLoading}
-                      className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
                     >
                       {pageNumber}
                     </button>
@@ -879,9 +956,9 @@ const Usuarios = () => {
                   <>
                     <span className={styles.paginationEllipsis}>...</span>
                     <button
+                      className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
                       onClick={() => paginate(totalPages)}
                       disabled={isLoading}
-                      className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
                     >
                       {totalPages}
                     </button>
@@ -889,9 +966,9 @@ const Usuarios = () => {
                 )}
 
                 <button
+                  className={`${styles.paginationButton} ${currentPage === totalPages || isLoading ? styles.disabled : ''}`}
                   onClick={nextPage}
                   disabled={currentPage === totalPages || isLoading}
-                  className={styles.paginationButton}
                 >
                   <FaChevronRight />
                 </button>
@@ -900,14 +977,13 @@ const Usuarios = () => {
           </>
         )}
 
-        {/* Chatbot */}
         <div className={styles.chatbotContainer}>
-          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={toggleChat} />
+          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={() => setIsChatOpen(!isChatOpen)} />
           {isChatOpen && (
             <div className={styles.chatWindow}>
               <div className={styles.chatHeader}>
                 <h4>Chat de Soporte</h4>
-                <button onClick={toggleChat} className={styles.closeChat}>&times;</button>
+                <button onClick={() => setIsChatOpen(false)} className={styles.closeChat}>&times;</button>
               </div>
               <div className={styles.chatBody}>
                 <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
