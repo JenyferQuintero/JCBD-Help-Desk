@@ -1,3 +1,4 @@
+-- Active: 1744258976597@@127.0.0.1@3306@help_desk_jcbd
 -- phpMyAdmin SQL Dump
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
@@ -6,6 +7,8 @@
 -- Tiempo de generación: 08-07-2025 a las 02:27:13
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
+
+
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,7 +23,8 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `help_desk_jcbd`
 --
-
+CREATE DATABASE help_desk_jcbd;
+USE help_desk_jcbd; 
 -- --------------------------------------------------------
 
 --

@@ -32,6 +32,10 @@ const Categorias = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +48,7 @@ const Categorias = () => {
   // Datos del formulario
   const [formData, setFormData] = useState({
     nombre_categoria: '',
+    entidad: '',
     descripcion: ''
   });
 
@@ -88,9 +93,37 @@ const Categorias = () => {
     });
   };
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  // Handlers
+  const toggleChat = () => setIsChatOpen(!isChatOpen);
   const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
+
+  const toggleSupport = () => {
+    setIsSupportOpen(!isSupportOpen);
+    setIsAdminOpen(false);
+    setIsConfigOpen(false);
+  };
+
+  const toggleAdmin = () => {
+    setIsAdminOpen(!isAdminOpen);
+    setIsSupportOpen(false);
+    setIsConfigOpen(false);
+  };
+
+  const toggleConfig = () => {
+    setIsConfigOpen(!isConfigOpen);
+    setIsSupportOpen(false);
+    setIsAdminOpen(false);
+  };
+
+  const handleSelectChange = (event) => {
+    const value = event.target.value;
+    const views = ["personal", "global", "todo", "dashboard"];
+    setActiveView(views[parseInt(value)]);
+  };
+
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
 
   // Funciones de exportación
   const exportToExcel = () => {
@@ -181,7 +214,7 @@ const Categorias = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['nombre_categoria'];
+    const requiredFields = ['nombre_categoria', 'entidad'];
     const isValid = requiredFields.every(field => {
       validateField(field, formData[field]);
       return formData[field]?.trim();
@@ -199,6 +232,7 @@ const Categorias = () => {
   const resetForm = () => {
     setFormData({
       nombre_categoria: '',
+      entidad: '',
       descripcion: ''
     });
     setEditingId(null);
@@ -209,6 +243,7 @@ const Categorias = () => {
   const handleEdit = (categoria) => {
     setFormData({
       nombre_categoria: categoria.nombre_categoria,
+      entidad: categoria.entidad,
       descripcion: categoria.descripcion || ''
     });
     setEditingId(categoria.id_categoria);
@@ -269,8 +304,8 @@ const Categorias = () => {
       {/* Menú Vertical */}
       <aside
         className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMainMenu}
-        onMouseLeave={toggleMainMenu}
+        onMouseEnter={toggleMenu}
+        onMouseLeave={toggleMenu}
       >
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
@@ -287,146 +322,88 @@ const Categorias = () => {
 
           <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
             <ul className={styles.menuIconos}>
-              {userRole === 'administrador' ? (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
-                      <FcAssistant className={styles.menuIcon} />
-                      <span className={styles.menuText}> Soporte</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Tickets" className={styles.submenuLink}>
-                          <FcAnswers className={styles.menuIcon} />
-                          <span className={styles.menuText}>Tickets</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                          <FcCustomerSupport className={styles.menuIcon} />
-                          <span className={styles.menuText}>Crear Caso</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Estadisticas" className={styles.submenuLink}>
-                          <FcBullish className={styles.menuIcon} />
-                          <span className={styles.menuText}>Estadísticas</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
-                      <FcBusinessman className={styles.menuIcon} />
-                      <span className={styles.menuText}> Administración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Usuarios" className={styles.submenuLink}>
-                          <FcPortraitMode className={styles.menuIcon} />
-                          <span className={styles.menuText}> Usuarios</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Grupos" className={styles.submenuLink}>
-                          <FcConferenceCall className={styles.menuIcon} />
-                          <span className={styles.menuText}> Grupos</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Entidades" className={styles.submenuLink}>
-                          <FcOrganization className={styles.menuIcon} />
-                          <span className={styles.menuText}> Entidades</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('config')}>
-                      <FcAutomatic className={styles.menuIcon} />
-                      <span className={styles.menuText}> Configuración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.config ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Categorias" className={styles.submenuLink}>
-                          <FcGenealogy className={styles.menuIcon} />
-                          <span className={styles.menuText}>Categorias</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                </>
-              ) : userRole === 'tecnico' ? (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
-                      <FcAssistant className={styles.menuIcon} />
-                      <span className={styles.menuText}> Soporte</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Tickets" className={styles.submenuLink}>
-                          <FcAnswers className={styles.menuIcon} />
-                          <span className={styles.menuText}>Tickets</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                          <FcCustomerSupport className={styles.menuIcon} />
-                          <span className={styles.menuText}>Crear Caso</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
-                      <FcBusinessman className={styles.menuIcon} />
-                      <span className={styles.menuText}> Administración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Usuarios" className={styles.submenuLink}>
-                          <FcPortraitMode className={styles.menuIcon} />
-                          <span className={styles.menuText}> Usuarios</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/home" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                      <FcCustomerSupport className={styles.menuIcon} />
-                      <span className={styles.menuText}>Crear Caso</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/Tickets" className={styles.linkSinSubrayado}>
+              {/* Opción Inicio */}
+              <li className={styles.iconosMenu}>
+                <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
+                  <FcHome className={styles.menuIcon} />
+                  <span className={styles.menuText}>Inicio</span>
+                </Link>
+              </li>
+
+              {/* Menú Soporte */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                  <FcAssistant className={styles.menuIcon} />
+                  <span className={styles.menuText}> Soporte</span>
+                </div>
+
+                <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+
+                  <li>
+                    <Link to="/Tickets" className={styles.submenuLink}>
                       <FcAnswers className={styles.menuIcon} />
                       <span className={styles.menuText}>Tickets</span>
                     </Link>
                   </li>
-                </>
-              )}
+                  <li>
+                    <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                      <FcCustomerSupport className={styles.menuIcon} />
+                      <span className={styles.menuText}>Crear Caso</span>
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link to="/Estadisticas" className={styles.submenuLink}>
+                      <FcBullish className={styles.menuIcon} />
+                      <span className={styles.menuText}>Estadísticas</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+
+              {/* Menú Administración */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                  <FcBusinessman className={styles.menuIcon} />
+                  <span className={styles.menuText}> Administración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                  <li>
+                    <Link to="/Usuarios" className={styles.submenuLink}>
+                      <FcPortraitMode className={styles.menuIcon} />
+                      <span className={styles.menuText}> Usuarios</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/Grupos" className={styles.submenuLink}>
+                      <FcConferenceCall className={styles.menuIcon} />
+                      <span className={styles.menuText}> Grupos</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/Entidades" className={styles.submenuLink}>
+                      <FcOrganization className={styles.menuIcon} />
+                      <span className={styles.menuText}> Entidades</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+
+              {/* Menú Configuración */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                  <FcAutomatic className={styles.menuIcon} />
+                  <span className={styles.menuText}> Configuración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                  <li>
+                    <Link to="/Categorias" className={styles.submenuLink}>
+                      <FcGenealogy className={styles.menuIcon} />
+                      <span className={styles.menuText}>Categorias</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
             </ul>
           </div>
 
@@ -648,7 +625,7 @@ const Categorias = () => {
                       <th>Nombre</th>
                       <th>Descripción</th>
                       <th>Acciones</th>
-                      <th>Acciones</th>
+
                     </tr>
                   </thead>
                   <tbody>

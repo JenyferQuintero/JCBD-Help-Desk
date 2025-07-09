@@ -235,7 +235,7 @@ const CrearCasoAdmin = () => {
         );
         setUsuarios(usuariosResponse.data);
 
-        // Obtener departamentos
+        // Obtener entidades
         const deptosResponse = await axios.get(
           "http://localhost:5000/usuarios/obtenerEntidades"
         );
@@ -246,6 +246,12 @@ const CrearCasoAdmin = () => {
           "http://localhost:5000/usuarios/obtenerCategorias"
         );
         setCategorias(catsResponse.data);
+
+        // Obtener grupos
+        const grupoResponse = await axios.get(
+          "http://localhost:5000/usuarios/obtenerGrupos"
+        );
+        setGrupos(grupoResponse.data);
 
 
         // Cargar datos del ticket si estamos en modo edición
@@ -734,7 +740,7 @@ const CrearCasoAdmin = () => {
                 <div className={styles.formGroup}>
                   <label>Grupo asignado*</label>
                   <select
-                    name="grupo asignado"
+                    name="grupo_asignado"
                     value={formData.grupo_asignado}
                     onChange={handleChange}
                     required

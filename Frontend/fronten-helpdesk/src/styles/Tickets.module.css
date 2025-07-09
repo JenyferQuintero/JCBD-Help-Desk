@@ -134,7 +134,7 @@
 
 .icon {
   font-size: 20px;
-  color: #ecdfdf;
+  color: #333;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -1037,7 +1037,7 @@ tr:hover {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   min-height: 18px;
   display: flex;
   align-items: center;
@@ -1055,14 +1055,14 @@ tr:hover {
 
 }
 
-.status.encurso {
+.status.en_curso {
   background-color: #ffb13b;
   color: rgb(14, 13, 13);
 
 }
 
-.status.enespera {
-  background-color: #eec588;
+.status.en_espera {
+  background-color: #dc8b11;
   color: rgb(14, 13, 13);
 
 }
