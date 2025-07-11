@@ -33,6 +33,7 @@ const Usuarios = () => {
   const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
   const [entidades, setEntidades] = useState([]);
+  
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,6 +96,8 @@ const Usuarios = () => {
       return newState;
     });
   };
+
+
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleMainMenu = () => setIsMenuExpanded(!isMenuExpanded);

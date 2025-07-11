@@ -1,3 +1,10 @@
+/* Variables para breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+}
+
 .containerPrincipal {
   width: 100vw;
   height: 100vh;
@@ -27,10 +34,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   border-bottom: 1px solid #ccc;
   transition: margin-left 0.3s ease;
 }
+
 @media (max-width: 1024px) {
   .containerInicio {
     padding: 40px;
@@ -55,6 +63,354 @@
   border-radius: 4px;
   background-color: #e9ecef;
   transition: all 0.3s ease;
+}
+
+
+/* MENÚ VERTICAL - ESTILOS PRINCIPALES */
+.menuVertical {
+  width: 60px;
+  height: 100vh;
+  background-color: #343bbf;
+  color: white;  position: fixed;
+  top: 0;
+  left: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.menuVertical:hover {
+  width: 200px;
+}
+
+.containerFluidMenu {
+  padding: 20px 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  position: relative;
+}
+
+.logoContainer {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logoContainer img {
+  max-width: 80%;
+  height: auto;
+  border-radius: 80px;
+  transition: all 0.3s ease;
+}
+
+.logoContainer:hover img {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobileMenuButton {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 10px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.mobileMenuButton:hover {
+  transform: rotate(90deg);
+}
+
+.menuVerticalDesplegable {
+  width: 100%;
+  flex-grow: 1;
+  position: relative;
+}
+
+.menuIconos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  height: calc(100% - 80px);
+}
+
+.iconosMenu {
+  margin-bottom: 10px;
+  position: relative;
+  perspective: 1000px;
+}
+
+.iconosMenu a {
+  color: #060606de;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+}
+
+.iconosMenu a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s ease;
+}
+
+.iconosMenu a:hover {
+  background-color: #0096c7;
+  color: white;
+  transform: rotateY(10deg) translateX(5px);
+}
+
+.iconosMenu a:hover::before {
+  left: 100%;
+}
+
+.menuIcon {
+  font-size: 24px;
+  min-width: 24px;
+  margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+.iconosMenu a:hover .menuIcon {
+  transform: rotate(10deg) scale(1.2);
+}
+
+.menuText {
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.menuVertical:hover .menuText {
+  opacity: 1;
+}
+
+.submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-left: 20px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in;
+  background-color: transparent;
+}
+
+.showSubmenu {
+  max-height: 500px;
+}
+
+.submenuLink {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  margin: 5px 0;
+  transition: all 0.3s ease;
+}
+
+.submenuLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding-left: 15px;
+}
+
+.menuLogoEmpresarial {
+  text-align: center;
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 auto;
+}
+
+.menuLogoEmpresarial img {
+  max-width: 80%;
+  height: auto;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.menuLogoEmpresarial:hover {
+  opacity: 1;
+}
+
+.menuLogoEmpresarial:hover img {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Eliminar el logo empresarial flotante si existe */
+.floatingLogo {
+  display: none;
+}
+
+/* Ajustes para móvil */
+@media (max-width: 768px) {
+  .menuLogoEmpresarial {
+    display: none;
+    /* Ocultar en móvil si es necesario */
+  }
+
+  .menuVerticalDesplegable.mobileMenuOpen .menuLogoEmpresarial {
+    display: block;
+    /* Mostrar cuando el menú móvil está abierto */
+    margin-top: 20px;
+
+  }
+}
+
+/* Estilos responsive para el menú */
+@media (max-width: 768px) {
+  .menuVertical {
+    width: 60px;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .menuVertical:hover {
+    width: 60px;
+  }
+
+  .mobileMenuButton {
+    display: block;
+    z-index: 1001;
+  }
+
+  .menuVerticalDesplegable {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #023e8a;
+    width: 200px;
+    padding: 10px;
+    border-radius: 0 0 10px 0;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    height: auto;
+    max-height: calc(100vh - 100px);
+  }
+
+  .menuVerticalDesplegable.mobileMenuOpen {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .menuText {
+    opacity: 1 !important;
+  }
+
+  .menuLogoEmpresarial {
+    position: static;
+    margin-top: 20px;
+    width: 100%;
+    border-top: none;
+  }
+
+  .menuVerticalDesplegable {
+    padding-bottom: 0;
+  }
+
+  .menuIconos {
+    height: auto;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobileMenuButton {
+    display: none !important;
+  }
+
+  .menuVerticalDesplegable {
+    display: block !important;
+  }
+}
+
+/* Efecto hover solo para dispositivos que soportan hover */
+@media (hover: hover) {
+  .menuVertical:hover {
+    width: 200px;
+  }
+
+  .menuVertical:hover .menuText {
+    opacity: 1;
+  }
+}
+
+/* Animaciones para los botones del menú principal */
+.iconosMenu {
+  perspective: 1000px;
+}
+
+.iconosMenu a {
+  transform-style: preserve-3d;
+  transform-origin: left center;
+}
+
+.iconosMenu a:hover {
+  transform: rotateY(10deg) translateX(5px);
+}
+
+/* Animación para el logo empresarial */
+.empresarialContainer img {
+  transition: all 0.5s ease;
+}
+
+.empresarialContainer:hover img {
+  animation: rotateLogo 2s ease;
+}
+
+@keyframes rotateLogo {
+  0% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
 }
 
 .linkSinSubrayado:hover {
@@ -140,8 +496,15 @@
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .chatWindow {
@@ -203,143 +566,7 @@
   cursor: pointer;
 }
 
-/* Menú Vertical */
-.menuVertical {
-  width: 60px;
-  height: 100vh;
-  background-color: #3a0ca3;
-  color: white;
-  position: fixed;
-  top: 0;
-  left: 0;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  z-index: 1000;
-}
 
-.menuVertical.expanded {
-  width: 200px;
-}
-
-.containerFluidMenu {
-  padding: 20px 10px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-}
-
-.logoContainer img {
-  max-width: 80%;
-  height: auto;
-  border-radius: 80px;
-  transition: all 0.3s ease;
-}
-
-.menuButton {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 10px;
-  margin-bottom: 20px;
-}
-
-.menuVerticalDesplegable {
-  width: 100%;
-  flex-grow: 1;
-}
-
-.menuIconos {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.iconosMenu {
-  margin-bottom: 15px;
-  position: relative;
-}
-
-.iconosMenu a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 5px;
-  transition: all 0.3s ease;
-}
-
-.iconosMenu a:hover {
-  background-color: #0096c7;
-}
-
-.menuIcon {
-  font-size: 24px;
-  min-width: 24px;
-}
-
-.menuText {
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.menuVertical.expanded .menuText {
-  opacity: 1;
-}
-
-.submenu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  margin-left: 20px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.showSubmenu {
-  max-height: 500px;
-}
-
-.submenuLink {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 10px;
-  border-radius: 4px;
-}
-
-.submenuLink:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.floatingContainer {
-  position: relative;
-  width: 100%;
-  margin-top: auto;
-}
-
-.menuLogoEmpresarial {
-  text-align: center;
-  padding-top: 20px;
-  opacity: 0.6;
-  transition: all 0.3s ease;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.menuLogoEmpresarial img {
-  max-width: 80%;
-  height: auto;
-  border-radius: 10px;
-}
 
 /* Contenedor de creación de ticket */
 .containersolucion {
@@ -352,7 +579,7 @@
 }
 
 .title {
-  color: #3a0ca3;
+  color: #343bbf;
   text-align: center;
   margin-bottom: 2rem;
   font-size: 1.8rem;
@@ -372,7 +599,8 @@
   justify-content: center;
   padding: 20px;
   flex: 1;
-  position: relative; /* Añadido para posicionamiento relativo */
+  position: relative;
+ 
 }
 
 .gloBoContainer {
@@ -384,14 +612,16 @@
   max-width: 600px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #dee2e6;
-  margin-top: 30px; /* Espacio para la punta */
+  margin-top: 30px;
+  /* Espacio para la punta */
 }
 
 .gloBoHeader {
   text-align: center;
   margin-bottom: 20px;
   color: #2c3e50;
-  position: relative; /* Para posicionar el nombre del usuario */
+  position: relative;
+  /* Para posicionar el nombre del usuario */
 }
 
 .userIndicator {
@@ -399,7 +629,7 @@
   top: -5px;
   left: 80px;
   font-size: 14px;
-  color: #3a0ca3;
+  color: #343bbf;
   font-weight: 500;
 }
 
@@ -541,7 +771,7 @@
 }
 
 .editButton {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -628,88 +858,7 @@
   margin-top: 10px;
 }
 
-/* Botón de menú para móviles */
-.mobileMenuButton {
-  display: none;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 10px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-}
 
-.mobileMenuButton:hover {
-  transform: rotate(90deg);
-}
-
-/* Estilos responsive */
-@media (max-width: 768px) {
-  .menuVertical {
-    width: 60px;
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
-  }
-  
-  .menuVertical:hover {
-    width: 60px;
-  }
-  
-  .mobileMenuButton {
-    display: block;
-    z-index: 1001;
-  }
-  
-  .menuVerticalDesplegable {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #023e8a;
-    width: 200px;
-    padding: 10px;
-    border-radius: 0 0 10px 0;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    z-index: 1000;
-    height: auto;
-    max-height: calc(100vh - 100px);
-  }
-  
-  .menuVerticalDesplegable.mobileMenuOpen {
-    display: block;
-    animation: slideDown 0.3s ease;
-  }
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .menuText {
-    opacity: 1 !important;
-  }
-  
-  .containerHomeAdmiPage {
-    width: calc(100% - 60px);
-    padding: 20px;
-  }
-  
-  .layoutContainer {
-    flex-direction: column;
-  }
-  
-  .ticketInfoContainer {
-    flex: 1;
-    width: 100%;
-  }
-}
 
 /* Modal de éxito */
 .modalOverlay {

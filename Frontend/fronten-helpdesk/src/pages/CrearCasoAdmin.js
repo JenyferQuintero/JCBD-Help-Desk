@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useParams, useNavigate } from "react-router-dom";
+import { Outlet, Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
@@ -15,6 +15,7 @@ const CrearCasoAdmin = () => {
   const nombre = localStorage.getItem("nombre") || "";
 
   // Estados
+  const location = useLocation();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -91,6 +92,9 @@ const CrearCasoAdmin = () => {
     setIsSupportOpen(false);
     setIsAdminOpen(false);
   };
+
+
+
 
   // Manejar búsqueda
   const handleSearch = (e) => {

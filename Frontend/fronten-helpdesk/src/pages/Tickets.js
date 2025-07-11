@@ -736,8 +736,8 @@ const Tickets = () => {
                 >
                   <option value="">Seleccione...</option>
                   <option value="nuevo">Nuevo</option>
-                  <option value="en_curso">En Curso</option>
-                  <option value="en_espera">En Espera</option>
+                  <option value="en-curso">Curso</option>
+                  <option value="en-espera">Espera</option>
                   <option value="resuelto">Resuelto</option>
                   <option value="cerrado">Cerrado</option>
                 </select>

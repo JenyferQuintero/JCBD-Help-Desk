@@ -253,6 +253,18 @@ const HomeAdmiPage = () => {
   // Obtener datos del usuario
   const userRole = localStorage.getItem("rol") || "";
   const nombre = localStorage.getItem("nombre") || "";
+
+    // Estados
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeView, setActiveView] = useState("personal");
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Verificación de rol
   if (userRole !== "administrador") {
@@ -267,17 +279,7 @@ const HomeAdmiPage = () => {
     );
   }
 
-  // Estados
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeView, setActiveView] = useState("personal");
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+
 
   // Datos
   const tickets = [

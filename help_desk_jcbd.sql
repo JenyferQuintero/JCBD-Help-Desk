@@ -333,7 +333,10 @@ CREATE TRIGGER `after_ticket_update` AFTER UPDATE ON `tickets` FOR EACH ROW BEGI
     
     -- Registrar cierre de ticket
     IF (NEW.fecha_cierre IS NOT NULL AND OLD.fecha_cierre IS NULL) THEN
-        INSERT INTO historial_tickets (id_ticket2, campo_modificado, valor_anterior, valor_nuevo, 
+        INSERT INTO historial_tickets (id_ticket2, campo_modificado, valor_anterior, valor_nuevo, {
+          "message": "Error interno del servidor",
+          "success": false
+        }
                                      modificado_por, nombre_modificador, rol_modificador)
         VALUES (NEW.id_ticket, 'fecha_cierre', NULL, NEW.fecha_cierre, 
                user_id, user_name, user_rol);
@@ -372,7 +375,10 @@ CREATE TABLE `usuarios` (
 
 --
 -- Volcado de datos para la tabla `usuarios`
---
+--{
+  "message": "Error interno del servidor",
+  "success": false
+}
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre_completo`, `correo`, `telefono`, `nombre_usuario`, `contraseña`, `rol`, `estado`, `fecha_registro`, `fecha_actualizacion`, `id_entidad1`) VALUES
 (1, 'Admin Sistema', 'admin@helpdeskjcbd.com', '123456789', 'Admin', 'admin123', 'administrador', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:32:19', 1),

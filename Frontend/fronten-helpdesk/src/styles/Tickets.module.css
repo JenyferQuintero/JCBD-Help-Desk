@@ -1,18 +1,20 @@
+/* Variables para breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+}
 .containerPrincipal {
   width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hiddn;
-  /* o 'hidden' si no quieres scroll */
   position: relative;
-  /* para posicionar hijos absolutos si es necesario */
   display: flex;
-  /* opcional, para flexbox layout */
   flex-direction: column;
-  /* opcional, para apilar hijos verticalmente */
   box-sizing: border-box;
-  /* para incluir padding en el tamaño total */
+  
 }
 
 .containerticket {
@@ -44,7 +46,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   border-bottom: 1px solid #ccc;
   transition: margin-left 0.3s ease;
   /* Transición suave para el margen */
@@ -128,7 +130,7 @@
 }
 
 .buttonBuscar:hover .searchIcon {
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 
@@ -210,6 +212,7 @@
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+/*tabla*/
 
 .tablaContainer {
   margin-top: 20px;
@@ -474,47 +477,13 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.ticketContainer {
-  margin: 10px 0;
-  justify-content: center;
-  text-align: center;
-}
 
-.ticketContainer .creacion {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ticketContainer .creacion a.creacionDeTicket {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.ticketContainer .creacion a.creacionDeTicket:hover {
-  background-color: #0096c7;
-  border-color: #004080;
-}
-
-.ticketContainer .creacion a.creacionDeTicket:active {
-  background-color: #004080;
-}
 
 /* MENÚ VERTICAL - ESTILOS PRINCIPALES */
 .menuVertical {
   width: 60px;
   height: 100vh;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   position: fixed;
   top: 0;
@@ -1050,10 +1019,10 @@ tr:hover {
 }
 
 .status {
-  padding: 4px 8px;
+  padding: 5px 8px;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 750;
   min-height: 18px;
   display: flex;
   align-items: center;
@@ -1071,13 +1040,13 @@ tr:hover {
 
 }
 
-.status.en_curso {
+.status.en-curso {
   background-color: #ffb13b;
   color: rgb(14, 13, 13);
 
 }
 
-.status.en_espera {
+.status.en-espera {
   background-color: #dc8b11;
   color: rgb(14, 13, 13);
 
@@ -1237,9 +1206,9 @@ tr:hover {
 }
 
 .paginationButton.active {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
-  border-color: #3a0ca3;
+  border-color: #343bbf;
 }
 
 .paginationEllipsis {
@@ -1248,7 +1217,7 @@ tr:hover {
 }
 
 .linkTicket {
-  color: #3a0ca3;
+  color: #343bbf;
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;

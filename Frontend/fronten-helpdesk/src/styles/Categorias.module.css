@@ -1,3 +1,9 @@
+/* Variables para breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+}
 .containerPrincipal {
   width: 100vw;
   height: 100vh;
@@ -30,7 +36,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #3a0ca3;
+  background-color: #3a3bbf;
   border-bottom: 1px solid #ccc;
   transition: margin-left 0.3s ease;
 }
@@ -114,7 +120,7 @@
 }
 
 .buttonBuscar:hover .searchIcon {
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .userContainer {
@@ -316,7 +322,7 @@
 
 .titulo {
   text-align: center;
-  color: #3a0ca3;
+  color: #343bbf;
   margin-bottom: 30px;
 }
 
@@ -354,7 +360,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #3a0ca3;
+  border-color: #343bbf;
   box-shadow: 0 0 0 2px rgba(58, 12, 163, 0.2);
 }
 
@@ -377,7 +383,7 @@
 
 .select:focus {
   outline: none;
-  border-color: #3a0ca3;
+  border-color: #343bbf;
   box-shadow: 0 0 0 2px rgba(58, 12, 163, 0.2);
 }
 
@@ -394,7 +400,7 @@
   width: 100%;
   max-width: 200px;
   padding: 12px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   border-radius: 4px;
@@ -409,7 +415,7 @@
 }
 
 .addButton {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -436,7 +442,7 @@
 }
 
 .sectionTitle {
-  color: #3a0ca3;
+  color: #343bbf;
   margin-bottom: 15px;
   font-size: 1.5rem;
 }
@@ -574,7 +580,7 @@
 .usersTable th {
   position: sticky;
   top: 0;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   z-index: 10;
 }
 
@@ -671,9 +677,9 @@
 }
 
 .paginationButton.active {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
-  border-color: #3a0ca3;
+  border-color: #343bbf;
 }
 
 .paginationEllipsis {
@@ -682,7 +688,7 @@
 }
 
 .linkTicket {
-  color: #3a0ca3;
+  color: #343bbf;
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
@@ -715,7 +721,7 @@
 .spinner {
   animation: spin 1s linear infinite;
   font-size: 50px;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .spinnerButton {
@@ -921,7 +927,7 @@
 .menuVertical {
   width: 60px;
   height: 100vh;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   position: fixed;
   top: 0;

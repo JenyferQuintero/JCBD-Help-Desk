@@ -5,7 +5,7 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
-import styles from "../styles/Usuarios.module.css";
+import styles from "../styles/Categorias.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatbotIcon from "../imagenes/img chatbot.png";
@@ -35,6 +35,7 @@ const Categorias = () => {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [activeView, setActiveView] = useState("personal");
 
 
   // Paginación

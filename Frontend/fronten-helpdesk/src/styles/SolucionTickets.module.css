@@ -1,3 +1,9 @@
+/* Variables para breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+}
 .containerPrincipal {
   width: 100vw;
   height: 100vh;
