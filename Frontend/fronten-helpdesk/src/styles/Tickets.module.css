@@ -55,7 +55,6 @@
 
 @media (max-width: 1024px) {
   .containerInicio {
-    padding: 40px;
     width: calc(95% - 40px);
   }
 }
@@ -63,7 +62,7 @@
 @media (max-width: 768px) {
   .containerInicio {
     width: calc(100% - 30px);
-    margin: 10px auto;
+  
     border-radius: 10px;
   }
 }

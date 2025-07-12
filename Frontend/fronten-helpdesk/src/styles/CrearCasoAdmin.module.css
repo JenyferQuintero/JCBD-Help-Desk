@@ -18,10 +18,8 @@
 }
 
 .containerCrearCasoAdmin {
-  width: calc(88% - 60px);
-  height: auto;
-  margin: 20px auto;
-  padding: 80px;
+   width: 93%;
+  padding: 20px;
   background-color: rgb(224, 224, 241);
   border-radius: 15px;
   box-shadow: 15px 15px 15px rgba(15, 12, 207, 0.3);
@@ -41,7 +39,6 @@
 
 @media (max-width: 1024px) {
   .containerInicio {
-    padding: 40px;
     width: calc(95% - 40px);
   }
 }
@@ -49,7 +46,7 @@
 @media (max-width: 768px) {
   .containerInicio {
     width: calc(100% - 30px);
-    margin: 10px auto;
+  
     border-radius: 10px;
   }
 }
@@ -604,15 +601,14 @@
 
 .gloBoContainer {
   position: relative;
-  background-color: #f8f9fa;
+  background-color: #afd3f7;
   border-radius: 20px;
   padding: 25px;
-  width: 100%;
-  max-width: 600px;
+  width: 150%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #dee2e6;
   margin-top: 30px;
-  /* Espacio para la punta */
+  
 }
 
 .gloBoHeader {
@@ -652,14 +648,25 @@
 }
 
 .formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  margin-bottom: 15px;
 }
 
 .formGroup label {
-  font-weight: 500;
-  color: #495057;
+  width: 50%;
+  margin-bottom: 5px;
+  font-weight: 100;
+  color: #555;
+  
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .inputField {
@@ -753,11 +760,26 @@
 
 /* Panel de información del ticket */
 .ticketInfoContainer {
+  flex: 0 0 30%; /* 30% de ancho, sin crecimiento */
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 20px;
+  order: 1; /* Columna izquierda */
+  height: auto; /* Altura según contenido */
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .layoutContainer {
+    flex-direction: column;
+  }
+  
+  .ticketInfoContainer,
+  .gloBoContainer {
+    flex: 1 1 100%;
+    width: 90%;
+  }
 }
 
 .header {

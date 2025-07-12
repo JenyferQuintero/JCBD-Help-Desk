@@ -43,7 +43,6 @@
 
 @media (max-width: 1024px) {
   .containerInicio {
-    padding: 40px;
     width: calc(95% - 40px);
   }
 }
@@ -51,7 +50,7 @@
 @media (max-width: 768px) {
   .containerInicio {
     width: calc(100% - 30px);
-    margin: 10px auto;
+  
     border-radius: 10px;
   }
 }
@@ -368,6 +367,20 @@
   box-shadow: 0 0 0 2px rgba(58, 12, 163, 0.2);
 }
 
+.inputField {
+  padding: 10px 15px;
+  border: 1px solid #136fca;  
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #343bbf;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
 .selectsContainer {
   display: grid;
   gap: 20px;
@@ -584,7 +597,7 @@
 .usersTable th {
   position: sticky;
   top: 0;
-  background-color: #343bbf;
+  background-color: #99bff2;
   z-index: 10;
 }
 

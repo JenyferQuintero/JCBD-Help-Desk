@@ -33,14 +33,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   border-bottom: 1px solid #ccc;
   transition: margin-left 0.3s ease;
  
 }
 @media (max-width: 1024px) {
   .containerInicio {
-    padding: 40px;
     width: calc(95% - 40px);
   }
 }
@@ -48,7 +47,7 @@
 @media (max-width: 768px) {
   .containerInicio {
     width: calc(100% - 30px);
-    margin: 10px auto;
+  
     border-radius: 10px;
   }
 }

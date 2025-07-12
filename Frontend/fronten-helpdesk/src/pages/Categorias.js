@@ -16,6 +16,7 @@ const Categorias = () => {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [entidades, setEntidades] = useState([]);
   const [menuState, setMenuState] = useState({
     support: false,
     admin: false,
@@ -35,7 +36,7 @@ const Categorias = () => {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [activeView, setActiveView] = useState("personal");
+ 
 
 
   // Paginación
@@ -116,15 +117,10 @@ const Categorias = () => {
     setIsAdminOpen(false);
   };
 
-  const handleSelectChange = (event) => {
-    const value = event.target.value;
-    const views = ["personal", "global", "todo", "dashboard"];
-    setActiveView(views[parseInt(value)]);
-  };
+ 
 
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
 
   // Funciones de exportación
   const exportToExcel = () => {
@@ -502,6 +498,26 @@ const Categorias = () => {
                   </div>
 
                   <div className={styles.formGroup}>
+                  <label className={styles.label}>Entidad</label>
+                  <select
+                    className={`${styles.select} ${formErrors.id_entidad ? styles.inputError : ''}`}
+                    name="id_entidad"
+                    value={formData.id_entidad}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una entidad</option>
+                    {entidades.map(entidad => (
+                      <option key={entidad.id_entidad} value={entidad.id_entidad}>
+                        {entidad.nombre_entidad}
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
+                </div>
+                  
+                  
+                  <div className={styles.formGroup}>
                     <label className={styles.label}>Descripción</label>
                     <textarea
                       className={styles.input}
@@ -536,7 +552,8 @@ const Categorias = () => {
                       value={searchField}
                       onChange={(e) => setSearchField(e.target.value)}
                     >
-                      <option value="nombre_categoria">Nombre</option>
+                      <option value="nombre categoria">Nombre</option>
+                      <option value="entidad">Entidad</option>
                       <option value="descripcion">Descripción</option>
                     </select>
                     <input
@@ -624,6 +641,7 @@ const Categorias = () => {
                   <thead>
                     <tr>
                       <th>Nombre</th>
+                      <th>Entidad</th>
                       <th>Descripción</th>
                       <th>Acciones</th>
 
@@ -640,6 +658,7 @@ const Categorias = () => {
                       currentRows.map((categoria) => (
                         <tr key={categoria.id_categoria}>
                           <td>{categoria.nombre_categoria}</td>
+                          <td>{categoria.entidad}</td>
                           <td>{categoria.descripcion || '-'}</td>
                           <td>
                             <button

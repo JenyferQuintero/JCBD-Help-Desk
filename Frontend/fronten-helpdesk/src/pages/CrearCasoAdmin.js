@@ -535,7 +535,7 @@ const CrearCasoAdmin = () => {
           <h1 className={styles.title}>Creación de Ticket</h1>
 
 
-          <div className={styles.crearCasoContainer}>
+          <div className={styles.layoutContainer}>
 
             <div className={styles.gloBoContainer}>
               <div className={styles.gloBoHeader}>
@@ -682,8 +682,8 @@ const CrearCasoAdmin = () => {
                   <select name="estado" value={ticket.estado}
                     onChange={handleChange} required>
                     <option value="nuevo">Nuevo</option>
-                    <option value="en curso">En curso</option>
-                    <option value="en espera">En espera</option>
+                    <option value="en-curso">En curso</option>
+                    <option value="en-espera">En espera</option>
                     <option value="resuelto">Resuelto</option>
                     <option value="cerrado">Cerrado</option>
                   </select>
