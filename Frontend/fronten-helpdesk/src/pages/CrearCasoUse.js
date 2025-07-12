@@ -20,12 +20,22 @@ const CrearCasoUse = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(""); // Estado para el término de búsqueda
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
-  // Obtener rol del usuario desde localStorage
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+
+  // Obtener datos del usuario desde localStorage
   const userRole = localStorage.getItem("rol") || "usuario";
-  const nombre = localStorage.getItem("nombre");
+  const userNombre = localStorage.getItem("nombre") || "";
+  const userId = localStorage.getItem("id_usuario");
+
+  // Determinar si estamos en modo edición
+  const isEditMode = id || location.state?.ticketData;
 
   // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
@@ -62,23 +72,19 @@ const CrearCasoUse = () => {
     administrador: '/HomeAdmiPage'
   };
 
-
-
-  console.log(nombre);
-  
-
   // Estado del formulario
   const [formData, setFormData] = useState({
     id: "",
-    tipo: "",
+    tipo: "incidente",
     origen: "",
+    ubicacion: "",
     prioridad: "",
     categoria: "",
     titulo: "",
     descripcion: "",
     archivo: null,
-    solicitante: nombre || "",
-    elementos: "",
+    solicitante: userId,
+    estado: "nuevo"
   });
 
   // Obtener datos iniciales al cargar el componente
@@ -102,13 +108,39 @@ const CrearCasoUse = () => {
           "http://localhost:5000/usuarios/obtenerCategorias"
         );
         setCategorias(catsResponse.data);
-        
 
+        // Obtener datos del usuario logueado para el campo origen
+        const userResponse = await axios.get(
+          `http://localhost:5000/usuarios/obtenerUsuario/${userId}`
+        );
+        const userData = userResponse.data;
+        
         // Cargar datos del ticket si estamos en modo edición
-        if (location.state?.ticketData) {
-          setFormData((prev) => ({
+        if (isEditMode) {
+          const ticketId = id || location.state?.ticketData?.id_ticket || location.state?.ticketData?.id;
+          const response = await axios.get(
+            `http://localhost:5000/usuarios/tickets/${ticketId}`
+          );
+          const ticketData = response.data;
+
+          setFormData({
+            id: ticketData.id,
+            tipo: ticketData.tipo,
+            origen: ticketData.origen || userData.entidad, // Usar el origen del ticket o la entidad del usuario
+            ubicacion: ticketData.ubicacion,
+            prioridad: ticketData.prioridad,
+            categoria: ticketData.id_categoria1,
+            titulo: ticketData.titulo,
+            descripcion: ticketData.descripcion,
+            archivo: null,
+            solicitante: userId,
+            estado: ticketData.estado_ticket
+          });
+        } else {
+          // En modo creación, establecer el origen con la entidad del usuario
+          setFormData(prev => ({
             ...prev,
-            ...location.state.ticketData,
+            origen: userData.entidad
           }));
         }
       } catch (error) {
@@ -118,10 +150,7 @@ const CrearCasoUse = () => {
     };
 
     fetchInitialData();
-  }, [location.state]);
-
-  
-
+  }, [id, location.state, isEditMode, userId]);
 
   // Manejo de cambios en el formulario
   const handleChange = (e) => {
@@ -142,40 +171,83 @@ const CrearCasoUse = () => {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("prioridad", formData.prioridad);
+      
+      // Campos que siempre se envían
       formDataToSend.append("titulo", formData.titulo);
-      formDataToSend.append("solicitante", formData.solicitante);
       formDataToSend.append("descripcion", formData.descripcion);
-      formDataToSend.append("origen", formData.origen);
-      formDataToSend.append("tipo", formData.tipo);
-      formDataToSend.append("categoria", formData.categoria);
+      formDataToSend.append("solicitante", formData.solicitante);
+      formDataToSend.append("ubicacion", formData.ubicacion); // Ubicación física
+      
+      // Campos adicionales para admin/tecnico o creación
+      if (!isEditMode || userRole === 'administrador' || userRole === 'tecnico') {
+        formDataToSend.append("prioridad", formData.prioridad);
+        formDataToSend.append("tipo", formData.tipo);
+        formDataToSend.append("categoria", formData.categoria);
+      }
 
       if (formData.archivo) {
         formDataToSend.append("archivo", formData.archivo);
       }
 
-      if (location.state?.mode === "edit") {
-        await axios.put(
-          `http://localhost:5000/usuarios/tickets${formData.id}`,
+      if (isEditMode) {
+        // En modo edición, agregar datos de usuario para validación en backend
+        formDataToSend.append("user_id", userId);
+        formDataToSend.append("user_role", userRole);
+        
+        const response = await axios.put(
+          `http://localhost:5000/usuarios/tickets/${formData.id}`,
           formDataToSend,
-          {}
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
-        setSuccess("Ticket actualizado correctamente");
+        
+        if (response.data.success) {
+          setSuccess("Ticket actualizado correctamente");
+        } else {
+          setError(response.data.message || "Error al actualizar el ticket");
+          return;
+        }
       } else {
-        await axios.post(
+        const response = await axios.post(
           "http://localhost:5000/usuarios/tickets",
           formDataToSend,
-          {}
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
-        setSuccess("Ticket creado correctamente");
+
+        if (response.data.success) {
+          setSuccess("Ticket creado correctamente");
+        } else {
+          setError(response.data.message || "Error al crear el ticket");
+          return;
+        }
       }
 
       setTimeout(() => navigate("/Tickets"), 2000);
     } catch (error) {
-      console.error("Error al procesar el ticket:", error);
-      setError(
-        error.response?.data?.detail || "Error al procesar la solicitud"
-      );
+      console.error("Error detallado:", {
+        error: error,
+        response: error.response,
+        request: error.request,
+      });
+      
+      let errorMsg = "Error al procesar la solicitud";
+      if (error.response) {
+        errorMsg = error.response.data?.message || 
+          `Error ${error.response.status}: ${error.response.statusText}`;
+      } else if (error.request) {
+        errorMsg = "No se recibió respuesta del servidor";
+      } else {
+        errorMsg = error.message || "Error al procesar la solicitud";
+      }
+      
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -183,42 +255,64 @@ const CrearCasoUse = () => {
 
   // Validación del formulario
   const validateForm = () => {
+    if (isEditMode) {
+      // En modo edición, solo requerimos título, descripción y ubicación para usuarios normales
+      if (userRole === 'usuario') {
+        return formData.titulo && formData.descripcion && formData.ubicacion;
+      }
+    }
+    
+    // Para creación o edición por admin/tecnico, validar todos los campos
     return (
       formData.tipo &&
-      formData.origen &&
       formData.prioridad &&
       formData.categoria &&
       formData.titulo &&
       formData.descripcion &&
-      formData.solicitante
+      formData.solicitante &&
+      formData.ubicacion
     );
   };
 
- const getRouteByRole = (section) => {
-  const userRole = localStorage.getItem("rol");
-  
-  if (section === 'inicio') {
-    if (userRole === 'administrador') {
-      return '/HomeAdmiPage';
-    } else if (userRole === 'tecnico') {
-      return '/HomeTecnicoPage';
-    } else {
-      return '/home';
+  const getRouteByRole = (section) => {
+    const userRole = localStorage.getItem("rol");
+    
+    if (section === 'inicio') {
+      if (userRole === 'administrador') {
+        return '/HomeAdmiPage';
+      } else if (userRole === 'tecnico') {
+        return '/HomeTecnicoPage';
+      } else {
+        return '/home';
+      }
+    } else if (section === 'crear-caso') {
+      if (userRole === 'administrador') {
+        return '/CrearCasoAdmin';
+      } else if (userRole === 'tecnico') {
+        return '/CrearCasoAdmin';
+      } else {
+        return '/CrearCasoUse';
+      }
+    } else if (section === "tickets") {
+      return "/Tickets";
     }
-  } else if (section === 'crear-caso') {
-    if (userRole === 'administrador') {
-      return '/CrearCasoAdmin';
-    } else if (userRole === 'tecnico') {
-      return '/CrearCasoAdmin';
-    } else {
-      return '/CrearCasoUse';
-    }
-  } else if (section === "tickets") {
-    // Todos los roles van a la misma ruta de tickets en tu caso
-    return "/Tickets";}
-};
-  return (
+  };
 
+  // Determinar qué campos son editables según el rol y el modo
+  const isFieldEditable = (fieldName) => {
+    if (!isEditMode) return true; // Todos los campos son editables en creación
+    
+    // En modo edición:
+    if (userRole === 'administrador' || userRole === 'tecnico') {
+      return true; // Admins y técnicos pueden editar todo
+    }
+    
+    // Usuarios normales solo pueden editar estos campos en modo edición
+    const editableFieldsForUsers = ['titulo', 'descripcion', 'archivo', 'ubicacion'];
+    return editableFieldsForUsers.includes(fieldName);
+  };
+
+  return (
     <div className={styles.containerPrincipal}>
       {/* Menú Vertical */}
       <aside
@@ -373,17 +467,27 @@ const CrearCasoUse = () => {
         </div>
         <div className={styles.inputContainer}>
           <div className={styles.searchContainer}>
-            <input className={styles.search} type="text" placeholder="Buscar" />
-            <button type="submit" className={styles.buttonBuscar} title="Buscar">
+            <input 
+              className={styles.search} 
+              type="text" 
+              placeholder="Buscar" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button 
+              type="submit" 
+              className={styles.buttonBuscar} 
+              title="Buscar"
+              onClick={handleSearch}
+            >
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
             {isLoading && <span className={styles.loading}>Buscando...</span>}
             {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
-
           <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{userNombre}</span></span>
             <div className={styles.iconContainer}>
               <Link to="/">
                 <FaPowerOff className={styles.icon} />
@@ -392,8 +496,6 @@ const CrearCasoUse = () => {
           </div>
         </div>
       </header>
-
-
 
       {/* Contenido Principal */}
       <div className={styles.containercaso} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
@@ -405,9 +507,7 @@ const CrearCasoUse = () => {
                 <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
                   <FcCustomerSupport className={styles.menuIcon} />
                   <span className={styles.creacionDeTicket}>
-                    {location.state?.mode === "edit"
-                      ? "Editar Ticket"
-                      : "Crear Nuevo Ticket"}
+                    {isEditMode ? "Editar Ticket" : "Crear Nuevo Ticket"}
                   </span>
                 </Link>
               </li>
@@ -439,60 +539,76 @@ const CrearCasoUse = () => {
           </div>
         )}
 
-       
-        
-          {/* Formulario */}
-          <div className={styles.formColumn}>
-            <div className={styles.formContainerCaso}>
-              <form onSubmit={handleSubmit}>
-                {location.state?.mode === 'edit' && (
-                  <div className={styles.formGroupCaso}>
-                    <label className={styles.casoLabel}>ID</label>
-                    <input
-                      className={styles.casoInput}
-                      type="text"
-                      name="id"
-                      value={formData.id}
-                      readOnly
-                    />
-                  </div>
-                )}
+        {/* Formulario */}
+        <div className={styles.formColumn}>
+          <div className={styles.formContainerCaso}>
+            <form onSubmit={handleSubmit}>
+              {isEditMode && (
+                <div className={styles.formGroupCaso}>
+                  <label className={styles.casoLabel}>ID</label>
+                  <input
+                    className={styles.casoInput}
+                    type="text"
+                    name="id"
+                    value={formData.id}
+                    readOnly
+                  />
+                </div>
+              )}
 
+              {/* Solicitante */}
               <div className={styles.formGroupCaso}>
-                <label className={styles.casoLabel}>Tipo*</label>
-                <select
-                  className={styles.casoSelect}
-                  name="tipo"
-                  value={formData.tipo}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="incidencia">Incidencia</option>
-                  <option value="requerimiento">Requerimiento</option>
-                </select>
+                <label className={styles.casoLabel}>Solicitante*</label>
+                <input
+                  className={styles.casoInput}
+                  type="text"
+                  value={userNombre}
+                  readOnly
+                  disabled
+                />
+              </div>
+
+              {/* Estado (solo visible en edición) */}
+              {isEditMode && (
+                <div className={styles.formGroupCaso}>
+                  <label className={styles.casoLabel}>Estado</label>
+                  <input
+                    className={styles.casoInput}
+                    type="text"
+                    value={formData.estado}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              )}
+
+              {/* Campo Origen - solo lectura */}
+              <div className={styles.formGroupCaso}>
+                <label className={styles.casoLabel}>Origen*</label>
+                <input
+                  className={styles.casoInput}
+                  type="text"
+                  name="origen"
+                  value={formData.origen || ''}
+                  readOnly
+                />
               </div>
                 
-                
-                {/* Campo Origen con datos dinámicos */}
-                <div className={styles.formGroupCaso}>
-                  <label className={styles.casoLabel}>Origen*</label>
-                  <select
-                    className={styles.casoSelect}
-                    name="origen"
-                    value={formData.origen}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione...</option>
-                    {departamentos.map(depto => (
-                      <option key={depto.id_entidad} value={depto.nombre_entidad}>
-                        {depto.nombre_entidad}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Campo Ubicación - editable siempre */}
+              <div className={styles.formGroupCaso}>
+                <label className={styles.casoLabel}>Ubicación*</label>
+                <input
+                  className={styles.casoInput}
+                  type="text"
+                  name="ubicacion"
+                  value={formData.ubicacion}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ej: Edificio A, Piso 3, Oficina 302"
+                />
+              </div>
 
+              {/* Prioridad - editable solo en creación o por admin/tecnico */}
               <div className={styles.formGroupCaso}>
                 <label className={styles.casoLabel}>Prioridad*</label>
                 <select
@@ -500,34 +616,37 @@ const CrearCasoUse = () => {
                   name="prioridad"
                   value={formData.prioridad}
                   onChange={handleChange}
-                  required
+                  required={!isEditMode}
+                  disabled={isEditMode && !(userRole === 'administrador' || userRole === 'tecnico')}
                 >
                   <option value="">Seleccione...</option>
                   <option value="alta">Alta</option>
-                  <option value="mediana">Mediana</option>
+                  <option value="media">Media</option>
                   <option value="baja">Baja</option>
                 </select>
               </div>
 
-                {/* Campo Categoría con datos dinámicos */}
-                <div className={styles.formGroupCaso}>
-                  <label className={styles.casoLabel}>Categoría*</label>
-                  <select
-                    className={styles.casoSelect}
-                    name="categoria"
-                    value={formData.categoria}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione...</option>
-                    {categorias.map(cat => (
-                      <option key={cat.id_categoria} value={cat.id_categoria}>
-                        {cat.nombre_categoria}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Campo Categoría con datos dinámicos - editable solo en creación o por admin/tecnico */}
+              <div className={styles.formGroupCaso}>
+                <label className={styles.casoLabel}>Categoría*</label>
+                <select
+                  className={styles.casoSelect}
+                  name="categoria"
+                  value={formData.categoria}
+                  onChange={handleChange}
+                  required={!isEditMode}
+                  disabled={isEditMode && !(userRole === 'administrador' || userRole === 'tecnico')}
+                >
+                  <option value="">Seleccione...</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id_categoria} value={cat.id_categoria}>
+                      {cat.nombre_categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
+              {/* Título - siempre editable */}
               <div className={styles.formGroupCaso}>
                 <label className={styles.casoLabel}>Título*</label>
                 <input
@@ -540,35 +659,7 @@ const CrearCasoUse = () => {
                 />
               </div>
 
-                <div className={styles.formGroupCaso}>
-                  <label className={styles.casoLabel}>Solicitante*</label>
-                  <select
-                    className={styles.casoSelect}
-                    name="solicitante"
-                    value={formData.solicitante}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione un usuario...</option>
-                    {usuarios.map(usuario => (
-                      <option key={usuario.id_usuario} value={usuario.id_usuario}>
-                        {`${usuario.nombre_completo}`} ({usuario.correo})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-              <div className={styles.formGroupCaso}>
-                <label className={styles.casoLabel}>Elementos Asociados</label>
-                <input
-                  className={styles.casoInput}
-                  type="text"
-                  name="elementos"
-                  value={formData.elementos}
-                  onChange={handleChange}
-                />
-              </div>
-
+              {/* Descripción - siempre editable */}
               <div className={styles.formGroupCaso}>
                 <label className={styles.casoLabel}>Descripción*</label>
                 <textarea
@@ -582,37 +673,36 @@ const CrearCasoUse = () => {
                 />
               </div>
 
-                <div className={styles.formGroupCaso}>
-                  <label className={styles.casoLabel}>Adjuntar archivo</label>
-                  <input
-                    className={styles.casoFile}
-                    type="file"
-                    name="archivo"
-                    onChange={handleChange}
-                  />
-                  {formData.archivo && (
-                    <span className={styles.fileName}>{formData.archivo.name}</span>
-                  )}
-                </div>
+              {/* Archivo adjunto - siempre editable */}
+              <div className={styles.formGroupCaso}>
+                <label className={styles.casoLabel}>Adjuntar archivo</label>
+                <input
+                  className={styles.casoFile}
+                  type="file"
+                  name="archivo"
+                  onChange={handleChange}
+                />
+                {formData.archivo && (
+                  <span className={styles.fileName}>{formData.archivo.name}</span>
+                )}
+              </div>
 
-                <button
-                  type="submit"
-                  className={styles.submitButton}
-                  disabled={isLoading || !validateForm()}
-                >
-                  {isLoading ? (
-                    <span className={styles.loadingSpinner}></span>
-                  ) : (
-                    location.state?.mode === 'edit' ? 'Actualizar Ticket' : 'Crear Ticket'
-                  )}
-                </button>
-              </form>
-            </div>
+              <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={isLoading || !validateForm()}
+              >
+                {isLoading ? (
+                  <span className={styles.loadingSpinner}></span>
+                ) : (
+                  isEditMode ? 'Actualizar Ticket' : 'Crear Ticket'
+                )}
+              </button>
+            </form>
           </div>
-
-          
-       
+        </div>
       </div>
+      
       {/* Chatbot */}
       <div className={styles.chatbotContainer}>
         <img
@@ -643,4 +733,4 @@ const CrearCasoUse = () => {
   );
 };
 
-      export default CrearCasoUse;
+export default CrearCasoUse;
