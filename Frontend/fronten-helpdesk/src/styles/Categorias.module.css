@@ -50,7 +50,6 @@
 
 @media (max-width: 768px) {
   .containerInicio {
-    padding: 20px;
     width: calc(100% - 30px);
     margin: 10px auto;
     border-radius: 10px;
@@ -328,16 +327,19 @@
 
 .gridContainerUsuarios {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
-}
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 
+}
 .columna {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
+
 
 .formGroup {
   display: flex;
@@ -351,11 +353,13 @@
 }
 
 .input {
-  padding: 10px;
-  border: 1px solid #ced4da;
+  padding: 5px;
+  border: 1px solid #136fca;
   border-radius: 4px;
   font-size: 16px;
   transition: border-color 0.3s ease;
+  width: 350px;
+ 
 }
 
 .input:focus {
@@ -366,9 +370,9 @@
 
 .selectsContainer {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 25px;
+  
 }
 
 .select {

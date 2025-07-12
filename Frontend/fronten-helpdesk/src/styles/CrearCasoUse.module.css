@@ -47,7 +47,6 @@
 
 @media (max-width: 768px) {
   .containerInicio {
-    padding: 20px;
     width: calc(100% - 30px);
     margin: 10px auto;
     border-radius: 10px;
@@ -426,7 +425,7 @@ tr:nth-child(even) td {
 .menuVertical {
   width: 60px;
   height: 100vh;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   position: fixed;
   top: 0;

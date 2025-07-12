@@ -21,7 +21,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   border-bottom: 1px solid #ccc;
   transition: margin-left 0.3s ease;
 }
@@ -35,7 +35,6 @@
 
 @media (max-width: 768px) {
   .containerInicio {
-    padding: 20px;
     width: calc(100% - 30px);
     margin: 10px auto;
     border-radius: 10px;
@@ -117,7 +116,7 @@
 }
 
 .buttonBuscar:hover .searchIcon {
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .userContainer {
@@ -403,7 +402,7 @@
 .menuVertical {
   width: 60px;
   height: 100vh;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   position: fixed;
   top: 0;
@@ -641,7 +640,7 @@
 }
 
 .title {
-  color: #3a0ca3;
+  color: #343bbf;
   text-align: center;
   margin-bottom: 2rem;
   font-size: 1.8rem;
@@ -729,7 +728,7 @@
 }
 
 .solutionTitle {
-  color: #3a0ca3;
+  color: #343bbf;
   margin-bottom: 1.5rem;
   font-size: 1.4rem;
 }
@@ -759,7 +758,7 @@
 
 .textarea:focus {
   outline: none;
-  border-color: #3a0ca3;
+  border-color: #343bbf;
   box-shadow: 0 0 0 2px rgba(58, 12, 163, 0.2);
 }
 
@@ -789,7 +788,7 @@
 
 .submitButton {
   padding: 0.75rem 1.5rem;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   border-radius: 5px;
@@ -865,12 +864,12 @@
 }
 
 .actionButton:hover {
-  border-color: #3a0ca3;
+  border-color: #343bbf;
   background-color: #f8f9fa;
 }
 
 .actionButton.active {
-  border-color: #3a0ca3;
+  border-color: #343bbf;
   background-color: #f0e6ff;
 }
 
@@ -883,7 +882,7 @@
 .radioIndicator {
   width: 20px;
   height: 20px;
-  border: 2px solid #3a0ca3;
+  border: 2px solid #343bbf;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -893,7 +892,7 @@
 .radioDot {
   width: 10px;
   height: 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   border-radius: 50%;
 }
 
@@ -917,7 +916,7 @@
 
 .buttonIcon {
   font-size: 1.5rem;
-  color: #3a0ca3;
+  color: #343bbf;
   margin-right: 0.5rem;
 }
 
@@ -948,7 +947,7 @@
 
 .optionsContainer h3 {
   margin-top: 0;
-  color: #3a0ca3;
+  color: #343bbf;
   border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
 }
@@ -981,7 +980,7 @@
   display: inline-block;
   margin-top: 10px;
   padding: 5px 10px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -1016,7 +1015,7 @@
 }
 
 .editButton {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -1310,7 +1309,7 @@
 
 .backButton {
   padding: 0.5rem 1rem;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   border-radius: 4px;
@@ -1339,7 +1338,7 @@
   margin-bottom: 1.5rem;
   background-color: #f8f9fa;
   border-radius: 8px;
-  border-left: 4px solid #3a0ca3;
+  border-left: 4px solid #343bbf;
 }
 
 .itemHeader {
@@ -1355,7 +1354,7 @@
 }
 
 .user {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
@@ -1379,7 +1378,7 @@
 .field {
   font-weight: 600;
   margin-right: 0.5rem;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .comment {
@@ -1399,7 +1398,7 @@
 .loading {
   text-align: center;
   padding: 2rem;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .error {
@@ -1503,11 +1502,11 @@
 
 .filterToggle {
   background-color: #e0e0ff;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .applyButton {
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
 }
 
@@ -1589,7 +1588,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
 }
 
 .timelineItem {
@@ -1609,7 +1608,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   position: absolute;
   left: -30px;
 }
@@ -1624,7 +1623,7 @@
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .timelineContent {
@@ -1645,7 +1644,7 @@
 .changeField {
   font-weight: 600;
   min-width: 120px;
-  color: #3a0ca3;
+  color: #343bbf;
 }
 
 .oldValue {
@@ -1686,7 +1685,7 @@
 
 .paginationControls button {
   padding: 0.5rem 1rem;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   border-radius: 4px;
@@ -1711,7 +1710,7 @@
 
 .backButton {
   padding: 0.7rem 1.5rem;
-  background-color: #3a0ca3;
+  background-color: #343bbf;
   color: white;
   border: none;
   border-radius: 4px;
@@ -1735,7 +1734,7 @@
   height: 40px;
   border: 4px solid rgba(58, 12, 163, 0.2);
   border-radius: 50%;
-  border-top-color: #3a0ca3;
+  border-top-color: #343bbf;
   animation: spin 1s ease-in-out infinite;
   margin-bottom: 1rem;
 }

@@ -233,7 +233,7 @@ const Tickets = () => {
       setFilteredTickets(normalizedTickets);
       setUsingDemoData(false);
     } catch (err) {
-      setError("No se pudo conectar al servidor. Mostrando datos de ejemplo.");
+      setError(" ");
       setTickets(initialData);
       setFilteredTickets(initialData);
       setUsingDemoData(true);

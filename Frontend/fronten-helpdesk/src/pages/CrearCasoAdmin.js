@@ -267,7 +267,7 @@ const CrearCasoAdmin = () => {
         }
       } catch (error) {
         console.error("Error al obtener datos iniciales:", error);
-        setError("Error al cargar datos iniciales");
+        
       }
     };
 

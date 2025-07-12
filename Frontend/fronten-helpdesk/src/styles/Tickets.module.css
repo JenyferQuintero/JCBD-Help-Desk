@@ -62,7 +62,6 @@
 
 @media (max-width: 768px) {
   .containerInicio {
-    padding: 20px;
     width: calc(100% - 30px);
     margin: 10px auto;
     border-radius: 10px;
@@ -152,7 +151,7 @@
 
 .icon {
   font-size: 20px;
-  color: #333;
+  color: #ecdfdf;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -241,8 +240,8 @@
 .tableticket th {
   position: sticky;
   top: 0;
-  background-color: #2667ff;
-  color: white;
+  background-color: #99bff2;
+  color: rgb(6, 6, 6);
   z-index: 10;
 }
 

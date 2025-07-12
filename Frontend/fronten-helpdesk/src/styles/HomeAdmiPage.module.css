@@ -37,7 +37,6 @@
 
 @media (max-width: 768px) {
   .containerHomeAdmiPage {
-    padding: 20px;
     width: calc(100% - 30px);
     margin: 10px auto;
     border-radius: 10px;
@@ -300,7 +299,7 @@ td {
 }
 
 th {
-  background-color: #3d90d9;
+  background-color: #99bff2;
   color: rgb(14, 13, 13);
   position: relative;
 }
@@ -332,7 +331,7 @@ tr:nth-child(odd) td {
 }
 
 tr:nth-child(even) td {
-  background-color: #3d90d9;
+  background-color: #99bff2;
   color: rgb(14, 13, 13);
 }
 
