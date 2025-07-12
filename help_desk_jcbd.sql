@@ -1,9 +1,9 @@
-DROP DATABASE IF EXISTS help_desk_jcbd1;
+DROP DATABASE IF EXISTS help_desk_jcbd;
 
 
-CREATE DATABASE help_desk_jcbd1
+CREATE DATABASE help_desk_jcbd;
 
-USE help_desk_jcbd1
+USE help_desk_jcbd;
 
 CREATE TABLE `adjuntos_tickets` (
   `id_adjunto` int(11) NOT NULL,
