@@ -72,447 +72,516 @@ const SolucionTickets = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState(""); // Estado para el término de búsqueda
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Obtener datos del usuario y validar autenticación
+  const nombre = localStorage.getItem("nombre");
+  const userRole = localStorage.getItem("rol");
+  const isAdminOrTech = ["admin", "tecnico"].includes(userRole);
+
+  // Verificar autenticación al cargar el componente
+  useEffect(() => {
+    if (!nombre) {
+      navigate("/login");
+    }
+  }, [nombre, navigate]);
 
   // Obtener datos del ticket y relacionados
   useEffect(() => {
     const fetchAllData = async () => {
       try {
+        setIsLoading(true);
+        
         // Obtener datos del ticket
         const ticketRes = await axios.get(
-          `http://localhost:5000/usuarios/tickets/${id}`
+          `http://localhost:5000/api/tickets/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
         );
-        console.log("Ticket recibido:", ticketRes.data);
+        
+        if (ticketRes.data.estado === "cerrado") {
+          setSurveyEnabled(true);
+        }
+
         setTicket(ticketRes.data);
 
-        const categoriasRes = await axios.get(
-          "http://localhost:5000/usuarios/obtenerCategorias"
-        );
-        setCategorias(categoriasRes.data);
-
         // Obtener datos relacionados
-        /*const [casosRes, seguimientosRes, categoriasRes, gruposRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/tickets/relacionados/${id}`),
-          axios.get(`http://localhost:5000/api/tickets/${id}/seguimientos`),
-          axios.get('http://localhost:5000/usuarios/obtenerCategorias'),
-          axios.get('http://localhost:5000/api/grupos')
+        const [categoriasRes, gruposRes, seguimientosRes, tecnicosRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/categorias", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }),
+          axios.get("http://localhost:5000/api/grupos", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }),
+          axios.get(`http://localhost:5000/api/tickets/${id}/seguimientos`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }),
+          isAdminOrTech ? 
+            axios.get("http://localhost:5000/api/tecnicos", {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+              }
+            }) 
+            : Promise.resolve({data: []})
         ]);
 
-        setCasos(casosRes.data);
-        setSeguimientos(seguimientosRes.data);
         setCategorias(categoriasRes.data);
-        setGrupos(gruposRes.data);*/
-
-        // Si es admin o técnico, obtener lista de técnicos
-        /*const userRole = localStorage.getItem("rol");
-        if (['admin', 'tecnico'].includes(userRole)) {
-          const tecnicosRes = await axios.get('http://localhost:5000/api/tecnicos');
-          setTecnicos(tecnicosRes.data);
-        }*/
-
+        setGrupos(gruposRes.data);
+        setSeguimientos(seguimientosRes.data);
+        setTecnicos(tecnicosRes.data);
+        
         setLoading(false);
       } catch (error) {
         console.error("Error al cargar datos:", error);
-        // Datos de ejemplo en caso de error
-        setTicket({
-          id: id || "TKT-001",
-          titulo: "Problema con el sistema de impresión",
-          descripcion:
-            "El sistema no imprime correctamente los documentos largos",
-          solicitante: "Usuario Ejemplo",
-          prioridad: "Alta",
-          estado: "Abierto",
-          tecnico: "Técnico Asignado",
-          grupo: "Soporte Técnico",
-          categoria: "Hardware",
-          fechaApertura: "2023-05-10 09:30:00",
-          ultimaActualizacion: "2023-05-12 14:15:00",
-          tipo: "incidencia",
-          ubicacion: "Oficina Central",
-          observador: "",
-          asignadoA: "Técnico Asignado",
-          grupoAsignado: "Soporte Técnico",
-        });
+        setError("Error al cargar los datos del ticket");
         setLoading(false);
+        
+        if (error.response?.status === 401) {
+          navigate("/login");
+        } else if (error.response?.status === 403) {
+          navigate("/no-autorizado");
+        }
       }
     };
 
     fetchAllData();
-  }, [id]);
+  }, [id, isAdminOrTech, navigate]);
 
-  const handleAgregarSeguimiento = async () => {
-    if (!nuevoSeguimiento.trim()) return;
-
-    try {
-      await axios.post(`http://localhost:5000/api/tickets/${id}/seguimientos`, {
-        descripcion: nuevoSeguimiento,
-        usuario: localStorage.getItem("nombre"),
-      });
-
-      const response = await axios.get(
-        `http://localhost:5000/api/tickets/${id}/seguimientos`
-      );
-      setSeguimientos(response.data);
-      setNuevoSeguimiento("");
-    } catch (error) {
-      console.error("Error al agregar seguimiento:", error);
-    }
-  };
-
-  const roleToPath = {
-    usuario: "/home",
-    tecnico: "/HomeTecnicoPage",
-    administrador: "/HomeAdmiPage",
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  // Validar formulario
+  const validateForm = () => {
+    const errors = {};
+    
     if (!solucion.trim()) {
-      alert("Por favor ingrese la solución");
-      return;
+      errors.solucion = "Este campo es requerido";
     }
-
-    console.log({
-      ticketId: id,
-      solucion,
-      accion,
-      fecha: new Date().toISOString(),
-    });
-
-    if (accion === "solucion") {
-      alert(
-        "Solución guardada. El ticket se ha cerrado y se enviará una encuesta de satisfacción."
-      );
-      navigate(`/EncuestaSatisfaccion/${id}`);
-    } else {
-      alert("Seguimiento guardado. El ticket permanece abierto.");
+    
+    if (solucion.length > 1000) {
+      errors.solucion = "El texto no puede exceder los 1000 caracteres";
     }
-
-    navigate("/Tickets");
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleSurveySubmit = (e) => {
+  // Función para manejar el envío del formulario
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(
-      `Encuesta enviada: ${surveyRating} estrellas, Comentario: ${surveyComment}`
-    );
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Manejo especial para campos de fecha/hora
-    if (name === "fechaApertura") {
-      // Convertir a formato ISO para almacenamiento
-      const isoDate = value ? new Date(value).toISOString() : "";
-      setTicket((prev) => ({ ...prev, [name]: isoDate }));
-    } else {
-      setTicket((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      await axios.put(`http://localhost:5000/api/tickets/${id}`, ticket);
-      setSuccessMessage("Cambios guardados correctamente");
-      setIsEditing(false);
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      console.error("Error al guardar cambios:", error);
-      alert("Error al guardar cambios");
-    }
-  };
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
+    
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
-      setError(null);
-      // Aquí va lógica de búsqueda con axios
+      
+      // Enviar la solución/seguimiento al backend
+      await axios.post(
+        `http://localhost:5000/api/tickets/${id}/seguimientos`,
+        {
+          descripcion: solucion,
+          accion,
+          usuario: nombre,
+          rol: userRole
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
 
-      navigate(`/Tickets?search=${encodeURIComponent(searchTerm)}`);
-      setSearchTerm("");
+      if (accion === "solucion" && isAdminOrTech) {
+        // Cerrar el ticket si es solución y el usuario tiene permisos
+        await axios.put(
+          `http://localhost:5000/api/tickets/${id}/estado`,
+          { estado: "cerrado" },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
+
+        // Registrar el cierre en el historial
+        await axios.post(
+          `http://localhost:5000/api/tickets/${id}/historial`,
+          {
+            usuario: nombre,
+            accion: "Cierre de ticket",
+            cambios: `Ticket cerrado por ${nombre}`
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
+
+        // Redirigir a encuesta de satisfacción
+        navigate(`/EncuestaSatisfaccion/${id}`);
+      } else {
+        // Actualizar la lista de seguimientos
+        const response = await axios.get(
+          `http://localhost:5000/api/tickets/${id}/seguimientos`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
+        setSeguimientos(response.data);
+        setSolucion("");
+        
+        // Mostrar mensaje de éxito
+        setSuccessMessage(
+          accion === "solucion" 
+            ? "Solución enviada para revisión" 
+            : "Seguimiento guardado correctamente"
+        );
+        setTimeout(() => setSuccessMessage(""), 5000);
+      }
     } catch (error) {
-      setError("Error al realizar la búsqueda");
-      console.error("Error en búsqueda:", error);
-      // Manejar el error si es necesario
+      console.error("Error al guardar solución/seguimiento:", error);
+      setError(
+        error.response?.data?.message || 
+        "Ocurrió un error al procesar la solicitud"
+      );
+      
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        setError("No tiene permisos para realizar esta acción");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handlers del menú
-  const nombre = localStorage.getItem("nombre");
-  const userRole = localStorage.getItem("rol");
-  const isAdminOrTech = ["admin", "tecnico"].includes(userRole);
+  // Función para manejar el guardado de ediciones
+  const handleSave = async () => {
+    try {
+      if (!validateForm()) return;
+      
+      setIsLoading(true);
+      
+      // Validar campos según rol
+      const cambiosPermitidos = { ...ticket };
+      
+      // Usuarios normales solo pueden editar ciertos campos
+      if (!isAdminOrTech) {
+        cambiosPermitidos.prioridad = ticket.prioridad;
+        cambiosPermitidos.categoria = ticket.categoria;
+        cambiosPermitidos.descripcion = ticket.descripcion;
+      }
+      
+      await axios.put(
+        `http://localhost:5000/api/tickets/${id}`,
+        cambiosPermitidos,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
 
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+      // Registrar el cambio en el historial
+      await axios.post(
+        `http://localhost:5000/api/tickets/${id}/historial`,
+        {
+          usuario: nombre,
+          accion: "Edición de ticket",
+          cambios: JSON.stringify(cambiosPermitidos)
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
 
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
+      setSuccessMessage("Cambios guardados correctamente");
+      setIsEditing(false);
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (error) {
+      console.error("Error al guardar cambios:", error);
+      setError(
+        error.response?.data?.message || 
+        "Error al guardar los cambios"
+      );
+      
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        setError("No tiene permisos para editar este ticket");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
-
-  if (loading) {
-    return <div className={styles.loading}>Cargando ticket...</div>;
-  }
-
+  // Formatear fecha para inputs
   const formatDateTimeForInput = (dateString) => {
     if (!dateString) return "";
-
-    // Si ya está en el formato correcto (desde la API)
-    if (dateString.includes("T")) {
-      return dateString.substring(0, 16); // Tomamos solo la parte relevante
-    }
-
-    // Si viene como string de fecha ISO
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return ""; // Si no es una fecha válida
-
-    // Formatear a YYYY-MM-DDTHH:MM
+    if (isNaN(date.getTime())) return "";
+    
     const pad = (num) => num.toString().padStart(2, "0");
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
       date.getDate()
     )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
-   const getRouteByRole = (section) => {
-      if (section === 'inicio') {
-        if (userRole === 'administrador') {
-          return '/HomeAdmiPage';
-        } else if (userRole === 'tecnico') {
-          return '/HomeTecnicoPage';
-        } else {
-          return '/home';
-        }
-      } else if (section === 'crear-caso') {
-        if (userRole === 'administrador') {
-          return '/CrearCasoAdmin';
-        } else if (userRole === 'tecnico') {
-          return '/CrearCasoAdmin';
-        } else {
-          return '/CrearCasoUse';
-        }
-    } if (section === "tickets") return "/Tickets";
-        return "/";
-      };
-    
-      // Renderizar menú según el rol
-      const renderMenuByRole = () => {
-        switch (userRole) {
-          case 'administrador':
-            return (
-              <ul className={styles.menuIconos}>
-                <li className={styles.iconosMenu}>
-                  <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                    <FcHome className={styles.menuIcon} />
-                    <span className={styles.menuText}>Inicio</span>
-                  </Link>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                    <FcAssistant className={styles.menuIcon} />
-                    <span className={styles.menuText}> Soporte</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Tickets" className={styles.submenuLink}>
-                        <FcAnswers className={styles.menuIcon} />
-                        <span className={styles.menuText}>Tickets</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                        <FcCustomerSupport className={styles.menuIcon} />
-                        <span className={styles.menuText}>Crear Caso</span>
-                      </Link>
-                    </li>
-                    
-                    <li>
-                      <Link to="/Estadisticas" className={styles.submenuLink}>
-                        <FcBullish className={styles.menuIcon} />
-                        <span className={styles.menuText}>Estadísticas</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                    <FcBusinessman className={styles.menuIcon} />
-                    <span className={styles.menuText}> Administración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Usuarios" className={styles.submenuLink}>
-                        <FcPortraitMode className={styles.menuIcon} />
-                        <span className={styles.menuText}> Usuarios</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Grupos" className={styles.submenuLink}>
-                        <FcConferenceCall className={styles.menuIcon} />
-                        <span className={styles.menuText}> Grupos</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Entidades" className={styles.submenuLink}>
-                        <FcOrganization className={styles.menuIcon} />
-                        <span className={styles.menuText}> Entidades</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                    <FcAutomatic className={styles.menuIcon} />
-                    <span className={styles.menuText}> Configuración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Categorias" className={styles.submenuLink}>
-                        <FcGenealogy className={styles.menuIcon} />
-                        <span className={styles.menuText}>Categorias</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            );
-    
-          case 'tecnico':
-            return (
-              <ul className={styles.menuIconos}>
-                <li className={styles.iconosMenu}>
-                  <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                    <FcHome className={styles.menuIcon} />
-                    <span className={styles.menuText}>Inicio</span>
-                  </Link>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                    <FcAssistant className={styles.menuIcon} />
-                    <span className={styles.menuText}> Soporte</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Tickets" className={styles.submenuLink}>
-                        <FcAnswers className={styles.menuIcon} />
-                        <span className={styles.menuText}>Tickets</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                        <FcCustomerSupport className={styles.menuIcon} />
-                        <span className={styles.menuText}>Crear Caso</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                    <FcBusinessman className={styles.menuIcon} />
-                    <span className={styles.menuText}> Administración</span>
-                  </div>
-                  <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                    <li>
-                      <Link to="/Usuarios" className={styles.submenuLink}>
-                        <FcPortraitMode className={styles.menuIcon} />
-                        <span className={styles.menuText}> Usuarios</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            );
-    
-          case 'usuario':
-          default:
-            return (
-              <ul className={styles.menuIconos}>
-                <li className={styles.iconosMenu}>
-                  <Link to="/home" className={styles.linkSinSubrayado}>
-                    <FcHome className={styles.menuIcon} />
-                    <span className={styles.menuText}>Inicio</span>
-                  </Link>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                    <FcCustomerSupport className={styles.menuIcon} />
-                    <span className={styles.menuText}>Crear Caso</span>
-                  </Link>
-                </li>
-    
-                <li className={styles.iconosMenu}>
-                  <Link to="/Tickets" className={styles.linkSinSubrayado}>
+  // Navegación según rol
+  const getRouteByRole = (section) => {
+    if (section === "inicio") {
+      if (userRole === "administrador") {
+        return "/HomeAdmiPage";
+      } else if (userRole === "tecnico") {
+        return "/HomeTecnicoPage";
+      } else {
+        return "/home";
+      }
+    } else if (section === "crear-caso") {
+      if (userRole === "administrador") {
+        return "/CrearCasoAdmin";
+      } else if (userRole === "tecnico") {
+        return "/CrearCasoAdmin";
+      } else {
+        return "/CrearCasoUse";
+      }
+    } else if (section === "tickets") {
+      return "/Tickets";
+    }
+    return "/";
+  };
+
+  // Renderizar menú según el rol
+  const renderMenuByRole = () => {
+    switch (userRole) {
+      case "administrador":
+        return (
+          <ul className={styles.menuIconos}>
+            <li className={styles.iconosMenu}>
+              <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
+                <FcHome className={styles.menuIcon} />
+                <span className={styles.menuText}>Inicio</span>
+              </Link>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                <FcAssistant className={styles.menuIcon} />
+                <span className={styles.menuText}> Soporte</span>
+              </div>
+              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                <li>
+                  <Link to="/Tickets" className={styles.submenuLink}>
                     <FcAnswers className={styles.menuIcon} />
                     <span className={styles.menuText}>Tickets</span>
                   </Link>
                 </li>
-    
-    
+                <li>
+                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                    <FcCustomerSupport className={styles.menuIcon} />
+                    <span className={styles.menuText}>Crear Caso</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/Estadisticas" className={styles.submenuLink}>
+                    <FcBullish className={styles.menuIcon} />
+                    <span className={styles.menuText}>Estadísticas</span>
+                  </Link>
+                </li>
               </ul>
-            );
-        }
-      };
-    
-      return (
-        <div className={styles.containerPrincipal}>
-          {/* Menú Vertical */}
-          <aside
-            className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-            onMouseEnter={toggleMenu}
-            onMouseLeave={toggleMenu}
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                <FcBusinessman className={styles.menuIcon} />
+                <span className={styles.menuText}> Administración</span>
+              </div>
+              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                <li>
+                  <Link to="/Usuarios" className={styles.submenuLink}>
+                    <FcPortraitMode className={styles.menuIcon} />
+                    <span className={styles.menuText}> Usuarios</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/Grupos" className={styles.submenuLink}>
+                    <FcConferenceCall className={styles.menuIcon} />
+                    <span className={styles.menuText}> Grupos</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/Entidades" className={styles.submenuLink}>
+                    <FcOrganization className={styles.menuIcon} />
+                    <span className={styles.menuText}> Entidades</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                <FcAutomatic className={styles.menuIcon} />
+                <span className={styles.menuText}> Configuración</span>
+              </div>
+              <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                <li>
+                  <Link to="/Categorias" className={styles.submenuLink}>
+                    <FcGenealogy className={styles.menuIcon} />
+                    <span className={styles.menuText}>Categorias</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        );
+
+      case "tecnico":
+        return (
+          <ul className={styles.menuIconos}>
+            <li className={styles.iconosMenu}>
+              <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
+                <FcHome className={styles.menuIcon} />
+                <span className={styles.menuText}>Inicio</span>
+              </Link>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                <FcAssistant className={styles.menuIcon} />
+                <span className={styles.menuText}> Soporte</span>
+              </div>
+              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                <li>
+                  <Link to="/Tickets" className={styles.submenuLink}>
+                    <FcAnswers className={styles.menuIcon} />
+                    <span className={styles.menuText}>Tickets</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                    <FcCustomerSupport className={styles.menuIcon} />
+                    <span className={styles.menuText}>Crear Caso</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                <FcBusinessman className={styles.menuIcon} />
+                <span className={styles.menuText}> Administración</span>
+              </div>
+              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                <li>
+                  <Link to="/Usuarios" className={styles.submenuLink}>
+                    <FcPortraitMode className={styles.menuIcon} />
+                    <span className={styles.menuText}> Usuarios</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        );
+
+      case "usuario":
+      default:
+        return (
+          <ul className={styles.menuIconos}>
+            <li className={styles.iconosMenu}>
+              <Link to="/home" className={styles.linkSinSubrayado}>
+                <FcHome className={styles.menuIcon} />
+                <span className={styles.menuText}>Inicio</span>
+              </Link>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
+                <FcCustomerSupport className={styles.menuIcon} />
+                <span className={styles.menuText}>Crear Caso</span>
+              </Link>
+            </li>
+
+            <li className={styles.iconosMenu}>
+              <Link to="/Tickets" className={styles.linkSinSubrayado}>
+                <FcAnswers className={styles.menuIcon} />
+                <span className={styles.menuText}>Tickets</span>
+              </Link>
+            </li>
+          </ul>
+        );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Cargando información del ticket...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button 
+          onClick={() => navigate("/Tickets")} 
+          className={styles.backButton}
+        >
+          Volver a Tickets
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.containerPrincipal}>
+      {/* Menú Vertical */}
+      <aside
+        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        onMouseEnter={toggleMenu}
+        onMouseLeave={toggleMenu}
+      >
+        <div className={styles.containerFluidMenu}>
+          <div className={styles.logoContainer}>
+            <img src={Logo} alt="Logo" />
+          </div>
+
+          <button
+            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+            type="button"
+            onClick={toggleMobileMenu}
           >
-            <div className={styles.containerFluidMenu}>
-              <div className={styles.logoContainer}>
-                <img src={Logo} alt="Logo" />
-              </div>
-    
-              <button
-                className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-                type="button"
-                onClick={toggleMobileMenu}
-              >
-                <FiAlignJustify className={styles.menuIcon} />
-              </button>
-    
-              <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-                {renderMenuByRole()}
-              </div>
-    
-              <div className={styles.floatingContainer}>
-                <div className={styles.menuLogoEmpresarial}>
-                  <img src={Logoempresarial} alt="Logo Empresarial" />
-                </div>
-              </div>
+            <FiAlignJustify className={styles.menuIcon} />
+          </button>
+
+          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+            {renderMenuByRole()}
+          </div>
+
+          <div className={styles.floatingContainer}>
+            <div className={styles.menuLogoEmpresarial}>
+              <img src={Logoempresarial} alt="Logo Empresarial" />
             </div>
-          </aside>
+          </div>
+        </div>
+      </aside>
 
       {/* Contenido principal */}
       <div
@@ -523,6 +592,7 @@ const SolucionTickets = () => {
       >
         <Outlet />
       </div>
+
       {/* Header */}
       <header
         className={styles.containerInicio}
@@ -554,7 +624,6 @@ const SolucionTickets = () => {
               <FaMagnifyingGlass className={styles.searchIcon} />
             </button>
             {isLoading && <span className={styles.loading}>Buscando...</span>}
-            {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
 
           <div className={styles.userContainer}>
@@ -562,7 +631,7 @@ const SolucionTickets = () => {
               Bienvenido, <span id="nombreusuario">{nombre}</span>
             </span>
             <div className={styles.iconContainer}>
-              <Link to="/">
+              <Link to="/logout">
                 <FaPowerOff className={styles.icon} />
               </Link>
             </div>
@@ -575,11 +644,13 @@ const SolucionTickets = () => {
         style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
       >
         <div className={styles.containersolucion}>
-          <h1 className={styles.title}>Solución del Ticket #{ticket.id}</h1>
+          <h1 className={styles.title}>
+            {ticket.estado === "cerrado" ? "Ticket Cerrado" : "Solución del Ticket"} #{ticket.id}
+          </h1>
 
           {/* Contenedor principal con tres columnas */}
           <div className={styles.layoutContainer}>
-            {/* Columna izquierda - Opciones adicionales */}
+            {/* Columna izquierda - Información del ticket */}
             <div className={styles.ticketInfoContainer}>
               <div className={styles.header}>
                 <h3>Información del Ticket</h3>
@@ -587,6 +658,7 @@ const SolucionTickets = () => {
                   <button
                     onClick={() => setIsEditing(true)}
                     className={styles.editButton}
+                    disabled={ticket.estado === "cerrado"}
                   >
                     Editar
                   </button>
@@ -597,17 +669,21 @@ const SolucionTickets = () => {
                 <div className={styles.successMessage}>{successMessage}</div>
               )}
 
+              {error && (
+                <div className={styles.errorMessage}>{error}</div>
+              )}
+
               {/* Sección 1: Datos principales */}
               <div className={styles.verticalForm}>
                 <h4>Datos del Ticket</h4>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.fecha}>Fecha de apertura:</label>
+                  <label>Fecha de apertura:</label>
                   <input
                     type="datetime-local"
                     name="fechaApertura"
                     value={formatDateTimeForInput(ticket.fechaApertura)}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, fechaApertura: e.target.value})}
                     disabled={!isEditing || !isAdminOrTech}
                   />
                 </div>
@@ -617,7 +693,7 @@ const SolucionTickets = () => {
                   <select
                     name="tipo"
                     value={ticket.tipo}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, tipo: e.target.value})}
                     disabled={!isEditing || !isAdminOrTech}
                   >
                     <option value="incidencia">Incidencia</option>
@@ -630,13 +706,13 @@ const SolucionTickets = () => {
                   <select
                     name="categoria"
                     value={ticket.categoria}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, categoria: e.target.value})}
                     disabled={!isEditing}
                   >
-                  <option value="">Seleccione...</option>
-                    {categorias?.map(categoria => (
-                      <option key={categoria.id_categoria} value={categoria.id_categoria}>
-                        {categoria.nombre_categoria}
+                    <option value="">Seleccione...</option>
+                    {categorias.map(categoria => (
+                      <option key={categoria.id} value={categoria.nombre}>
+                        {categoria.nombre}
                       </option>
                     ))}
                   </select>
@@ -647,14 +723,18 @@ const SolucionTickets = () => {
                   <select
                     name="estado"
                     value={ticket.estado}
-                    onChange={handleChange}
-                    disabled={!isEditing || !isAdminOrTech}
+                    onChange={(e) => setTicket({...ticket, estado: e.target.value})}
+                    disabled={!isEditing || !isAdminOrTech || ticket.estado === "cerrado"}
                   >
                     <option value="nuevo">Nuevo</option>
                     <option value="en-curso">En curso</option>
                     <option value="en-espera">En espera</option>
-                    <option value="resuelto">Resuelto</option>
-                    <option value="cerrado">Cerrado</option>
+                    {isAdminOrTech && (
+                      <>
+                        <option value="resuelto">Resuelto</option>
+                        <option value="cerrado">Cerrado</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -663,11 +743,11 @@ const SolucionTickets = () => {
                   <select
                     name="prioridad"
                     value={ticket.prioridad}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, prioridad: e.target.value})}
                     disabled={!isEditing}
                   >
                     <option value="alta">Alta</option>
-                    <option value="mediana">Mediana</option>
+                    <option value="media">Media</option>
                     <option value="baja">Baja</option>
                   </select>
                 </div>
@@ -678,7 +758,7 @@ const SolucionTickets = () => {
                     type="text"
                     name="ubicacion"
                     value={ticket.ubicacion}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, ubicacion: e.target.value})}
                     disabled={!isEditing || !isAdminOrTech}
                   />
                 </div>
@@ -691,7 +771,7 @@ const SolucionTickets = () => {
                     type="text"
                     name="solicitante"
                     value={ticket.solicitante}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, solicitante: e.target.value})}
                     disabled={!isEditing || !isAdminOrTech}
                   />
                 </div>
@@ -702,61 +782,75 @@ const SolucionTickets = () => {
                     type="text"
                     name="observador"
                     value={ticket.observador}
-                    onChange={handleChange}
+                    onChange={(e) => setTicket({...ticket, observador: e.target.value})}
                     disabled={!isEditing || !isAdminOrTech}
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label>Asignado a:</label>
-                  {isAdminOrTech ? (
-                    <select
-                      name="asignadoA"
-                      value={ticket.asignadoA}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    >
-                      <option value="">Seleccionar técnico</option>
-                      {tecnicos.map((tec) => (
-                        <option key={tec.id} value={tec.nombre}>
-                          {tec.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input type="text" value={ticket.asignadoA} disabled />
-                  )}
-                </div>
+                {isAdminOrTech && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label>Asignado a:</label>
+                      <select
+                        name="asignadoA"
+                        value={ticket.asignadoA}
+                        onChange={(e) => setTicket({...ticket, asignadoA: e.target.value})}
+                        disabled={!isEditing}
+                      >
+                        <option value="">Seleccionar técnico</option>
+                        {tecnicos.map((tec) => (
+                          <option key={tec.id} value={tec.nombre}>
+                            {tec.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className={styles.formGroup}>
-                  <label>Grupo asignado:</label>
-                  {isAdminOrTech ? (
-                    <select
-                      name="grupoAsignado"
-                      value={ticket.grupoAsignado}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    >
-                      <option value="">Seleccionar grupo</option>
-                      {grupos.map((grupo) => (
-                        <option key={grupo.id} value={grupo.nombre}>
-                          {grupo.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input type="text" value={ticket.grupoAsignado} disabled />
-                  )}
-                </div>
+                    <div className={styles.formGroup}>
+                      <label>Grupo asignado:</label>
+                      <select
+                        name="grupoAsignado"
+                        value={ticket.grupoAsignado}
+                        onChange={(e) => setTicket({...ticket, grupoAsignado: e.target.value})}
+                        disabled={!isEditing}
+                      >
+                        <option value="">Seleccionar grupo</option>
+                        {grupos.map((grupo) => (
+                          <option key={grupo.id} value={grupo.nombre}>
+                            {grupo.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               {isEditing && (
                 <div className={styles.actions}>
-                  <button onClick={handleSave} className={styles.saveButton}>
-                    Guardar Cambios
+                  <button 
+                    onClick={handleSave} 
+                    className={styles.saveButton}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className={styles.loadingSpinner}></span> Guardando...
+                      </>
+                    ) : "Guardar Cambios"}
                   </button>
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      // Recuperar datos originales
+                      axios.get(`http://localhost:5000/api/tickets/${id}`, {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("token")}`
+                        }
+                      })
+                      .then(res => setTicket(res.data))
+                      .catch(console.error);
+                    }}
                     className={styles.cancelButton}
                   >
                     Cancelar
@@ -765,7 +859,7 @@ const SolucionTickets = () => {
               )}
             </div>
 
-            {/*contenedor central - contenido principal*/}
+            {/* Contenedor central - Formulario de solución/seguimiento */}
             <div className={styles.mainContentContainer}>
               <div className={styles.ticketInfo}>
                 <div className={styles.ticketHeader}>
@@ -787,93 +881,144 @@ const SolucionTickets = () => {
                     <strong>Solicitante:</strong> {ticket.solicitante}
                   </div>
                   <div>
-                    <strong>Fecha apertura:</strong> {ticket.fechaApertura}
+                    <strong>Fecha apertura:</strong> {new Date(ticket.fechaApertura).toLocaleString()}
                   </div>
                   <div>
-                    <strong>Última actualización:</strong>{" "}
-                    {ticket.ultimaActualizacion}
+                    <strong>Última actualización:</strong> {new Date(ticket.ultimaActualizacion).toLocaleString()}
                   </div>
                   <div>
                     <strong>Categoría:</strong> {ticket.categoria}
                   </div>
+                  <div>
+                    <strong>Estado:</strong> <span className={styles[ticket.estado]}>{ticket.estado}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Acción a realizar:</label>
-                <div className={styles.buttonRadioGroup}>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${
-                      accion === "seguimiento" ? styles.active : ""
-                    }`}
-                    onClick={() => setAccion("seguimiento")}
-                  >
-                    <div className={styles.buttonContent}>
-                      <FaRegClock className={styles.buttonIcon} />
-                      <div>
-                        <div className={styles.buttonTitle}>Seguimiento</div>
-                        <div className={styles.buttonSubtitle}>
-                          El ticket permanece abierto
+              {/* Solo mostrar acciones si el ticket no está cerrado */}
+              {ticket.estado !== "cerrado" && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Acción a realizar:</label>
+                    <div className={styles.buttonRadioGroup}>
+                      <button
+                        type="button"
+                        className={`${styles.actionButton} ${
+                          accion === "seguimiento" ? styles.active : ""
+                        }`}
+                        onClick={() => setAccion("seguimiento")}
+                      >
+                        <div className={styles.buttonContent}>
+                          <FaRegClock className={styles.buttonIcon} />
+                          <div>
+                            <div className={styles.buttonTitle}>Seguimiento</div>
+                            <div className={styles.buttonSubtitle}>
+                              El ticket permanece abierto
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </button>
+
+                      {/* Botón de Solución - solo visible para admin y técnico */}
+                      {isAdminOrTech && (
+                        <button
+                          type="button"
+                          className={`${styles.actionButton} ${
+                            accion === "solucion" ? styles.active : ""
+                          }`}
+                          onClick={() => setAccion("solucion")}
+                        >
+                          <div className={styles.buttonContent}>
+                            <FaCheckCircle className={styles.buttonIcon} />
+                            <div>
+                              <div className={styles.buttonTitle}>Solución</div>
+                              <div className={styles.buttonSubtitle}>
+                                Cierra el ticket y envía encuesta
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      )}
                     </div>
-                  </button>
+                  </div>
 
-                  {/* Botón de Solución - solo visible para admin y técnico */}
-                  {(userRole === "admin" || userRole === "tecnico") && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${
-                        accion === "solucion" ? styles.active : ""
-                      }`}
-                      onClick={() => setAccion("solucion")}
-                    >
-                      <div className={styles.buttonContent}>
-                        <FaCheckCircle className={styles.buttonIcon} />
-                        <div>
-                          <div className={styles.buttonTitle}>Solución</div>
-                          <div className={styles.buttonSubtitle}></div>
-                        </div>
-                      </div>
-                    </button>
-                  )}
+                  {/* Formulario de solución/seguimiento */}
+                  <form onSubmit={handleSubmit} className={styles.solutionForm}>
+                    <h2 className={styles.solutionTitle}>
+                      {accion === "solucion" ? "Solución Final" : "Seguimiento"}
+                    </h2>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="solucion" className={styles.label}>
+                        {accion === "solucion"
+                          ? "Detalle de la solución aplicada:"
+                          : "Detalle del seguimiento:"}
+                        <span className={styles.required}>*</span>
+                      </label>
+                      <textarea
+                        id="solucion"
+                        value={solucion}
+                        onChange={(e) => setSolucion(e.target.value)}
+                        required
+                        className={`${styles.textarea} ${
+                          validationErrors.solucion ? styles.errorInput : ""
+                        }`}
+                        placeholder={
+                          accion === "solucion"
+                            ? "Describa la solución aplicada..."
+                            : "Describa los pasos realizados..."
+                        }
+                      />
+                      {validationErrors.solucion && (
+                        <span className={styles.errorText}>
+                          {validationErrors.solucion}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className={styles.buttonGroup}>
+                      <button
+                        type="submit"
+                        className={styles.submitButton}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <span className={styles.loadingSpinner}></span> Procesando...
+                          </>
+                        ) : accion === "solucion" ? (
+                          "Cerrar Ticket con Solución"
+                        ) : (
+                          "Guardar Seguimiento"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/Tickets")}
+                        className={styles.cancelButton}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+
+              {/* Mostrar mensaje si el ticket está cerrado */}
+              {ticket.estado === "cerrado" && (
+                <div className={styles.closedTicketMessage}>
+                  <h3>Este ticket ha sido cerrado</h3>
+                  <p>
+                    {ticket.solucion
+                      ? `Solución aplicada: ${ticket.solucion}`
+                      : "No se registró una solución específica."}
+                  </p>
+                  <p>
+                    Cerrado por: {ticket.cerradoPor || "Sistema"} el{" "}
+                    {new Date(ticket.fechaCierre).toLocaleString()}
+                  </p>
                 </div>
-              </div>
-
-              {/* Container para la solución */}
-              <form onSubmit={handleSubmit} className={styles.solutionForm}>
-                <h2 className={styles.solutionTitle}>Seguimiento </h2>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="solucion" className={styles.label}>
-                    Detalle de la solución o seguimiento:
-                  </label>
-                  <textarea
-                    id="solucion"
-                    value={solucion}
-                    onChange={(e) => setSolucion(e.target.value)}
-                    required
-                    className={styles.textarea}
-                    placeholder="Describa la solución aplicada o los pasos realizados..."
-                  />
-                </div>
-
-                <div className={styles.buttonGroup}>
-                  <button type="submit" className={styles.submitButton}>
-                    {accion === "solucion"
-                      ? "Cerrar Ticket con Solución"
-                      : "Guardar Seguimiento"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/Tickets")}
-                    className={styles.cancelButton}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
 
             {/* Columna derecha - Opciones adicionales */}
@@ -882,42 +1027,77 @@ const SolucionTickets = () => {
                 <h3>Opciones del Ticket</h3>
 
                 <div className={styles.optionGroup}>
-                  <label className={styles.optionLabel}>Casos</label>
+                  <label className={styles.optionLabel}>Historial</label>
                   <div className={styles.optionContent}>
                     <Link
-                      to="/tickets/solucion/:id"
+                      to={`/tickets/${id}/historial`}
                       className={styles.optionLink}
                     >
-                      Caso Actual
+                      <FaHistory /> Ver Historial
                     </Link>
                   </div>
                 </div>
 
+                {ticket.estado === "cerrado" && (
+                  <div className={styles.optionGroup}>
+                    <label className={styles.optionLabel}>
+                      Encuesta de satisfacción
+                    </label>
+                    <div className={styles.optionContent}>
+                      {surveyEnabled ? (
+                        <Link
+                          to={`/EncuestaSatisfaccion/${id}`}
+                          className={styles.optionLink}
+                        >
+                          Completar Encuesta
+                        </Link>
+                      ) : (
+                        <p className={styles.optionText}>
+                          Encuesta ya completada
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className={styles.optionGroup}>
-                  <label className={styles.optionLabel}>
-                    Encuesta de satisfacción
-                  </label>
+                  <label className={styles.optionLabel}>Documentación</label>
                   <div className={styles.optionContent}>
-                    <Link
-                      to="/EncuestaSatisfaccion/:surveyId"
-                      className={styles.optionLink}
-                    >
-                      Encuesta
-                    </Link>
+                    <p className={styles.optionText}>
+                      Adjuntos: {ticket.adjuntos || "Ninguno"}
+                    </p>
                   </div>
                 </div>
 
-                <div className={styles.optionGroup}>
-                  <label className={styles.optionLabel}>Histórico</label>
-                  <div className={styles.optionContent}>
-                    <Link
-                      to={`/tickets/${ticket.id}/historial`}
-                      className={styles.optionLink}
-                    >
-                      <FaHistory /> Historial
-                    </Link>
+                {seguimientos.length > 0 && (
+                  <div className={styles.optionGroup}>
+                    <label className={styles.optionLabel}>Últimos Seguimientos</label>
+                    <div className={styles.optionContent}>
+                      <div className={styles.seguimientosList}>
+                        {seguimientos.slice(0, 3).map((seg, index) => (
+                          <div key={index} className={styles.seguimientoItem}>
+                            <p className={styles.seguimientoFecha}>
+                              {new Date(seg.fecha).toLocaleString()}
+                            </p>
+                            <p className={styles.seguimientoTexto}>
+                              {seg.descripcion.length > 50
+                                ? `${seg.descripcion.substring(0, 50)}...`
+                                : seg.descripcion}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      {seguimientos.length > 3 && (
+                        <Link
+                          to={`/tickets/${id}/historial`}
+                          className={styles.optionLinkSmall}
+                        >
+                          Ver todos ({seguimientos.length})
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
