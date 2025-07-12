@@ -1,35 +1,9 @@
--- Active: 1744258976597@@127.0.0.1@3306@help_desk_jcbd
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Servidor: 127.0.0.1
--- Tiempo de generación: 08-07-2025 a las 02:27:13
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+DROP DATABASE IF EXISTS help_desk_jcbd1;
 
 
+CREATE DATABASE help_desk_jcbd1
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Base de datos: `help_desk_jcbd`
---
-CREATE DATABASE help_desk_jcbd;
-USE help_desk_jcbd; 
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `adjuntos_tickets`
---
+USE help_desk_jcbd1
 
 CREATE TABLE `adjuntos_tickets` (
   `id_adjunto` int(11) NOT NULL,
@@ -41,11 +15,7 @@ CREATE TABLE `adjuntos_tickets` (
   `fecha_subida` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `categorias`
---
 
 CREATE TABLE `categorias` (
   `id_categoria` int(11) NOT NULL,
@@ -53,9 +23,7 @@ CREATE TABLE `categorias` (
   `descripcion` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `categorias`
---
+
 
 INSERT INTO `categorias` (`id_categoria`, `nombre_categoria`, `descripcion`) VALUES
 (1, 'Hardware', 'Problemas relacionados con equipos físicos'),
@@ -63,11 +31,8 @@ INSERT INTO `categorias` (`id_categoria`, `nombre_categoria`, `descripcion`) VAL
 (3, 'Red', 'Problemas de conectividad y redes'),
 (4, 'Cuentas', 'Gestión de cuentas y permisos de usuarios');
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `entidades`
---
+
 
 CREATE TABLE `entidades` (
   `id_entidad` int(11) NOT NULL,
@@ -75,9 +40,6 @@ CREATE TABLE `entidades` (
   `descripcion` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `entidades`
---
 
 INSERT INTO `entidades` (`id_entidad`, `nombre_entidad`, `descripcion`) VALUES
 (1, 'Departamento de TI', 'Departamento de Tecnologías de la Información'),
@@ -85,11 +47,7 @@ INSERT INTO `entidades` (`id_entidad`, `nombre_entidad`, `descripcion`) VALUES
 (3, 'Contabilidad', 'Departamento financiero y contable'),
 (4, 'Operaciones', 'Departamento de operaciones generales');
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `grupos`
---
 
 CREATE TABLE `grupos` (
   `id_grupo` int(11) NOT NULL,
@@ -97,9 +55,7 @@ CREATE TABLE `grupos` (
   `descripcion` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `grupos`
---
+
 
 INSERT INTO `grupos` (`id_grupo`, `nombre_grupo`, `descripcion`) VALUES
 (1, 'Administradores del Sistema', 'Grupo de administración de sistemas'),
@@ -107,11 +63,7 @@ INSERT INTO `grupos` (`id_grupo`, `nombre_grupo`, `descripcion`) VALUES
 (3, 'Soporte Técnico N2', 'Grupo de soporte técnico especializado'),
 (4, 'Redes', 'Grupo de soporte técnico especializado en redes');
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `historial_tickets`
---
 
 CREATE TABLE `historial_tickets` (
   `id_historial` int(11) NOT NULL,
@@ -126,11 +78,7 @@ CREATE TABLE `historial_tickets` (
   `comentario_reapertura` text DEFAULT NULL COMMENT 'Comentario al reabrir el ticket'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `tickets`
---
 
 CREATE TABLE `tickets` (
   `id_ticket` int(11) NOT NULL,
@@ -150,16 +98,14 @@ CREATE TABLE `tickets` (
   `contador_reaperturas` int(11) DEFAULT 0 COMMENT 'Número de veces que se ha reabierto este ticket'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `tickets`
---
+
 
 INSERT INTO `tickets` (`id_ticket`, `prioridad`, `estado_ticket`, `tipo`, `titulo`, `descripcion`, `ubicacion`, `fecha_creacion`, `fecha_cierre`, `fecha_actualizacion`, `id_categoria1`, `id_grupo1`, `id_tecnico_asignado`, `id_usuario_reporta`, `contador_reaperturas`) VALUES
-(1, 'Alta', 'nuevo', 'Incidencia', 'Computadora no enciende', 'El equipo del usuario no muestra señal de vida al presionar el botón de encendido', 'Oficina 101', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:07', 1, 1, 2, 3, 0),
-(2, 'Media', 'nuevo', 'Requerimiento', 'Instalación de Photoshop', 'El usuario requiere la instalación de Adobe Photoshop para edición de imágenes', 'Oficina 205', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:12', 2, 2, 2, 3, 0),
-(3, 'Baja', 'nuevo', 'Incidencia', 'No hay conexión a internet', 'Todo el departamento de contabilidad ha perdido conexión a internet', 'Área Contabilidad', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:32', 3, 1, 6, 2, 0),
-(4, 'Baja', 'en proceso', 'Requerimiento', 'Restablecer contraseña', 'El usuario olvidó su contraseña y necesita que se la restablezcan', 'Oficina 312', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-25 01:00:00', 4, 3, 2, 3, 0),
-(5, 'Media', 'en proceso', 'Incidencia', 'Impresora no funciona', 'La impresora de la oficina 107 no responde y muestra un error de papel atascado', 'Oficina 107', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:45', 1, 2, 7, 3, 0);
+(1, 'Alta', 'nuevo', 'incidencia', 'Computadora no enciende', 'El equipo del usuario no muestra señal de vida al presionar el botón de encendido', 'Oficina 101', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:07', 1, 1, 2, 3, 0),
+(2, 'Media', 'nuevo', 'requerimiento', 'Instalación de Photoshop', 'El usuario requiere la instalación de Adobe Photoshop para edición de imágenes', 'Oficina 205', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:12', 2, 2, 2, 3, 0),
+(3, 'Alta', 'nuevo', 'incidencia', 'No hay conexión a internet', 'Todo el departamento de contabilidad ha perdido conexión a internet', 'Área Contabilidad', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:32', 3, 1, 6, 2, 0),
+(4, 'Baja', 'nuevo', 'requerimiento', 'Restablecer contraseña', 'El usuario olvidó su contraseña y necesita que se la restablezcan', 'Oficina 312', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-25 01:00:00', 4, 3, 2, 3, 0),
+(5, 'Media', 'nuevo', 'incidencia', 'Impresora no funciona', 'La impresora de la oficina 107 no responde y muestra un error de papel atascado', 'Oficina 107', '2025-06-18 10:10:10', '2025-06-18 11:34:07', '2025-06-18 11:34:45', 1, 2, 7, 3, 0);
 
 --
 -- Disparadores `tickets`
@@ -333,10 +279,7 @@ CREATE TRIGGER `after_ticket_update` AFTER UPDATE ON `tickets` FOR EACH ROW BEGI
     
     -- Registrar cierre de ticket
     IF (NEW.fecha_cierre IS NOT NULL AND OLD.fecha_cierre IS NULL) THEN
-        INSERT INTO historial_tickets (id_ticket2, campo_modificado, valor_anterior, valor_nuevo, {
-          "message": "Error interno del servidor",
-          "success": false
-        }
+        INSERT INTO historial_tickets (id_ticket2, campo_modificado, valor_anterior, valor_nuevo, 
                                      modificado_por, nombre_modificador, rol_modificador)
         VALUES (NEW.id_ticket, 'fecha_cierre', NULL, NEW.fecha_cierre, 
                user_id, user_name, user_rol);
@@ -353,11 +296,7 @@ END
 $$
 DELIMITER ;
 
--- --------------------------------------------------------
 
---
--- Estructura de tabla para la tabla `usuarios`
---
 
 CREATE TABLE `usuarios` (
   `id_usuario` int(11) NOT NULL,
@@ -375,60 +314,52 @@ CREATE TABLE `usuarios` (
 
 --
 -- Volcado de datos para la tabla `usuarios`
---{
-  "message": "Error interno del servidor",
-  "success": false
-}
+--
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre_completo`, `correo`, `telefono`, `nombre_usuario`, `contraseña`, `rol`, `estado`, `fecha_registro`, `fecha_actualizacion`, `id_entidad1`) VALUES
 (1, 'Admin Sistema', 'admin@helpdeskjcbd.com', '123456789', 'Admin', 'admin123', 'administrador', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:32:19', 1),
 (2, 'Técnico Principal', 'tecnico@helpdeskjcbd.com', '123456789', 'Tecnico_1', 'tecnico123', 'tecnico', 'activo', '2025-06-18 10:09:59', '2025-06-18 10:59:48', 1),
 (3, 'Sistema Usuario', 'usuario1@helpdeskjcbd.com', '123456789', 'Usuario_1', 'usuario123', 'usuario', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:09:01', 2),
-(4, 'Usuario Sistema', 'usuario2@helpdeskjcbd.com', '123456789', 'Usuario_2', 'usuario1234', 'usuario', 'inactivo', '2025-06-18 10:09:59', '2025-06-18 11:09:14', 3),
+(4, 'Usuario Sistema', 'usuario2@helpdeskjcbd.com', '123456789', 'Usuario_2', 'usuario1234', 'usuario', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:09:14', 3),
 (5, 'Usuario Usuario', 'usuario3@helpdeskjcbd.com', '5551234567', 'Usuario_3', 'usuario12345', 'usuario', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:09:23', 4),
 (6, 'Tecnico Tecnico', 'tecnico1@helpdeskjcbd.com', '5557654321', 'Tecnico_2', 'tecnico1234', 'tecnico', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:09:34', 1),
-(7, 'Tecnico Tecnico Tecnico', 'tecnico2@helpdeskjcbd.com', '5559876543', 'Tecnico_3', 'tecnico12345', 'tecnico', 'inactivo', '2025-06-18 10:09:59', '2025-06-18 11:09:47', 1);
+(7, 'Tecnico Tecnico Tecnico', 'tecnico2@helpdeskjcbd.com', '5559876543', 'Tecnico_3', 'tecnico12345', 'tecnico', 'activo', '2025-06-18 10:09:59', '2025-06-18 11:09:47', 1);
+
+-- --------------------------------------------------------
 
 --
--- Índices para tablas volcadas
+-- Estructura de tabla para la tabla `usuarios_tickets`
 --
 
---
--- Indices de la tabla `adjuntos_tickets`
---
+CREATE TABLE `usuarios_tickets` (
+  `id_usuario1` int(11) NOT NULL,
+  `id_ticket3` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 ALTER TABLE `adjuntos_tickets`
   ADD PRIMARY KEY (`id_adjunto`),
   ADD KEY `adjuntos_tickets_ibfk_1` (`id_ticket1`);
 
---
--- Indices de la tabla `categorias`
---
+
 ALTER TABLE `categorias`
   ADD PRIMARY KEY (`id_categoria`);
 
---
--- Indices de la tabla `entidades`
---
+
 ALTER TABLE `entidades`
   ADD PRIMARY KEY (`id_entidad`);
 
---
--- Indices de la tabla `grupos`
---
+
 ALTER TABLE `grupos`
   ADD PRIMARY KEY (`id_grupo`);
 
---
--- Indices de la tabla `historial_tickets`
---
+
 ALTER TABLE `historial_tickets`
   ADD PRIMARY KEY (`id_historial`),
   ADD KEY `id_ticket2` (`id_ticket2`),
   ADD KEY `modificado_por` (`modificado_por`);
 
---
--- Indices de la tabla `tickets`
---
+
 ALTER TABLE `tickets`
   ADD PRIMARY KEY (`id_ticket`),
   ADD KEY `id_categoria1` (`id_categoria1`),
@@ -436,94 +367,69 @@ ALTER TABLE `tickets`
   ADD KEY `id_tecnico_asignado` (`id_tecnico_asignado`),
   ADD KEY `id_usuario_reporta` (`id_usuario_reporta`);
 
---
--- Indices de la tabla `usuarios`
---
+
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
   ADD UNIQUE KEY `correo` (`correo`),
   ADD UNIQUE KEY `nombre_usuario` (`nombre_usuario`),
   ADD KEY `id_entidad1` (`id_entidad1`);
 
---
--- AUTO_INCREMENT de las tablas volcadas
---
 
---
--- AUTO_INCREMENT de la tabla `adjuntos_tickets`
---
+ALTER TABLE `usuarios_tickets`
+  ADD PRIMARY KEY (`id_usuario1`,`id_ticket3`),
+  ADD KEY `id_ticket3` (`id_ticket3`);
+
+
 ALTER TABLE `adjuntos_tickets`
   MODIFY `id_adjunto` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT de la tabla `categorias`
---
+
 ALTER TABLE `categorias`
   MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- AUTO_INCREMENT de la tabla `entidades`
---
+
 ALTER TABLE `entidades`
   MODIFY `id_entidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- AUTO_INCREMENT de la tabla `grupos`
---
+
 ALTER TABLE `grupos`
   MODIFY `id_grupo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- AUTO_INCREMENT de la tabla `historial_tickets`
---
+
 ALTER TABLE `historial_tickets`
-  MODIFY `id_historial` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_historial` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
---
--- AUTO_INCREMENT de la tabla `tickets`
---
+
 ALTER TABLE `tickets`
-  MODIFY `id_ticket` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_ticket` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
---
--- AUTO_INCREMENT de la tabla `usuarios`
---
+
 ALTER TABLE `usuarios`
   MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
---
--- Restricciones para tablas volcadas
---
 
---
--- Filtros para la tabla `adjuntos_tickets`
---
+
 ALTER TABLE `adjuntos_tickets`
   ADD CONSTRAINT `adjuntos_tickets_ibfk_1` FOREIGN KEY (`id_ticket1`) REFERENCES `tickets` (`id_ticket`) ON DELETE CASCADE;
 
---
--- Filtros para la tabla `historial_tickets`
---
+
 ALTER TABLE `historial_tickets`
   ADD CONSTRAINT `historial_tickets_ibfk_1` FOREIGN KEY (`id_ticket2`) REFERENCES `tickets` (`id_ticket`) ON DELETE CASCADE,
   ADD CONSTRAINT `historial_tickets_ibfk_2` FOREIGN KEY (`modificado_por`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL;
 
---
--- Filtros para la tabla `tickets`
---
+
 ALTER TABLE `tickets`
   ADD CONSTRAINT `tickets_ibfk_1` FOREIGN KEY (`id_categoria1`) REFERENCES `categorias` (`id_categoria`) ON DELETE SET NULL,
   ADD CONSTRAINT `tickets_ibfk_2` FOREIGN KEY (`id_grupo1`) REFERENCES `grupos` (`id_grupo`) ON DELETE SET NULL,
   ADD CONSTRAINT `tickets_ibfk_3` FOREIGN KEY (`id_tecnico_asignado`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL,
   ADD CONSTRAINT `tickets_ibfk_4` FOREIGN KEY (`id_usuario_reporta`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL;
 
---
--- Filtros para la tabla `usuarios`
---
+
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_entidad1`) REFERENCES `entidades` (`id_entidad`) ON DELETE SET NULL;
-COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+ALTER TABLE `usuarios_tickets`
+  ADD CONSTRAINT `usuarios_tickets_ibfk_1` FOREIGN KEY (`id_usuario1`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
+  ADD CONSTRAINT `usuarios_tickets_ibfk_2` FOREIGN KEY (`id_ticket3`) REFERENCES `tickets` (`id_ticket`) ON DELETE CASCADE;
+COMMIT;
