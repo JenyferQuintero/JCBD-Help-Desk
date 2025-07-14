@@ -170,11 +170,7 @@ const Tickets = () => {
   };
 
   const handleViewSolution = (ticketId) => {
-    if (['administrador', 'tecnico'].includes(userRole)) {
-      navigate(`/SolucionarTicket/${ticketId}`); // Ruta para solucionar ticket
-    } else {
-      navigate(`/SolucionTicket/${ticketId}`); // Ruta para ver solución
-    }
+    navigate(`/tickets/solucion/${ticketId}`);
   };
 
   const exportToExcel = () => {
