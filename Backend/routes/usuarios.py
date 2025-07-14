@@ -564,6 +564,7 @@ def obtener_tickets():
             query += " WHERE ut.id_usuario1 = %s"
             params.append(usuario_id)
         
+        # Ordenar por fecha de creación descendente (más reciente primero)
         query += " ORDER BY t.fecha_creacion DESC"
         
         cursor.execute(query, params)
@@ -708,6 +709,10 @@ def actualizar_ticket(id_ticket):
             updates.append("descripcion = %s")
             params.append(data['descripcion'])
 
+        if 'ubicacion' in data:
+            updates.append("ubicacion = %s")
+            params.append(data['ubicacion'])
+
         # Campos solo para admin/tecnico
         if user_role in ['administrador', 'tecnico']:
             if 'prioridad' in data:
@@ -824,6 +829,9 @@ def obtener_estado_tickets():
 
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
+
+        # Ordenar por fecha de creación descendente (más reciente primero)
+        query += " ORDER BY t.fecha_creacion DESC"
 
         cursor.execute(query, params)
         tickets = cursor.fetchall()
