@@ -126,7 +126,7 @@ const CrearCasoUse = () => {
           setFormData({
             id: ticketData.id,
             tipo: ticketData.tipo,
-            origen: ticketData.origen || userData.entidad, // Usar el origen del ticket o la entidad del usuario
+            origen: ticketData.origen || userData.entidad,
             ubicacion: ticketData.ubicacion,
             prioridad: ticketData.prioridad,
             categoria: ticketData.id_categoria1,
@@ -176,7 +176,7 @@ const CrearCasoUse = () => {
       formDataToSend.append("titulo", formData.titulo);
       formDataToSend.append("descripcion", formData.descripcion);
       formDataToSend.append("solicitante", formData.solicitante);
-      formDataToSend.append("ubicacion", formData.ubicacion); // Ubicación física
+      formDataToSend.append("ubicacion", formData.ubicacion);
       
       // Campos adicionales para admin/tecnico o creación
       if (!isEditMode || userRole === 'administrador' || userRole === 'tecnico') {
@@ -296,20 +296,6 @@ const CrearCasoUse = () => {
     } else if (section === "tickets") {
       return "/Tickets";
     }
-  };
-
-  // Determinar qué campos son editables según el rol y el modo
-  const isFieldEditable = (fieldName) => {
-    if (!isEditMode) return true; // Todos los campos son editables en creación
-    
-    // En modo edición:
-    if (userRole === 'administrador' || userRole === 'tecnico') {
-      return true; // Admins y técnicos pueden editar todo
-    }
-    
-    // Usuarios normales solo pueden editar estos campos en modo edición
-    const editableFieldsForUsers = ['titulo', 'descripcion', 'archivo', 'ubicacion'];
-    return editableFieldsForUsers.includes(fieldName);
   };
 
   return (
@@ -543,18 +529,8 @@ const CrearCasoUse = () => {
         <div className={styles.formColumn}>
           <div className={styles.formContainerCaso}>
             <form onSubmit={handleSubmit}>
-              {isEditMode && (
-                <div className={styles.formGroupCaso}>
-                  <label className={styles.casoLabel}>ID</label>
-                  <input
-                    className={styles.casoInput}
-                    type="text"
-                    name="id"
-                    value={formData.id}
-                    readOnly
-                  />
-                </div>
-              )}
+              {/* Campo ID oculto (necesario para el backend pero no visible) */}
+              {isEditMode && <input type="hidden" name="id" value={formData.id} />}
 
               {/* Solicitante */}
               <div className={styles.formGroupCaso}>
@@ -626,7 +602,7 @@ const CrearCasoUse = () => {
                 </select>
               </div>
 
-              {/* Campo Categoría con datos dinámicos - editable solo en creación o por admin/tecnico */}
+              {/* Campo Categoría con datos dinámicos */}
               <div className={styles.formGroupCaso}>
                 <label className={styles.casoLabel}>Categoría*</label>
                 <select
