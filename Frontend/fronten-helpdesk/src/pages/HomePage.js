@@ -576,11 +576,6 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* Breadcrumbs simplificados */}
-      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-        <Breadcrumbs />
-      </div>
-
       {/* Contenido principal */}
       <div
         className={styles.container}
