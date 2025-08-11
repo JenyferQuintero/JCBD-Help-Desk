@@ -545,7 +545,7 @@ const CrearCasoAdmin = () => {
               <div className={styles.gloBoBody}>
                 <div className={styles.formGroup}>
                   <label>Entidad:*</label>
-                  <select className={styles.inputField} value={ticket.entidad}
+                  <select className={styles.inputField} value={formData.entidad}
                     name="entidad" onChange={handleChange}>
                     <option value="">Seleccione una entidad</option>
                     <option value="Contabilidad">Contabilidad</option>
@@ -643,7 +643,7 @@ const CrearCasoAdmin = () => {
                 <div className={styles.formGroup}>
                   <label className={styles.fecha}>Fecha de apertura*</label>
                   <input type="datetime-local" name="fechaApertura"
-                    value={formatDateTimeForInput(ticket.fechaApertura)}
+                    value={formatDateTimeForInput(formData.fechaApertura)}
                     onChange={handleChange} required />
                 </div>
 
@@ -651,7 +651,7 @@ const CrearCasoAdmin = () => {
                   <label>Tipo*</label>
                   <select
                     name="tipo"
-                    value={ticket.tipo}
+                    value={formData.tipo}
                     onChange={handleChange}
                     required>
                     <option value="incidencia">Incidencia</option>

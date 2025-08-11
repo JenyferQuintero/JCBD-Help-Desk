@@ -426,6 +426,7 @@ def obtener_usuario(usuario_id):
     except Exception as e:
         print("Error al obtener usuario:", e)
         return jsonify({"success": False, "message": "Error al obtener usuario"}), 500
+    
 @usuarios_bp.route("/tickets", methods=["POST"])
 def crear_ticket():
     try:

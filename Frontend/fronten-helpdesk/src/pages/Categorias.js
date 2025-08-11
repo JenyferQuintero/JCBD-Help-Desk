@@ -57,6 +57,7 @@ const Categorias = () => {
   // Efectos
   useEffect(() => {
     fetchCategorias();
+    fetchEntidades();
   }, []);
 
   useEffect(() => {
@@ -85,6 +86,15 @@ const Categorias = () => {
 
     setFilteredCategorias(result);
     setCurrentPage(1);
+  };
+
+  const fetchEntidades = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/usuarios/obtenerEntidades");
+      setEntidades(response.data);
+    } catch (error) {
+      console.error("Error al cargar entidades:", error);
+    }
   };
 
   const toggleMenu = (menu) => {
@@ -211,7 +221,7 @@ const Categorias = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['nombre_categoria', 'entidad'];
+    const requiredFields = ['nombre_categoria', 'id_entidad'];
     const isValid = requiredFields.every(field => {
       validateField(field, formData[field]);
       return formData[field]?.trim();

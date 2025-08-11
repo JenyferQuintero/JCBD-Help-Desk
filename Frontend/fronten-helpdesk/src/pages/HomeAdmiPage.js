@@ -63,31 +63,34 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false); // Cambiado a false para mostrar datos demo
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('month');
+  const [tableData, setTableData] = useState({
+      nuevo: [],
+      enProceso: [],
+      enEspera: [],
+      resueltos: [],
+      cerrados: [],
+      borrados: [],
+      encuesta: [],
+    });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            usuario_id: userId,
+            rol: userRole
+          }
+        });
         
         // Simular llamadas API con datos demo
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // En producción, usaría esto:
-        /*
-        const [usersRes, ticketsRes, surveysRes, entitiesRes] = await Promise.all([
-          axios.get('/api/dashboard/users'),
-          axios.get('/api/dashboard/tickets'),
-          axios.get('/api/dashboard/surveys'),
-          axios.get('/api/dashboard/entities')
-        ]);
-
-        setStats({
-          users: usersRes.data,
-          tickets: ticketsRes.data,
-          surveys: surveysRes.data,
-          entities: entitiesRes.data
-        });
-        */
         
         setLoading(false);
       } catch (err) {
@@ -293,16 +296,7 @@ const HomeAdmiPage = () => {
     { icon: "✔️", label: "Resueltos", count: 4, color: "#607D8B" },
   ];
 
-  const problems = [
-    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "Aceptado", color: "#008000", icon: "✔", count: 0 },
-    { label: "En curso", color: "lightgreen", icon: "📅", count: 0 },
-    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
-    { label: "Bajo observación", color: "black", icon: "👁", count: 0 },
-    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
-    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-  ];
+  
 
   // Handlers
   const toggleChat = () => setIsChatOpen(!isChatOpen);
@@ -637,18 +631,7 @@ const HomeAdmiPage = () => {
                   </div>
                 </div>
 
-                <div className={styles.sectionContainer}>
-                  <h2>Problemas</h2>
-                  <div className={styles.cardsContainer}>
-                    {problems.map((problem, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: problem.color }}>
-                        <span className="icon">{problem.icon}</span>
-                        <span className="label">{problem.label}</span>
-                        <span className="count">{problem.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                
               </>
             )}
 

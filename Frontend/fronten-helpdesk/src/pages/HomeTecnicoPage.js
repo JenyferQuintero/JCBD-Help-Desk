@@ -39,16 +39,7 @@ const HomeTecnicoPage = () => {
     { icon: "✔️", label: "Resueltos", count: 4, color: "#607D8B" },
   ];
 
-  const problems = [
-    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "Aceptado", color: "#008000", icon: "✔", count: 0 },
-    { label: "En curso", color: "lightgreen", icon: "📅", count: 0 },
-    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: 0 },
-    { label: "Bajo observación", color: "black", icon: "👁", count: 0 },
-    { label: "Cerrado", color: "black", icon: "⚫", count: 0 },
-    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-  ];
+  
   // Handlers
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
@@ -486,18 +477,7 @@ const roleToPath = {
                   </div>
                 </div>
 
-                <div className={styles.sectionContainer}>
-                  <h2>Problemas</h2>
-                  <div className={styles.cardsContainer}>
-                    {problems.map((problem, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: problem.color }}>
-                        <span className="icon">{problem.icon}</span>
-                        <span className="label">{problem.label}</span>
-                        <span className="count">{problem.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                
               </>
             )}
           </div>
