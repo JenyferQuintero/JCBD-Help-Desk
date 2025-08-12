@@ -221,12 +221,15 @@ const HomePage = () => {
               <th>DESCRIPCIÓN</th>
               <th>PRIORIDAD</th>
               <th>TÉCNICO ASIGNADO</th>
-              <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr key={index}>
+              <tr 
+                key={index}
+                onClick={() => handleTicketClick(item)}
+                className={styles.clickableRow}
+              >
                 <td>#{item.id}</td>
                 <td>{item.solicitante}</td>
                 <td>{item.descripcion}</td>
@@ -236,14 +239,6 @@ const HomePage = () => {
                   </span>
                 </td>
                 <td>{item.tecnico}</td>
-                <td>
-                  <button 
-                    onClick={() => handleTicketClick(item)}
-                    className={styles.editButton}
-                  >
-                    Editar
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -276,25 +271,22 @@ const HomePage = () => {
               <th>SOLICITANTE</th>
               <th>DESCRIPCIÓN</th>
               <th>TÉCNICO ASIGNADO</th>
-              <th>ACCIÓN</th>
             </tr>
           </thead>
           <tbody>
             {pendingSurveys.map((item, index) => (
-              <tr key={index}>
+              <tr 
+                key={index}
+                onClick={() => {
+                  markSurveyAsCompleted(item.id);
+                  navigate(`/EncuestaSatisfaccion/${item.id}`);
+                }}
+                className={styles.clickableRow}
+              >
                 <td>#{item.id}</td>
                 <td>{item.solicitante}</td>
                 <td>{item.descripcion}</td>
                 <td>{item.tecnico}</td>
-                <td>
-                  <Link
-                    to={`/EncuestaSatisfaccion/${item.id}`}
-                    onClick={() => markSurveyAsCompleted(item.id)}
-                    className={styles.surveyLink}
-                  >
-                    Realizar Encuesta
-                  </Link>
-                </td>
               </tr>
             ))}
           </tbody>
