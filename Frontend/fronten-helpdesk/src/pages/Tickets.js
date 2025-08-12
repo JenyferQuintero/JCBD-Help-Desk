@@ -554,7 +554,6 @@ const Tickets = () => {
                 <th>Categoría</th>
                 <th>Fecha Apertura</th>
                 <th>Última Actualización</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -562,24 +561,11 @@ const Tickets = () => {
                 currentRows.map((ticket, index) => (
                   <tr 
                     key={index}
-                    className={ticket.solicitanteId === parseInt(userId) ? styles.userTicket : ""}
+                    className={`${ticket.solicitanteId === parseInt(userId) ? styles.userTicket : ""} ${styles.clickableRow}`}
+                    onClick={() => handleViewSolution(ticket.id || ticket.id_ticket)}
                   >
-                    <td>
-                      <span
-                        className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
-                      >
-                        {ticket.id || ticket.id_ticket || 'N/A'}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={styles.clickableCell}
-                        onClick={() => handleTicketClick(ticket.id || ticket.id_ticket)}
-                      >
-                        {String(ticket.titulo || 'Sin título').toUpperCase()}
-                      </span>
-                    </td>
+                    <td>{ticket.id || ticket.id_ticket || 'N/A'}</td>
+                    <td>{String(ticket.titulo || 'Sin título').toUpperCase()}</td>
                     <td>{String(ticket.solicitante || 'Sin solicitante').toUpperCase()}</td>
                     <td>{String(ticket.descripcion || 'Sin descripción').toUpperCase()}</td>
                     <td>
@@ -629,24 +615,11 @@ const Tickets = () => {
                           .toUpperCase()
                       ) : 'Sin actualización'}
                     </td>
-                    <td className={styles.actionsCell}>
-                      {/* Botón de Solución - visible para usuarios (solicitantes) y admin/tecnico */}
-                      {(ticket.solicitanteId === parseInt(userId) || ['administrador', 'tecnico'].includes(userRole)) && (
-                        <button
-                          onClick={() => handleViewSolution(ticket.id || ticket.id_ticket)}
-                          className={styles.solutionButton}
-                          title={['administrador', 'tecnico'].includes(userRole) ? "Solucionar ticket" : "Ver solución"}
-                        >
-                          <FaCheckCircle /> 
-                          {['administrador', 'tecnico'].includes(userRole) ? " Solucionar" : " Solución"}
-                        </button>
-                      )}
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="12" className={styles.noResults}>
+                  <td colSpan="11" className={styles.noResults}>
                     No se encontraron tickets que coincidan con los criterios de búsqueda
                   </td>
                 </tr>
