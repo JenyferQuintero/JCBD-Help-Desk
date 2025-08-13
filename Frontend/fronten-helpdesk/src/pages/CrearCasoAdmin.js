@@ -6,8 +6,10 @@ import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerS
 import axios from 'axios';
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
-import ChatbotIcon from "../imagenes/img chatbot.png";
+import ChatBot from "../Componentes/ChatBot";
+import { NotificationContext } from "../context/NotificationContext";
 import styles from "../styles/CrearCasoAdmin.module.css";
+import MenuVertical from "../Componentes/MenuVertical";
 
 const CrearCasoAdmin = () => {
   // Obtener datos del usuario
@@ -23,39 +25,39 @@ const CrearCasoAdmin = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
-  const [ticket, setTicket] = useState({
-    entidad: '',
-    titulo: '',
-    descripcion: '',
-    archivos: [],
-    id: '',
-    solicitante: '',
-    prioridad: '',
-    estado: '',
-    tecnico: '',
-    grupo: '',
-    categoria: '',
-    fechaApertura: '',
-    ultimaActualizacion: '',
-    tipo: 'incidencia',
-    ubicacion: '',
-    observador: '',
-    asignadoA: '',
-    grupoAsignado: ''
-  });
+  const [departamentos, setDepartamentos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [grupos, setGrupos] = useState([]);
   const [tecnicos, setTecnicos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [success, setSuccess] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdTicketId, setCreatedTicketId] = useState(null);
   const navigate = useNavigate();
+
+  // Estado del formulario
+  const [formData, setFormData] = useState({
+    id: "",
+    tipo: "incidencia",
+    origen: "",
+    prioridad: "mediana",
+    categoria: "",
+    titulo: "",
+    descripcion: "",
+    archivos: [],
+    solicitante: nombre || "",
+    elementos: "",
+    entidad: "",
+    estado: "nuevo",
+    ubicacion: "",
+    observador: "",
+    asignado_a: "",
+    grupo_asignado: "",
+    fechaApertura: new Date().toISOString().slice(0, 16)
+  });
 
   // Verificación de rol
   const isAdminOrTech = userRole === "administrador" || userRole === "tecnico";
@@ -72,30 +74,7 @@ const CrearCasoAdmin = () => {
     );
   }
 
-  // Handlers
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
-
-
-
-
+  
   // Manejar búsqueda
   const handleSearch = (e) => {
     e.preventDefault();
@@ -109,20 +88,21 @@ const CrearCasoAdmin = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
-  };
-
-
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setTicket(prev => ({ ...prev, archivos: [...prev.archivos, ...files] }));
+    if (name === "archivos" && files) {
+      setFormData(prev => ({
+        ...prev,
+        archivos: Array.from(files)
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const removeFile = (index) => {
-    setTicket(prev => {
+    setFormData(prev => {
       const newFiles = [...prev.archivos];
       newFiles.splice(index, 1);
       return { ...prev, archivos: newFiles };
@@ -134,43 +114,36 @@ const CrearCasoAdmin = () => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    setSuccess(null);
+    setSuccessMessage('');
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("prioridad", formData.prioridad);
-      formDataToSend.append("estado", formData.estado);
-      formDataToSend.append("titulo", formData.titulo);
-      formDataToSend.append("solicitante", formData.solicitante);
-      formDataToSend.append("observador", formData.observador);
-      formDataToSend.append("asignado a", formData.asignado_a);
-      formDataToSend.append("descripcion", formData.descripcion);
-      formDataToSend.append("grupo asignado", formData.grupo_asignado);
-      formDataToSend.append("origen", formData.origen);
-      formDataToSend.append("tipo", formData.tipo);
-      formDataToSend.append("categoria", formData.categoria);
+      
+      // Agregar campos al FormData
+      Object.keys(formData).forEach(key => {
+        if (key !== "archivos" && formData[key] !== undefined && formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
 
-      if (formData.archivo) {
-        formDataToSend.append("archivo", formData.archivo);
-      }
+      // Agregar archivos
+      formData.archivos.forEach(file => {
+        formDataToSend.append("archivos", file);
+      });
 
-      if (location.state?.mode === "edit") {
-        await axios.put(
-          `http://localhost:5000/usuarios/tickets${formData.id}`,
-          formDataToSend,
-          {}
-        );
-        setSuccess("Ticket actualizado correctamente");
-      } else {
-        await axios.post(
-          "http://localhost:5000/usuarios/tickets",
-          formDataToSend,
-          {}
-        );
-        setSuccess("Ticket creado correctamente");
-      }
+      const response = await axios.post(
+        "http://localhost:5000/usuarios/tickets",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
 
-      setTimeout(() => navigate("/Tickets"), 2000);
+      setCreatedTicketId(response.data.id_ticket);
+      setShowSuccessModal(true);
+      setSuccessMessage("Ticket creado correctamente");
     } catch (error) {
       console.error("Error al procesar el ticket:", error);
       setError(
@@ -194,26 +167,10 @@ const CrearCasoAdmin = () => {
     );
   };
 
-
   const handleCloseModal = () => {
     setShowSuccessModal(false);
-    navigate('/Tickets'); // Redirige a la página de tickets
+    navigate('/Tickets');
   };
-
-
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    id: "",
-    tipo: "",
-    origen: "",
-    prioridad: "",
-    categoria: "",
-    titulo: "",
-    descripcion: "",
-    archivo: null,
-    solicitante: nombre || "",
-    elementos: "",
-  });
 
   const formatDateTimeForInput = (dateString) => {
     if (!dateString) return '';
@@ -226,13 +183,12 @@ const CrearCasoAdmin = () => {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
   // Obtener datos iniciales al cargar el componente
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
+        setLoading(true);
+        
         // Obtener usuarios
         const usuariosResponse = await axios.get(
           "http://localhost:5000/usuarios/obtener"
@@ -257,17 +213,25 @@ const CrearCasoAdmin = () => {
         );
         setGrupos(grupoResponse.data);
 
+        // Obtener técnicos
+        const tecnicosResponse = await axios.get(
+          "http://localhost:5000/usuarios/obtenerTecnicos"
+        );
+        setTecnicos(tecnicosResponse.data);
 
         // Cargar datos del ticket si estamos en modo edición
         if (location.state?.ticketData) {
-          setFormData((prev) => ({
+          setFormData(prev => ({
             ...prev,
             ...location.state.ticketData,
+            fechaApertura: formatDateTimeForInput(location.state.ticketData.fechaApertura)
           }));
         }
       } catch (error) {
         console.error("Error al obtener datos iniciales:", error);
-        
+        setError("Error al cargar datos iniciales");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -275,345 +239,123 @@ const CrearCasoAdmin = () => {
   }, [location.state]);
 
   if (loading) {
-    return <div className={styles.loading}>Cargando ticket...</div>;
+    return <div className={styles.loading}>Cargando datos iniciales...</div>;
   }
 
-  const getRouteByRole = (section) => {
-    if (section === 'inicio') {
-      if (userRole === 'administrador') {
-        return '/HomeAdmiPage';
-      } else if (userRole === 'tecnico') {
-        return '/HomeTecnicoPage';
-      } else {
-        return '/home';
-      }
-    } else if (section === 'crear-caso') {
-      if (userRole === 'administrador') {
-        return '/CrearCasoAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/CrearCasoAdmin';
-      } else {
-        return '/CrearCasoUse';
-      }
-    } else if (section === "tickets") {
-      // Todos los roles van a la misma ruta de tickets en tu caso
-      return "/Tickets";
-    }
-  };
-
-  // Renderizar menú según el rol
-  const renderMenuByRole = () => {
-    switch (userRole) {
-      case 'administrador':
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                <FcAssistant className={styles.menuIcon} />
-                <span className={styles.menuText}> Soporte</span>
-              </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Tickets" className={styles.submenuLink}>
-                    <FcAnswers className={styles.menuIcon} />
-                    <span className={styles.menuText}>Tickets</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                    <FcCustomerSupport className={styles.menuIcon} />
-                    <span className={styles.menuText}>Crear Caso</span>
-                  </Link>
-                </li>
-
-                <li>
-                  <Link to="/Estadisticas" className={styles.submenuLink}>
-                    <FcBullish className={styles.menuIcon} />
-                    <span className={styles.menuText}>Estadísticas</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                <FcBusinessman className={styles.menuIcon} />
-                <span className={styles.menuText}> Administración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Usuarios" className={styles.submenuLink}>
-                    <FcPortraitMode className={styles.menuIcon} />
-                    <span className={styles.menuText}> Usuarios</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/Grupos" className={styles.submenuLink}>
-                    <FcConferenceCall className={styles.menuIcon} />
-                    <span className={styles.menuText}> Grupos</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/Entidades" className={styles.submenuLink}>
-                    <FcOrganization className={styles.menuIcon} />
-                    <span className={styles.menuText}> Entidades</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
-                <FcAutomatic className={styles.menuIcon} />
-                <span className={styles.menuText}> Configuración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Categorias" className={styles.submenuLink}>
-                    <FcGenealogy className={styles.menuIcon} />
-                    <span className={styles.menuText}>Categorias</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        );
-
-      case 'tecnico':
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
-                <FcAssistant className={styles.menuIcon} />
-                <span className={styles.menuText}> Soporte</span>
-              </div>
-              <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Tickets" className={styles.submenuLink}>
-                    <FcAnswers className={styles.menuIcon} />
-                    <span className={styles.menuText}>Tickets</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                    <FcCustomerSupport className={styles.menuIcon} />
-                    <span className={styles.menuText}>Crear Caso</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
-                <FcBusinessman className={styles.menuIcon} />
-                <span className={styles.menuText}> Administración</span>
-              </div>
-              <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
-                <li>
-                  <Link to="/Usuarios" className={styles.submenuLink}>
-                    <FcPortraitMode className={styles.menuIcon} />
-                    <span className={styles.menuText}> Usuarios</span>
-                  </Link>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        );
-
-      case 'usuario':
-      default:
-        return (
-          <ul className={styles.menuIconos}>
-            <li className={styles.iconosMenu}>
-              <Link to="/home" className={styles.linkSinSubrayado}>
-                <FcHome className={styles.menuIcon} />
-                <span className={styles.menuText}>Inicio</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <Link to="/Tickets" className={styles.linkSinSubrayado}>
-                <FcAnswers className={styles.menuIcon} />
-                <span className={styles.menuText}>Tickets</span>
-              </Link>
-            </li>
-
-            <li className={styles.iconosMenu}>
-              <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                <FcCustomerSupport className={styles.menuIcon} />
-                <span className={styles.menuText}>Crear Caso</span>
-              </Link>
-            </li>
-          </ul>
-        );
-    }
-  };
+  
 
   return (
-    <div className={styles.containerPrincipal}>
-      {/* Menú Vertical */}
-      <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMenu}
-        onMouseLeave={toggleMenu}
-      >
-        <div className={styles.containerFluidMenu}>
-          <div className={styles.logoContainer}>
-            <img src={Logo} alt="Logo" />
-          </div>
-
-          <button
-            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-            type="button"
-            onClick={toggleMobileMenu}
-          >
-            <FiAlignJustify className={styles.menuIcon} />
-          </button>
-
-          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-            {renderMenuByRole()}
-          </div>
-
-          <div className={styles.floatingContainer}>
-            <div className={styles.menuLogoEmpresarial}>
-              <img src={Logoempresarial} alt="Logo Empresarial" />
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Contenido principal */}
-      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
-        <Outlet />
-      </div>
-
-      {/* Header */}
-      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-        <div className={styles.containerInicioImg}>
-          <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
-            <span>Inicio</span>
-          </Link>
-        </div>
-        <div className={styles.inputContainer}>
-          <div className={styles.searchContainer}>
-            <input className={styles.search} type="text" placeholder="Buscar..."
-              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <button className={styles.buttonBuscar} title="Buscar"
-              disabled={isLoading || !searchTerm.trim()}>
-              <FaMagnifyingGlass className={styles.searchIcon} />
-            </button>
-            {isLoading && <span className={styles.loading}>Buscando...</span>}
-            {error && <div className={styles.errorMessage}>{error}</div>}
-          </div>
-
-          <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
-            <div className={styles.iconContainer}>
-              <Link to="/"><FaPowerOff className={styles.icon} /></Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
+        <MenuVertical>
+       <>
+      {/* Contenido Principal */}
       <div className={styles.containerCrearCasoAdmin} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-
         <div className={styles.containersolucion}>
-          <h1 className={styles.title}>Creación de Ticket</h1>
-
+          <h1 className={styles.title}>{location.state?.ticketData ? 'Editar Ticket' : 'Creación de Ticket'}</h1>
 
           <div className={styles.layoutContainer}>
-
             <div className={styles.gloBoContainer}>
               <div className={styles.gloBoHeader}>
-                <h2>Crear Nuevo Caso</h2>
+                <h2>{location.state?.ticketData ? 'Editar Caso' : 'Crear Nuevo Caso'}</h2>
               </div>
 
               <div className={styles.gloBoBody}>
-                <div className={styles.formGroup}>
-                  <label>Entidad:*</label>
-                  <select className={styles.inputField} value={formData.entidad}
-                    name="entidad" onChange={handleChange}>
-                    <option value="">Seleccione una entidad</option>
-                    <option value="Contabilidad">Contabilidad</option>
-                    <option value="Talento Humano">Talento Humano</option>
-                    <option value="Almacen">Almacen</option>
-                  </select>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Título*</label>
-                  <input
-                    className={styles.inputField}
-                    type="text"
-                    name="titulo"
-                    value={formData.titulo}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Descripción*</label>
-                  <textarea className={styles.inputField}
-                    placeholder="Describa el caso detalladamente"
-                    name="descripcion"
-                    value={formData.descripcion}
-                    onChange={handleChange}
-                    rows="5"
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Adjuntar archivos:</label>
-                  <div className={styles.fileUploadContainer}>
-                    <input type="file" id="fileUpload" className={styles.fileInput}
-                      onChange={handleFileUpload} multiple />
-                    <label htmlFor="fileUpload" className={styles.fileUploadButton}>
-                      Seleccionar archivos
-                    </label>
-                    {ticket.archivos?.length > 0 && (
-                      <div className={styles.fileList}>
-                        {ticket.archivos.map((file, index) => (
-                          <div key={index} className={styles.fileItem}>
-                            <span>{file.name}</span>
-                            <button type="button" onClick={() => removeFile(index)}
-                              className={styles.removeFileButton}>×</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                <form onSubmit={handleSubmit}>
+                  <div className={styles.formGroup}>
+                    <label>Entidad:*</label>
+                    <select 
+                      className={styles.inputField} 
+                      value={formData.entidad}
+                      name="entidad" 
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Seleccione una entidad</option>
+                      {departamentos.map(depto => (
+                        <option key={depto.id_entidad} value={depto.id_entidad}>
+                          {depto.nombre_entidad}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
 
-                <div className={styles.formActions}>
-                  <button type="button" className={styles.submitButton} onClick={handleSubmit}>
-                    Crear Ticket
-                  </button>
-                </div>
+                  <div className={styles.formGroup}>
+                    <label>Título*</label>
+                    <input
+                      className={styles.inputField}
+                      type="text"
+                      name="titulo"
+                      value={formData.titulo}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Descripción*</label>
+                    <textarea 
+                      className={styles.inputField}
+                      placeholder="Describa el caso detalladamente"
+                      name="descripcion"
+                      value={formData.descripcion}
+                      onChange={handleChange}
+                      rows="5"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Adjuntar archivos:</label>
+                    <div className={styles.fileUploadContainer}>
+                      <input 
+                        type="file" 
+                        id="fileUpload" 
+                        className={styles.fileInput}
+                        onChange={handleChange} 
+                        name="archivos"
+                        multiple 
+                      />
+                      <label htmlFor="fileUpload" className={styles.fileUploadButton}>
+                        Seleccionar archivos
+                      </label>
+                      {formData.archivos.length > 0 && (
+                        <div className={styles.fileList}>
+                          {formData.archivos.map((file, index) => (
+                            <div key={index} className={styles.fileItem}>
+                              <span>{file.name}</span>
+                              <button 
+                                type="button" 
+                                onClick={() => removeFile(index)}
+                                className={styles.removeFileButton}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.formActions}>
+                    <button 
+                      type="submit" 
+                      className={styles.submitButton} 
+                      disabled={!validateForm() || isLoading}
+                    >
+                      {isLoading ? 'Procesando...' : (location.state?.ticketData ? 'Actualizar Ticket' : 'Crear Ticket')}
+                    </button>
+                  </div>
+                </form>
               </div>
               <div className={styles.gloBoPointer}></div>
             </div>
+
             {/* Modal de éxito */}
             {showSuccessModal && (
               <div className={styles.modalOverlay}>
                 <div className={styles.successModal}>
-                  <h3>¡Ticket creado exitosamente!</h3>
-                  <p>El ticket fue creado con el número: <strong>{createdTicketId}</strong></p>
+                  <h3>¡Ticket {location.state?.ticketData ? 'actualizado' : 'creado'} exitosamente!</h3>
+                  <p>El ticket fue {location.state?.ticketData ? 'actualizado' : 'creado'} con el número: <strong>{createdTicketId}</strong></p>
                   <button
                     onClick={handleCloseModal}
                     className={styles.modalButton}
@@ -624,27 +366,25 @@ const CrearCasoAdmin = () => {
               </div>
             )}
 
-
             <div className={styles.ticketInfoContainer}>
               <div className={styles.header}>
                 <h3>Información del Ticket</h3>
-                {!isEditing && (
-                  <button onClick={() => setIsEditing(true)} className={styles.editButton}>
-                    Editar
-                  </button>
-                )}
               </div>
 
-              {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+       
 
               <div className={styles.verticalForm}>
                 <h4>Casos</h4>
 
                 <div className={styles.formGroup}>
                   <label className={styles.fecha}>Fecha de apertura*</label>
-                  <input type="datetime-local" name="fechaApertura"
+                  <input 
+                    type="datetime-local" 
+                    name="fechaApertura"
                     value={formatDateTimeForInput(formData.fechaApertura)}
-                    onChange={handleChange} required />
+                    onChange={handleChange} 
+                    required 
+                  />
                 </div>
 
                 <div className={styles.formGroup}>
@@ -653,7 +393,8 @@ const CrearCasoAdmin = () => {
                     name="tipo"
                     value={formData.tipo}
                     onChange={handleChange}
-                    required>
+                    required
+                  >
                     <option value="incidencia">Incidencia</option>
                     <option value="requerimiento">Requerimiento</option>
                   </select>
@@ -662,7 +403,6 @@ const CrearCasoAdmin = () => {
                 <div className={styles.formGroup}>
                   <label>Categoría*</label>
                   <select
-
                     name="categoria"
                     value={formData.categoria}
                     onChange={handleChange}
@@ -679,8 +419,12 @@ const CrearCasoAdmin = () => {
 
                 <div className={styles.formGroup}>
                   <label>Estado*</label>
-                  <select name="estado" value={ticket.estado}
-                    onChange={handleChange} required>
+                  <select 
+                    name="estado" 
+                    value={formData.estado}
+                    onChange={handleChange} 
+                    required
+                  >
                     <option value="nuevo">Nuevo</option>
                     <option value="en-curso">En curso</option>
                     <option value="en-espera">En espera</option>
@@ -691,8 +435,12 @@ const CrearCasoAdmin = () => {
 
                 <div className={styles.formGroup}>
                   <label>Prioridad*</label>
-                  <select name="prioridad" value={formData.prioridad}
-                    onChange={handleChange} required>
+                  <select 
+                    name="prioridad" 
+                    value={formData.prioridad}
+                    onChange={handleChange} 
+                    required
+                  >
                     <option value="alta">Alta</option>
                     <option value="mediana">Mediana</option>
                     <option value="baja">Baja</option>
@@ -701,8 +449,13 @@ const CrearCasoAdmin = () => {
 
                 <div className={styles.formGroup}>
                   <label>Ubicación*</label>
-                  <input type="text" name="ubicacion" value={formData.ubicacion}
-                    onChange={handleChange} required />
+                  <input 
+                    type="text" 
+                    name="ubicacion" 
+                    value={formData.ubicacion}
+                    onChange={handleChange} 
+                    required
+                  />
                 </div>
 
                 <h4>Asignaciones</h4>
@@ -752,12 +505,11 @@ const CrearCasoAdmin = () => {
                     <option value="">Seleccione un grupo...</option>
                     {grupos.map(grupo => (
                       <option key={grupo.id_grupo} value={grupo.id_grupo}>
-                        {`${grupo.nombre_completo}`} ({usuario.correo})
+                        {grupo.nombre_grupo}
                       </option>
                     ))}
                   </select>
                 </div>
-
 
                 <div className={styles.formGroup}>
                   <label>Asignado a*</label>
@@ -775,44 +527,15 @@ const CrearCasoAdmin = () => {
                     ))}
                   </select>
                 </div>
-
               </div>
-
-              {isEditing && (
-                <div className={styles.actions}>
-                  <button onClick={handleSave} className={styles.saveButton}>
-                    Guardar Cambios
-                  </button>
-                  <button onClick={() => setIsEditing(false)} className={styles.cancelButton}>
-                    Cancelar
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chatbot */}
-      <div className={styles.chatbotContainer}>
-        <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={toggleChat} />
-        {isChatOpen && (
-          <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>
-              <h4>Chat de Soporte</h4>
-              <button onClick={toggleChat} className={styles.closeChat}>&times;</button>
-            </div>
-            <div className={styles.chatBody}>
-              <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-            </div>
-            <div className={styles.chatInput}>
-              <input type="text" placeholder="Escribe un mensaje..." />
-              <button>Enviar</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div >
+    <ChatBot />
+      </>
+    </MenuVertical>
   );
 };
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './Componentes/ProtectedRoute'; 
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
@@ -22,45 +23,47 @@ import UserStatusChecker from "./pages/UserStatusChecker";
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <UserStatusChecker />
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/CrearCasoUse" element={<CrearCasoUse />} />
-          <Route path="/HomeAdmiPage" element={<HomeAdmiPage />} />
-          <Route path="/HomeTecnicoPage" element={<HomeTecnicoPage />} />
-          <Route path="/Tickets" element={<Tickets />} />
-          <Route path="/CrearCasoAdmin" element={<CrearCasoAdmin />} />
-          <Route path="/Estadisticas" element={<Estadisticas />} />
-          <Route path="/Usuarios" element={<Usuarios />} />
-          <Route path="/Grupos" element={<Grupos />} />
-          <Route path="/Entidades" element={<Entidades />} />
-          <Route path="/Categorias" element={<Categorias />} />
-          <Route path="/tickets/solucion/:id" element={<SolucionTickets />} />
-          <Route path="/EncuestaSatisfaccion/:surveyId" element={<EncuestaSatisfaccion />} />
-          <Route path="/tickets/:id/historial" element={<TicketHistorial />} />
-          
-          <Route path="/HomeAdmiPage" element={
-            <ProtectedRoute allowedRoles={['administrador']}>
-              <HomeAdmiPage />
-            </ProtectedRoute>
-          } />
+      <NotificationProvider>
+        <Router>
+          <UserStatusChecker />
+          <Routes>
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/CrearCasoUse" element={<CrearCasoUse />} />
+            <Route path="/HomeAdmiPage" element={<HomeAdmiPage />} />
+            <Route path="/HomeTecnicoPage" element={<HomeTecnicoPage />} />
+            <Route path="/Tickets" element={<Tickets />} />
+            <Route path="/CrearCasoAdmin" element={<CrearCasoAdmin />} />
+            <Route path="/Estadisticas" element={<Estadisticas />} />
+            <Route path="/Usuarios" element={<Usuarios />} />
+            <Route path="/Grupos" element={<Grupos />} />
+            <Route path="/Entidades" element={<Entidades />} />
+            <Route path="/Categorias" element={<Categorias />} />
+            <Route path="/tickets/solucion/:id" element={<SolucionTickets />} />
+            <Route path="/EncuestaSatisfaccion/:surveyId" element={<EncuestaSatisfaccion />} />
+            <Route path="/tickets/:id/historial" element={<TicketHistorial />} />
+            
+            <Route path="/HomeAdmiPage" element={
+              <ProtectedRoute allowedRoles={['administrador']}>
+                <HomeAdmiPage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/HomeTecnicoPage" element={
-            <ProtectedRoute allowedRoles={['tecnico']}>
-              <HomeTecnicoPage />
-            </ProtectedRoute>
-          } />
+            <Route path="/HomeTecnicoPage" element={
+              <ProtectedRoute allowedRoles={['tecnico']}>
+                <HomeTecnicoPage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/home" element={
-            <ProtectedRoute allowedRoles={['usuario']}>
-              <HomePage />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </Router>
+            <Route path="/home" element={
+              <ProtectedRoute allowedRoles={['usuario']}>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

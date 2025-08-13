@@ -20,7 +20,7 @@
     "react-router": "^7.3.0",
     "react-router-dom": "^7.2.0",
     "react-scripts": "^5.0.1",
-    "recharts": "^2.15.3",
+    "recharts": "^2.15.4",
     "sass": "^1.85.1",
     "web-vitals": "^2.1.4"
   },

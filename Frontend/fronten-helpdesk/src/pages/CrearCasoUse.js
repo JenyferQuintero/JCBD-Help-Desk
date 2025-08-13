@@ -6,8 +6,10 @@ import Logoempresarial from "../imagenes/logo empresarial.png";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
-import ChatbotIcon from "../imagenes/img chatbot.png";
+import ChatBot from "../Componentes/ChatBot";
+import { NotificationContext } from "../context/NotificationContext";
 import styles from "../styles/CrearCasoUse.module.css";
+import MenuVertical from "../Componentes/MenuVertical";
 
 const CrearCasoUse = () => {
   // Estados
@@ -679,32 +681,7 @@ const CrearCasoUse = () => {
         </div>
       </div>
       
-      {/* Chatbot */}
-      <div className={styles.chatbotContainer}>
-        <img
-          src={ChatbotIcon}
-          alt="Chatbot"
-          className={styles.chatbotIcon}
-          onClick={toggleChat}
-        />
-        {isChatOpen && (
-          <div className={styles.chatWindow}>
-            <div className={styles.chatHeader}>
-              <h4>Chat de Soporte</h4>
-              <button onClick={toggleChat} className={styles.closeChat}>
-                &times;
-              </button>
-            </div>
-            <div className={styles.chatBody}>
-              <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-            </div>
-            <div className={styles.chatInput}>
-              <input type="text" placeholder="Escribe un mensaje..." />
-              <button>Enviar</button>
-            </div>
-          </div>
-        )}
-      </div>
+   <ChatBot />
     </div>
   );
 };

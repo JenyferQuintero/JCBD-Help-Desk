@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
@@ -6,8 +6,11 @@ import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
-import ChatbotIcon from "../imagenes/img chatbot.png";
+import ChatBot from "../Componentes/ChatBot";
+import { NotificationContext } from "../context/NotificationContext";
 import styles from "../styles/HomePage.module.css";
+import MenuVertical from "../Componentes/MenuVertical";
+
 
 const Breadcrumbs = () => {
   const location = useLocation();
@@ -55,6 +58,20 @@ const Breadcrumbs = () => {
 };
 
 const HomePage = () => {
+
+  // Obtener datos del usuario
+  const userRole = localStorage.getItem("rol") || "usuario";
+  const nombre = localStorage.getItem("nombre");
+  const userId = localStorage.getItem("id_usuario");
+  const { addNotification } = useContext(NotificationContext);
+
+  const roleToPath = {
+    usuario: '/home',
+    tecnico: '/HomeTecnicoPage',
+    administrador: '/HomeAdmiPage'
+  };
+
+
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -70,38 +87,19 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [tableData, setTableData] = useState({
     nuevo: [],
-    enProceso: [],
+    enCurso: [],
     enEspera: [],
     resueltos: [],
     cerrados: [],
     borrados: [],
     encuesta: [],
+    abiertos: [],
+    pendientes: [],
   });
 
-  const userRole = localStorage.getItem("rol") || "usuario";
-  const nombre = localStorage.getItem("nombre");
-  const userId = localStorage.getItem("id_usuario");
 
-  const toggleSupport = (e) => {
-    e?.stopPropagation();
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
 
-  const toggleAdmin = (e) => {
-    e?.stopPropagation();
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
 
-  const toggleConfig = (e) => {
-    e?.stopPropagation();
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
 
   const handleTicketClick = (ticket) => {
     const editRoute = userRole === "usuario" ? "/CrearCasoUse" : "/CrearCasoAdmin";
@@ -133,29 +131,31 @@ const HomePage = () => {
 
         const agrupados = {
           nuevo: [],
-          enProceso: [],
+          enCurso: [],
           enEspera: [],
           resueltos: [],
           cerrados: [],
           borrados: [],
           encuesta: [],
+          abiertos: [],
+          pendientes: [],
         };
 
         response.data.forEach((ticket) => {
           const estado = ticket.estado?.toLowerCase() || ticket.estado_ticket?.toLowerCase();
-          
+
           let estadoFrontend;
-          switch(estado) {
+          switch (estado) {
             case 'nuevo':
             case 'new':
               estadoFrontend = 'nuevo';
               break;
-            case 'en curso':
+            case 'en_curso':
             case 'en_proceso':
             case 'proceso':
-              estadoFrontend = 'enProceso';
+              estadoFrontend = 'enCurso';
               break;
-            case 'en espera':
+            case 'en_espera':
             case 'espera':
             case 'pendiente':
               estadoFrontend = 'enEspera';
@@ -170,6 +170,12 @@ const HomePage = () => {
             case 'borrado':
             case 'eliminado':
               estadoFrontend = 'borrados';
+              break;
+            case 'abierto':
+              estadoFrontend = 'abiertos';
+              break;
+            case 'pendiente':
+              estadoFrontend = 'pendientes';
               break;
             case 'encuesta':
               estadoFrontend = 'encuesta';
@@ -225,7 +231,7 @@ const HomePage = () => {
           </thead>
           <tbody>
             {data.map((item, index) => (
-              <tr 
+              <tr
                 key={index}
                 onClick={() => handleTicketClick(item)}
                 className={styles.clickableRow}
@@ -275,7 +281,7 @@ const HomePage = () => {
           </thead>
           <tbody>
             {pendingSurveys.map((item, index) => (
-              <tr 
+              <tr
                 key={index}
                 onClick={() => {
                   markSurveyAsCompleted(item.id);
@@ -297,12 +303,14 @@ const HomePage = () => {
 
   const tickets = [
     { label: "Nuevo", color: "green", icon: "🟢", count: tableData.nuevo.length, key: "nuevo" },
-    { label: "En proceso", color: "lightgreen", icon: "⭕", count: tableData.enProceso.length, key: "enProceso" },
+    { label: "En curso", color: "lightgreen", icon: "⏳", count: tableData.enCurso.length, key: "enCurso" },
     { label: "En espera", color: "orange", icon: "🟡", count: tableData.enEspera.length, key: "enEspera" },
-    { label: "Resueltas", color: "gray", icon: "⚪", count: tableData.resueltos.length, key: "resueltos" },
-    { label: "Cerrado", color: "black", icon: "⚫", count: tableData.cerrados.length, key: "cerrados" },
+    { label: "Resueltos", color: "gray", icon: "✔️", count: tableData.resueltos.length, key: "resueltos" },
+    { label: "Cerrado", color: "black", icon: "✅", count: tableData.cerrados.length, key: "cerrados" },
     { label: "Borrado", color: "red", icon: "🗑", count: tableData.borrados.length, key: "borrados" },
     { label: "Encuesta", color: "purple", icon: "📅", count: tableData.encuesta.length, key: "encuesta" },
+    { label: "Abiertos", color: "#4CAF50", icon: "📝", count: tableData.abiertos.length, key: "abiertos" },
+    { label: "Pendientes", color: "#FF5722", icon: "⚠️", count: tableData.pendientes.length, key: "pendientes" },
   ];
 
   const handleTabClick = (tabKey) => {
@@ -484,159 +492,56 @@ const HomePage = () => {
   };
 
   return (
-    <div className={styles.containerPrincipal}>
-      {/* Menú Vertical */}
-      <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={() => setIsMenuExpanded(true)}
-        onMouseLeave={() => setIsMenuExpanded(false)}
-      >
-        <div className={styles.containerFluidMenu}>
-          <div className={styles.logoContainer}>
-            <img src={Logo} alt="Logo" />
-          </div>
+    <MenuVertical>
+      <>
+        {/* Contenido principal */}
+        <div
+          className={styles.container}
+          style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
+        >
+          <div className={styles.sectionContainer}>
+            <div className={styles.ticketContainer}>
+              <li className={styles.creacion}>
+                <Link to={getRouteByRole("crear-caso")} className={styles.linkSinSubrayado}>
+                  <FcCustomerSupport className={styles.menuIcon} />
+                  <span className={styles.creacionDeTicket}>Crear Caso</span>
+                </Link>
+              </li>
+            </div>
 
-          <button
-            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            <FiAlignJustify className={styles.menuIcon} />
-          </button>
-
-          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-            {renderMenuByRole()}
-          </div>
-
-          <div className={styles.floatingContainer}>
-            <div className={styles.menuLogoEmpresarial}>
-              <img src={Logoempresarial} alt="Logo Empresarial" />
+            <h2>Tickets</h2>
+            <div className={styles.cardsContainer}>
+              {tickets.map((ticket, index) => (
+                <div
+                  key={index}
+                  className={`${styles.card} ${activeTab === ticket.key ? styles.activeCard : ""}`}
+                  style={{ borderColor: ticket.color }}
+                  onClick={() => handleTabClick(ticket.key)}
+                >
+                  <span className={styles.icon}>{ticket.icon}</span>
+                  <span className={styles.label}>{ticket.label}</span>
+                  <span className={styles.count}>{ticket.count}</span>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Mostrar la tabla correspondiente al tab activo */}
+          {activeTab === "nuevo" && renderTable(tableData.nuevo, "Nuevo")}
+          {activeTab === "enProceso" && renderTable(tableData.enProceso, "En proceso")}
+          {activeTab === "enEspera" && renderTable(tableData.enEspera, "En Espera")}
+          {activeTab === "resueltos" && renderTable(tableData.resueltos, "Resueltos")}
+          {activeTab === "cerrados" && renderTable(tableData.cerrados, "Cerrados")}
+          {activeTab === "borrados" && renderTable(tableData.borrados, "Borrados")}
+          {activeTab === "encuesta" && renderSurveyTable(tableData.encuesta, "Encuesta de Satisfacción")}
+          {activeTab === "abiertos" && renderTable(tableData.abiertos, "Abiertos")}
+          {activeTab === "pendientes" && renderTable(tableData.pendientes, "Pendientes")}
         </div>
-      </aside>
+        <ChatBot />
+      </>
+    </MenuVertical>
 
-      {/* Contenido principal */}
-      <div style={{
-        marginLeft: isMenuExpanded ? "200px" : "60px",
-        transition: "margin-left 0.3s ease",
-      }}>
-        <Outlet />
-      </div>
 
-      {/* Header con el enlace de Inicio restaurado */}
-      <header
-        className={styles.containerInicio}
-        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
-      >
-        <div className={styles.containerInicioImg}>
-          <Link to={getRouteByRole("inicio")} className={styles.linkSinSubrayado}>
-            <FcHome className={styles.menuIcon} />
-            <span>Inicio</span>
-          </Link>
-        </div>
-        <div className={styles.inputContainer}>
-          <div className={styles.searchContainer}>
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button
-              className={styles.buttonBuscar}
-              title="Buscar"
-              disabled={isLoading || !searchTerm.trim()}
-            >
-              <FaMagnifyingGlass className={styles.searchIcon} />
-            </button>
-            {isLoading && <span className={styles.loading}>Buscando...</span>}
-            {error && <div className={styles.errorMessage}>{error}</div>}
-          </div>
-
-          <div className={styles.userContainer}>
-            <span className={styles.username}>
-              Bienvenido, <span id="nombreusuario">{nombre}</span>
-            </span>
-            <div className={styles.iconContainer}>
-              <Link to="/">
-                <FaPowerOff className={styles.icon} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Contenido principal */}
-      <div
-        className={styles.container}
-        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
-      >
-        <div className={styles.sectionContainer}>
-          <div className={styles.ticketContainer}>
-            <li className={styles.creacion}>
-              <Link to={getRouteByRole("crear-caso")} className={styles.linkSinSubrayado}>
-                <FcCustomerSupport className={styles.menuIcon} />
-                <span className={styles.creacionDeTicket}>Crear Caso</span>
-              </Link>
-            </li>
-          </div>
-
-          <h2>Tickets</h2>
-          <div className={styles.cardsContainer}>
-            {tickets.map((ticket, index) => (
-              <div
-                key={index}
-                className={`${styles.card} ${activeTab === ticket.key ? styles.activeCard : ""}`}
-                style={{ borderColor: ticket.color }}
-                onClick={() => handleTabClick(ticket.key)}
-              >
-                <span className={styles.icon}>{ticket.icon}</span>
-                <span className={styles.label}>{ticket.label}</span>
-                <span className={styles.count}>{ticket.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mostrar la tabla correspondiente al tab activo */}
-        {activeTab === "nuevo" && renderTable(tableData.nuevo, "Nuevo")}
-        {activeTab === "enProceso" && renderTable(tableData.enProceso, "En proceso")}
-        {activeTab === "enEspera" && renderTable(tableData.enEspera, "En Espera")}
-        {activeTab === "resueltos" && renderTable(tableData.resueltos, "Resueltos")}
-        {activeTab === "cerrados" && renderTable(tableData.cerrados, "Cerrados")}
-        {activeTab === "borrados" && renderTable(tableData.borrados, "Borrados")}
-        {activeTab === "encuesta" && renderSurveyTable(tableData.encuesta, "Encuesta de Satisfacción")}
-
-        {/* Chatbot */}
-        <div className={styles.chatbotContainer}>
-          <img
-            src={ChatbotIcon}
-            alt="Chatbot"
-            className={styles.chatbotIcon}
-            onClick={() => setIsChatOpen(!isChatOpen)}
-          />
-          {isChatOpen && (
-            <div className={styles.chatWindow}>
-              <div className={styles.chatHeader}>
-                <h4>Chat de Soporte</h4>
-                <button onClick={() => setIsChatOpen(false)} className={styles.closeChat}>
-                  &times;
-                </button>
-              </div>
-              <div className={styles.chatBody}>
-                <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-              </div>
-              <div className={styles.chatInput}>
-                <input type="text" placeholder="Escribe un mensaje..." />
-                <button>Enviar</button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
   );
 };
 

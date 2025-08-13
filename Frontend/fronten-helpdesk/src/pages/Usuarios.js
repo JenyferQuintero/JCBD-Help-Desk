@@ -8,7 +8,9 @@ import axios from "axios";
 import styles from "../styles/Usuarios.module.css";
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
-import ChatbotIcon from "../imagenes/img chatbot.png";
+import ChatBot from "../Componentes/ChatBot";
+import { NotificationContext } from "../context/NotificationContext";
+import MenuVertical from "../Componentes/MenuVertical";
 
 const Usuarios = () => {
   // Estados para UI
@@ -33,7 +35,7 @@ const Usuarios = () => {
   const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
   const [entidades, setEntidades] = useState([]);
-  
+
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,7 +163,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'nombre_completo':
         if (!value) {
           newErrors[name] = 'Nombre completo es requerido';
@@ -171,7 +173,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'correo':
         if (!value) {
           newErrors[name] = 'Correo es requerido';
@@ -181,7 +183,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'telefono':
         if (value && typeof value === 'string' && !/^\d{7,15}$/.test(value.trim())) {
           newErrors[name] = 'Teléfono inválido';
@@ -189,7 +191,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'contrasena':
         if (!editingId && !value) {
           newErrors[name] = 'Contraseña es requerida';
@@ -199,7 +201,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'id_entidad':
         if (value === '' || value === null || value === undefined) {
           newErrors[name] = 'Entidad es requerida';
@@ -207,7 +209,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       case 'rol':
         if (!value) {
           newErrors[name] = 'Rol es requerido';
@@ -215,7 +217,7 @@ const Usuarios = () => {
           delete newErrors[name];
         }
         break;
-      
+
       default:
         break;
     }
@@ -227,23 +229,23 @@ const Usuarios = () => {
   const validateForm = () => {
     const requiredFields = ['nombre_usuario', 'nombre_completo', 'correo', 'id_entidad', 'rol'];
     if (!editingId) requiredFields.push('contrasena');
-    
+
     const isValid = requiredFields.every(field => {
       const value = formData[field];
       validateField(field, value);
-      
+
       if (value === null || value === undefined || value === '') {
         return false;
       }
-      
+
       if (typeof value === 'string') {
         return value.trim() !== '';
       }
-      
+
       if (typeof value === 'number') {
         return true;
       }
-      
+
       return true;
     });
 
@@ -377,629 +379,399 @@ const Usuarios = () => {
   }
 
   return (
-    <div className={styles.containerPrincipal}>
-      {/* Menú Vertical */}
-      <aside
-        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
-        onMouseEnter={toggleMainMenu}
-        onMouseLeave={toggleMainMenu}
-      >
-        <div className={styles.containerFluidMenu}>
-          <div className={styles.logoContainer}>
-            <img src={Logo} alt="Logo" />
-          </div>
+    <MenuVertical>
+      <>
 
-          <button
-            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
-            type="button"
-            onClick={toggleMobileMenu}
-          >
-            <FiAlignJustify className={styles.menuIcon} />
-          </button>
 
-          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
-            <ul className={styles.menuIconos}>
-              {userRole === 'administrador' ? (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/HomeAdmiPage" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
-                      <FcAssistant className={styles.menuIcon} />
-                      <span className={styles.menuText}> Soporte</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Tickets" className={styles.submenuLink}>
-                          <FcAnswers className={styles.menuIcon} />
-                          <span className={styles.menuText}>Tickets</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                          <FcCustomerSupport className={styles.menuIcon} />
-                          <span className={styles.menuText}>Crear Caso</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Estadisticas" className={styles.submenuLink}>
-                          <FcBullish className={styles.menuIcon} />
-                          <span className={styles.menuText}>Estadísticas</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
-                      <FcBusinessman className={styles.menuIcon} />
-                      <span className={styles.menuText}> Administración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Usuarios" className={styles.submenuLink}>
-                          <FcPortraitMode className={styles.menuIcon} />
-                          <span className={styles.menuText}> Usuarios</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Grupos" className={styles.submenuLink}>
-                          <FcConferenceCall className={styles.menuIcon} />
-                          <span className={styles.menuText}> Grupos</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/Entidades" className={styles.submenuLink}>
-                          <FcOrganization className={styles.menuIcon} />
-                          <span className={styles.menuText}> Entidades</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('config')}>
-                      <FcAutomatic className={styles.menuIcon} />
-                      <span className={styles.menuText}> Configuración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.config ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Categorias" className={styles.submenuLink}>
-                          <FcGenealogy className={styles.menuIcon} />
-                          <span className={styles.menuText}>Categorias</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                </>
-              ) : userRole === 'tecnico' ? (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/HomeTecnicoPage" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('support')}>
-                      <FcAssistant className={styles.menuIcon} />
-                      <span className={styles.menuText}> Soporte</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.support ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Tickets" className={styles.submenuLink}>
-                          <FcAnswers className={styles.menuIcon} />
-                          <span className={styles.menuText}>Tickets</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
-                          <FcCustomerSupport className={styles.menuIcon} />
-                          <span className={styles.menuText}>Crear Caso</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <div className={styles.linkSinSubrayado} onClick={() => toggleMenu('admin')}>
-                      <FcBusinessman className={styles.menuIcon} />
-                      <span className={styles.menuText}> Administración</span>
-                    </div>
-                    <ul className={`${styles.submenu} ${menuState.admin ? styles.showSubmenu : ''}`}>
-                      <li>
-                        <Link to="/Usuarios" className={styles.submenuLink}>
-                          <FcPortraitMode className={styles.menuIcon} />
-                          <span className={styles.menuText}> Usuarios</span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/home" className={styles.linkSinSubrayado}>
-                      <FcHome className={styles.menuIcon} />
-                      <span className={styles.menuText}>Inicio</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/CrearCasoUse" className={styles.linkSinSubrayado}>
-                      <FcCustomerSupport className={styles.menuIcon} />
-                      <span className={styles.menuText}>Crear Caso</span>
-                    </Link>
-                  </li>
-                  <li className={styles.iconosMenu}>
-                    <Link to="/Tickets" className={styles.linkSinSubrayado}>
-                      <FcAnswers className={styles.menuIcon} />
-                      <span className={styles.menuText}>Tickets</span>
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-
-          <div className={styles.floatingContainer}>
-            <div className={styles.menuLogoEmpresarial}>
-              <img src={Logoempresarial} alt="Logo Empresarial" />
+        {/* Contenido */}
+        <div className={styles.container} style={{
+          marginLeft: isMenuExpanded ? "200px" : "60px"
+        }}>
+          {isLoading && (
+            <div className={styles.loadingOverlay}>
+              <FaSpinner className={styles.spinner} />
             </div>
-          </div>
-        </div>
-      </aside>
+          )}
 
-      {/* Contenido principal */}
-      <div style={{
-        marginLeft: isMenuExpanded ? "200px" : "60px",
-        transition: "margin-left 0.3s ease"
-      }}>
-        <Outlet />
-      </div>
-
-      {/* Header */}
-      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
-        <div className={styles.containerInicioImg}>
-          <Link to={userRole === 'administrador' ? '/HomeAdmiPage' : userRole === 'tecnico' ? '/HomeTecnicoPage' : '/home'} className={styles.linkSinSubrayado}>
-            <span>Inicio</span>
-          </Link>
-        </div>
-        <div className={styles.inputContainer}>
-          <div className={styles.searchContainer}>
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className={styles.topControls}>
             <button
-              className={styles.buttonBuscar}
-              title="Buscar"
-              disabled={isLoading || !searchTerm.trim()}
+              onClick={() => { resetForm(); setShowForm(!showForm); }}
+              className={styles.addButton}
             >
-              <FaMagnifyingGlass className={styles.searchIcon} />
+              <FaPlus /> {showForm ? 'Ver Usuarios' : 'Agregar Usuario'}
             </button>
-            {isLoading && <span className={styles.loading}>Buscando...</span>}
           </div>
 
-          <div className={styles.userContainer}>
-            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
-            <div className={styles.iconContainer}>
-              <Link to="/">
-                <FaPowerOff className={styles.icon} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Contenido */}
-      <div className={styles.container} style={{
-        marginLeft: isMenuExpanded ? "200px" : "60px"
-      }}>
-        {isLoading && (
-          <div className={styles.loadingOverlay}>
-            <FaSpinner className={styles.spinner} />
-          </div>
-        )}
-
-        <div className={styles.topControls}>
-          <button
-            onClick={() => { resetForm(); setShowForm(!showForm); }}
-            className={styles.addButton}
-          >
-            <FaPlus /> {showForm ? 'Ver Usuarios' : 'Agregar Usuario'}
-          </button>
-        </div>
-
-        {showForm ? (
-          <div className={styles.containerUsuarios}>
-            <h2 className={styles.titulo}>
-              {editingId ? 'Editar Usuario' : 'Formulario de Creación de Usuario'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className={styles.gridContainerUsuarios}>
-                <div className={styles.columna}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Nombre de usuario</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.nombre_usuario ? styles.inputError : ''}`}
-                      name="nombre_usuario"
-                      value={formData.nombre_usuario}
-                      onChange={handleChange}
-                      required
-                    />
-                    {formErrors.nombre_usuario && <span className={styles.errorMessage}>{formErrors.nombre_usuario}</span>}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Nombre completo</label>
-                    <input
-                      type="text"
-                      className={`${styles.input} ${formErrors.nombre_completo ? styles.inputError : ''}`}
-                      name="nombre_completo"
-                      value={formData.nombre_completo}
-                      onChange={handleChange}
-                      required
-                    />
-                    {formErrors.nombre_completo && <span className={styles.errorMessage}>{formErrors.nombre_completo}</span>}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Correo electrónico</label>
-                    <input
-                      type="email"
-                      className={`${styles.input} ${formErrors.correo ? styles.inputError : ''}`}
-                      name="correo"
-                      value={formData.correo}
-                      onChange={handleChange}
-                      required
-                    />
-                    {formErrors.correo && <span className={styles.errorMessage}>{formErrors.correo}</span>}
-                  </div>
-                </div>
-
-                <div className={styles.columna}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Teléfono</label>
-                    <input
-                      type="tel"
-                      className={`${styles.input} ${formErrors.telefono ? styles.inputError : ''}`}
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleChange}
-                    />
-                    {formErrors.telefono && <span className={styles.errorMessage}>{formErrors.telefono}</span>}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Contraseña</label>
-                    <input
-                      type="password"
-                      className={`${styles.input} ${formErrors.contrasena ? styles.inputError : ''}`}
-                      name="contrasena"
-                      value={formData.contrasena}
-                      onChange={handleChange}
-                      placeholder={editingId ? "Dejar en blanco para no cambiar" : ""}
-                      required={!editingId}
-                    />
-                    {formErrors.contrasena && <span className={styles.errorMessage}>{formErrors.contrasena}</span>}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>Estado</label>
-                    <select
-                      className={styles.select}
-                      name="estado"
-                      value={formData.estado}
-                      onChange={handleChange}
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.selectsContainer}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Entidad</label>
-                  <select
-                    className={`${styles.select} ${formErrors.id_entidad ? styles.inputError : ''}`}
-                    name="id_entidad"
-                    value={formData.id_entidad}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione una entidad</option>
-                    {entidades.map(entidad => (
-                      <option key={entidad.id_entidad} value={entidad.id_entidad}>
-                        {entidad.nombre_entidad}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Rol</label>
-                  <select
-                    className={`${styles.select} ${formErrors.rol ? styles.inputError : ''}`}
-                    name="rol"
-                    value={formData.rol}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccione un rol</option>
-                    <option value="administrador">Administrador</option>
-                    <option value="tecnico">Técnico</option>
-                    <option value="usuario">Usuario</option>
-                  </select>
-                  {formErrors.rol && <span className={styles.errorMessage}>{formErrors.rol}</span>}
-                </div>
-              </div>
-
-              <div className={styles.botonesContainer}>
-                <button type="submit" className={styles.boton} disabled={isLoading}>
-                  {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
-                </button>
-                <button type="button" onClick={resetForm} className={styles.botonCancelar}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : (
-          <>
-            <div className={styles.searchSection}>
-              <h2 className={styles.sectionTitle}>Buscar Usuarios</h2>
-              <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
-                <div className={styles.mainSearch}>
-                  <div className={styles.searchFieldGroup}>
-                    <select
-                      className={styles.searchSelect}
-                      value={searchField}
-                      onChange={(e) => setSearchField(e.target.value)}
-                    >
-                      <option value="nombre_usuario">Usuario</option>
-                      <option value="nombre_completo">Nombre completo</option>
-                      <option value="correo">Correo</option>
-                      <option value="rol">Rol</option>
-                      <option value="estado">Estado</option>
-                    </select>
-                    <input
-                      type="text"
-                      className={styles.searchInput}
-                      placeholder={`Buscar por ${searchField}...`}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-
-                  <button type="submit" className={styles.searchButton} disabled={isLoading}>
-                    {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
-                  </button>
-                  <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
-                    Usuarios
-                  </button>
-                  <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
-                    <FaFilter /> Agregar Filtro
-                  </button>
-                </div>
-
-                {additionalFilters.map((filter, index) => (
-                  <div key={index} className={styles.additionalFilter}>
-                    <select
-                      className={styles.searchSelect}
-                      value={filter.field}
-                      onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
-                    >
-                      <option value="nombre_usuario">Usuario</option>
-                      <option value="nombre_completo">Nombre completo</option>
-                      <option value="correo">Correo</option>
-                      <option value="rol">Rol</option>
-                      <option value="estado">Estado</option>
-                    </select>
-                    <input
-                      type="text"
-                      className={styles.searchInput}
-                      placeholder={`Filtrar por ${filter.field}...`}
-                      value={filter.value}
-                      onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeFilter(index)}
-                      className={styles.removeFilterButton}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-
-                <div className={styles.exportDropdown}>
-                  <button
-                    onClick={toggleExportDropdown}
-                    className={styles.exportButton}
-                    title="Opciones de exportación"
-                  >
-                    Exportar <FaChevronDown className={styles.dropdownIcon} />
-                  </button>
-                  {isExportDropdownOpen && (
-                    <div
-                      className={styles.exportDropdownContent}
-                      onMouseLeave={() => setIsExportDropdownOpen(false)}
-                    >
-                      <button onClick={exportToExcel} className={styles.exportOption}>
-                        <FaFileExcel /> Excel
-                      </button>
-                      <button onClick={exportToPdf} className={styles.exportOption}>
-                        <FaFilePdf /> PDF
-                      </button>
-                      <button onClick={exportToCsv} className={styles.exportOption}>
-                        <FaFileCsv /> CSV
-                      </button>
-                      <button onClick={printTable} className={styles.exportOption}>
-                        <FcPrint /> Imprimir
-                      </button>
+          {showForm ? (
+            <div className={styles.containerUsuarios}>
+              <h2 className={styles.titulo}>
+                {editingId ? 'Editar Usuario' : 'Formulario de Creación de Usuario'}
+              </h2>
+              <form onSubmit={handleSubmit}>
+                <div className={styles.gridContainerUsuarios}>
+                  <div className={styles.columna}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Nombre de usuario</label>
+                      <input
+                        type="text"
+                        className={`${styles.input} ${formErrors.nombre_usuario ? styles.inputError : ''}`}
+                        name="nombre_usuario"
+                        value={formData.nombre_usuario}
+                        onChange={handleChange}
+                        required
+                      />
+                      {formErrors.nombre_usuario && <span className={styles.errorMessage}>{formErrors.nombre_usuario}</span>}
                     </div>
-                  )}
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Nombre completo</label>
+                      <input
+                        type="text"
+                        className={`${styles.input} ${formErrors.nombre_completo ? styles.inputError : ''}`}
+                        name="nombre_completo"
+                        value={formData.nombre_completo}
+                        onChange={handleChange}
+                        required
+                      />
+                      {formErrors.nombre_completo && <span className={styles.errorMessage}>{formErrors.nombre_completo}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Correo electrónico</label>
+                      <input
+                        type="email"
+                        className={`${styles.input} ${formErrors.correo ? styles.inputError : ''}`}
+                        name="correo"
+                        value={formData.correo}
+                        onChange={handleChange}
+                        required
+                      />
+                      {formErrors.correo && <span className={styles.errorMessage}>{formErrors.correo}</span>}
+                    </div>
+                  </div>
+
+                  <div className={styles.columna}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Teléfono</label>
+                      <input
+                        type="tel"
+                        className={`${styles.input} ${formErrors.telefono ? styles.inputError : ''}`}
+                        name="telefono"
+                        value={formData.telefono}
+                        onChange={handleChange}
+                      />
+                      {formErrors.telefono && <span className={styles.errorMessage}>{formErrors.telefono}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Contraseña</label>
+                      <input
+                        type="password"
+                        className={`${styles.input} ${formErrors.contrasena ? styles.inputError : ''}`}
+                        name="contrasena"
+                        value={formData.contrasena}
+                        onChange={handleChange}
+                        placeholder={editingId ? "Dejar en blanco para no cambiar" : ""}
+                        required={!editingId}
+                      />
+                      {formErrors.contrasena && <span className={styles.errorMessage}>{formErrors.contrasena}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Estado</label>
+                      <select
+                        className={styles.select}
+                        name="estado"
+                        value={formData.estado}
+                        onChange={handleChange}
+                      >
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.selectsContainer}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Entidad</label>
+                    <select
+                      className={`${styles.select} ${formErrors.id_entidad ? styles.inputError : ''}`}
+                      name="id_entidad"
+                      value={formData.id_entidad}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Seleccione una entidad</option>
+                      {entidades.map(entidad => (
+                        <option key={entidad.id_entidad} value={entidad.id_entidad}>
+                          {entidad.nombre_entidad}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Rol</label>
+                    <select
+                      className={`${styles.select} ${formErrors.rol ? styles.inputError : ''}`}
+                      name="rol"
+                      value={formData.rol}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Seleccione un rol</option>
+                      <option value="administrador">Administrador</option>
+                      <option value="tecnico">Técnico</option>
+                      <option value="usuario">Usuario</option>
+                    </select>
+                    {formErrors.rol && <span className={styles.errorMessage}>{formErrors.rol}</span>}
+                  </div>
+                </div>
+
+                <div className={styles.botonesContainer}>
+                  <button type="submit" className={styles.boton} disabled={isLoading}>
+                    {isLoading ? <FaSpinner className={styles.spinnerButton} /> : 'Guardar'}
+                  </button>
+                  <button type="button" onClick={resetForm} className={styles.botonCancelar}>
+                    Cancelar
+                  </button>
                 </div>
               </form>
             </div>
+          ) : (
+            <>
+              <div className={styles.searchSection}>
+                <h2 className={styles.sectionTitle}>Buscar Usuarios</h2>
+                <form className={styles.searchForm} onSubmit={(e) => e.preventDefault()}>
+                  <div className={styles.mainSearch}>
+                    <div className={styles.searchFieldGroup}>
+                      <select
+                        className={styles.searchSelect}
+                        value={searchField}
+                        onChange={(e) => setSearchField(e.target.value)}
+                      >
+                        <option value="nombre_usuario">Usuario</option>
+                        <option value="nombre_completo">Nombre completo</option>
+                        <option value="correo">Correo</option>
+                        <option value="rol">Rol</option>
+                        <option value="estado">Estado</option>
+                      </select>
+                      <input
+                        type="text"
+                        className={styles.searchInput}
+                        placeholder={`Buscar por ${searchField}...`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
 
-            <div className={styles.usersTableContainer}>
-              <h2 className={styles.sectionTitle}>Usuarios Registrados ({filteredUsers.length})</h2>
-              <div className={styles.tableWrapper}>
-                <table className={styles.usersTable}>
-                  <thead>
-                    <tr>
-                      <th>Usuario</th>
-                      <th>Nombre completo</th>
-                      <th>Correo</th>
-                      <th>Teléfono</th>
-                      <th>Rol</th>
-                      <th>Estado</th>
-                      <th>Entidad</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
+                    <button type="submit" className={styles.searchButton} disabled={isLoading}>
+                      {isLoading ? <FaSpinner className={styles.spinnerButton} /> : <><FaSearch /> Buscar</>}
+                    </button>
+                    <button type="button" onClick={resetSearch} className={styles.resetButton} disabled={isLoading}>
+                      Usuarios
+                    </button>
+                    <button type="button" onClick={addFilterField} className={styles.addFilterButton}>
+                      <FaFilter /> Agregar Filtro
+                    </button>
+                  </div>
+
+                  {additionalFilters.map((filter, index) => (
+                    <div key={index} className={styles.additionalFilter}>
+                      <select
+                        className={styles.searchSelect}
+                        value={filter.field}
+                        onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
+                      >
+                        <option value="nombre_usuario">Usuario</option>
+                        <option value="nombre_completo">Nombre completo</option>
+                        <option value="correo">Correo</option>
+                        <option value="rol">Rol</option>
+                        <option value="estado">Estado</option>
+                      </select>
+                      <input
+                        type="text"
+                        className={styles.searchInput}
+                        placeholder={`Filtrar por ${filter.field}...`}
+                        value={filter.value}
+                        onChange={(e) => handleFilterChange(index, 'value', e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFilter(index)}
+                        className={styles.removeFilterButton}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className={styles.exportDropdown}>
+                    <button
+                      onClick={toggleExportDropdown}
+                      className={styles.exportButton}
+                      title="Opciones de exportación"
+                    >
+                      Exportar <FaChevronDown className={styles.dropdownIcon} />
+                    </button>
+                    {isExportDropdownOpen && (
+                      <div
+                        className={styles.exportDropdownContent}
+                        onMouseLeave={() => setIsExportDropdownOpen(false)}
+                      >
+                        <button onClick={exportToExcel} className={styles.exportOption}>
+                          <FaFileExcel /> Excel
+                        </button>
+                        <button onClick={exportToPdf} className={styles.exportOption}>
+                          <FaFilePdf /> PDF
+                        </button>
+                        <button onClick={exportToCsv} className={styles.exportOption}>
+                          <FaFileCsv /> CSV
+                        </button>
+                        <button onClick={printTable} className={styles.exportOption}>
+                          <FcPrint /> Imprimir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              <div className={styles.usersTableContainer}>
+                <h2 className={styles.sectionTitle}>Usuarios Registrados ({filteredUsers.length})</h2>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.usersTable}>
+                    <thead>
                       <tr>
-                        <td colSpan="8" className={styles.loadingCell}>
-                          <FaSpinner className={styles.spinner} /> Cargando usuarios...
-                        </td>
+                        <th>Usuario</th>
+                        <th>Nombre completo</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Entidad</th>
+                        <th>Acciones</th>
                       </tr>
-                    ) : currentRows.length > 0 ? (
-                      currentRows.map((user) => (
-                        <tr key={user.id_usuario}>
-                          <td>{user.nombre_usuario}</td>
-                          <td>{user.nombre_completo}</td>
-                          <td>{user.correo}</td>
-                          <td>{user.telefono || '-'}</td>
-                          <td>{user.rol}</td>
-                          <td>
-                            <span className={`${styles.statusBadge} ${user.estado === 'activo' ? styles.active : styles.inactive}`}>
-                              {user.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                            </span>
-                          </td>
-                          <td>{user.entidad || '-'}</td>
-                          <td>
-                            <button
-                              className={styles.actionButton}
-                              onClick={() => handleEdit(user)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className={`${styles.actionButton} ${styles.deleteButton}`}
-                              onClick={() => handleDelete(user.id_usuario)}
-                            >
-                              Eliminar
-                            </button>
+                    </thead>
+                    <tbody>
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan="8" className={styles.loadingCell}>
+                            <FaSpinner className={styles.spinner} /> Cargando usuarios...
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="8" className={styles.noUsers}>No se encontraron usuarios</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      ) : currentRows.length > 0 ? (
+                        currentRows.map((user) => (
+                          <tr key={user.id_usuario}>
+                            <td>{user.nombre_usuario}</td>
+                            <td>{user.nombre_completo}</td>
+                            <td>{user.correo}</td>
+                            <td>{user.telefono || '-'}</td>
+                            <td>{user.rol}</td>
+                            <td>
+                              <span className={`${styles.statusBadge} ${user.estado === 'activo' ? styles.active : styles.inactive}`}>
+                                {user.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </td>
+                            <td>{user.entidad || '-'}</td>
+                            <td>
+                              <button
+                                className={styles.actionButton}
+                                onClick={() => handleEdit(user)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className={`${styles.actionButton} ${styles.deleteButton}`}
+                                onClick={() => handleDelete(user.id_usuario)}
+                              >
+                                Eliminar
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="8" className={styles.noUsers}>No se encontraron usuarios</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.paginationControls}>
-              <div className={styles.rowsPerPageSelector}>
-                <span>Filas por página:</span>
-                <select
-                  value={rowsPerPage}
-                  onChange={handleRowsPerPageChange}
-                  className={styles.rowsSelect}
-                  disabled={isLoading}
-                >
-                  {[15, 30, 50, 100].map(num => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
-                <span className={styles.rowsInfo}>
-                  Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredUsers.length)} de {filteredUsers.length} registros
-                </span>
+              <div className={styles.paginationControls}>
+                <div className={styles.rowsPerPageSelector}>
+                  <span>Filas por página:</span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    className={styles.rowsSelect}
+                    disabled={isLoading}
+                  >
+                    {[15, 30, 50, 100].map(num => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                  <span className={styles.rowsInfo}>
+                    Mostrando {indexOfFirstRow + 1}-{Math.min(indexOfLastRow, filteredUsers.length)} de {filteredUsers.length} registros
+                  </span>
+                </div>
+
+                <div className={styles.pagination}>
+                  <button
+                    className={`${styles.paginationButton} ${currentPage === 1 || isLoading ? styles.disabled : ''}`}
+                    onClick={prevPage}
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <FaChevronLeft />
+                  </button>
+
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNumber = i + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
+                        onClick={() => paginate(pageNumber)}
+                        disabled={isLoading}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+
+                  {totalPages > 5 && currentPage < totalPages - 2 && (
+                    <>
+                      <span className={styles.paginationEllipsis}>...</span>
+                      <button
+                        className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
+                        onClick={() => paginate(totalPages)}
+                        disabled={isLoading}
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    className={`${styles.paginationButton} ${currentPage === totalPages || isLoading ? styles.disabled : ''}`}
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages || isLoading}
+                  >
+                    <FaChevronRight />
+                  </button>
+                </div>
               </div>
-
-              <div className={styles.pagination}>
-                <button
-                  className={`${styles.paginationButton} ${currentPage === 1 || isLoading ? styles.disabled : ''}`}
-                  onClick={prevPage}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <FaChevronLeft />
-                </button>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNumber = i + 1;
-                  return (
-                    <button
-                      key={pageNumber}
-                      className={`${styles.paginationButton} ${currentPage === pageNumber ? styles.active : ''}`}
-                      onClick={() => paginate(pageNumber)}
-                      disabled={isLoading}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-
-                {totalPages > 5 && currentPage < totalPages - 2 && (
-                  <>
-                    <span className={styles.paginationEllipsis}>...</span>
-                    <button
-                      className={`${styles.paginationButton} ${currentPage === totalPages ? styles.active : ''}`}
-                      onClick={() => paginate(totalPages)}
-                      disabled={isLoading}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className={`${styles.paginationButton} ${currentPage === totalPages || isLoading ? styles.disabled : ''}`}
-                  onClick={nextPage}
-                  disabled={currentPage === totalPages || isLoading}
-                >
-                  <FaChevronRight />
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        <div className={styles.chatbotContainer}>
-          <img src={ChatbotIcon} alt="Chatbot" className={styles.chatbotIcon} onClick={() => setIsChatOpen(!isChatOpen)} />
-          {isChatOpen && (
-            <div className={styles.chatWindow}>
-              <div className={styles.chatHeader}>
-                <h4>Chat de Soporte</h4>
-                <button onClick={() => setIsChatOpen(false)} className={styles.closeChat}>&times;</button>
-              </div>
-              <div className={styles.chatBody}>
-                <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
-              </div>
-              <div className={styles.chatInput}>
-                <input type="text" placeholder="Escribe un mensaje..." />
-                <button>Enviar</button>
-              </div>
-            </div>
+            </>
           )}
         </div>
-      </div>
-    </div>
+        <ChatBot />
+
+      </>
+    </MenuVertical>
   );
 };
 
