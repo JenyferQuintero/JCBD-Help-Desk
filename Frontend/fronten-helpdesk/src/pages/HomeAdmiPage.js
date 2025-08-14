@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
-import { FiAlignJustify } from "react-icons/fi";
-import {
-  FcHome, FcAssistant, FcBusinessman, FcAutomatic,
-  FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy,
-  FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization
-} from "react-icons/fc";
-import {
-  BarChart, Bar, PieChart, Pie, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ResponsiveContainer
-} from 'recharts';
+import { BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
-import Logo from "../imagenes/logo proyecto color.jpeg";
-import Logoempresarial from "../imagenes/logo empresarial.png";
 import styles from "../styles/HomeAdmiPage.module.css";
 import ChatBot from "../Componentes/ChatBot";
 import { NotificationContext } from "../context/NotificationContext";
@@ -87,6 +75,14 @@ const Dashboard = () => {
             rol: userRole
           }
         });
+
+        try {
+          const res = await axios.post("http://localhost:5000/login", { user, pass });
+          addNotification(`Bienvenido ${res.data.nombre}`, "success");
+        } catch (err) {
+          const msg = err.response?.data?.message || "Error desconocido";
+          addNotification(`Error al iniciar sesión: ${msg}`, "error");
+        }
 
         // Simular llamadas API con datos demo
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -291,7 +287,7 @@ const HomeAdmiPage = () => {
 
   // Datos
   const tickets = [
-{ label: "Nuevo", color: "green", icon: "🟢", count: 0 },
+    { label: "Nuevo", color: "green", icon: "🟢", count: 0 },
     { label: "En curso", color: "lightgreen", icon: "⏳", count: 0 },
     { label: "En espera", color: "orange", icon: "🟡", count: 0 },
     { label: "Resueltos", color: "gray", icon: "✔️", count: 0 },
@@ -299,7 +295,7 @@ const HomeAdmiPage = () => {
     { label: "Borrado", color: "red", icon: "🗑", count: 0 },
     { label: "Encuesta", color: "purple", icon: "📅", count: 0 },
     { label: "Abiertos", color: "#4CAF50", icon: "📝", count: 0 },
-    { label: "Pendientes", color: "#FF5722", icon: "⚠️", count: 0},
+    { label: "Pendientes", color: "#FF5722", icon: "⚠️", count: 0 },
   ];
 
 
@@ -312,159 +308,159 @@ const HomeAdmiPage = () => {
 
   return (
     <MenuVertical>
-       <>
-      {/* Contenido Principal */}
-      <div className={styles.containerHomeAdmiPage}>
-        <main>
-          <div className={styles.flexColumna}>
-            <div className={styles.row}>
-              <div className={styles.col}>
-                <div className={styles.flexColumnHorizontal}>
-                  <div className={styles.viewButtonsContainer}>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "personal" ? styles.active : ""}`}
-                      onClick={() => setActiveView("personal")}
-                    >
-                      Vista Personal
-                    </button>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "global" ? styles.active : ""}`}
-                      onClick={() => setActiveView("global")}
-                    >
-                      Vista Global
-                    </button>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "todo" ? styles.active : ""}`}
-                      onClick={() => setActiveView("todo")}
-                    >
-                      Todo
-                    </button>
-                    <button
-                      className={`${styles.viewButton} ${activeView === "dashboard" ? styles.active : ""}`}
-                      onClick={() => setActiveView("dashboard")}
-                    >
-                      Tablero
-                    </button>
+      <>
+        {/* Contenido Principal */}
+        <div className={styles.containerHomeAdmiPage}>
+          <main>
+            <div className={styles.flexColumna}>
+              <div className={styles.row}>
+                <div className={styles.col}>
+                  <div className={styles.flexColumnHorizontal}>
+                    <div className={styles.viewButtonsContainer}>
+                      <button
+                        className={`${styles.viewButton} ${activeView === "personal" ? styles.active : ""}`}
+                        onClick={() => setActiveView("personal")}
+                      >
+                        Vista Personal
+                      </button>
+                      <button
+                        className={`${styles.viewButton} ${activeView === "global" ? styles.active : ""}`}
+                        onClick={() => setActiveView("global")}
+                      >
+                        Vista Global
+                      </button>
+                      <button
+                        className={`${styles.viewButton} ${activeView === "todo" ? styles.active : ""}`}
+                        onClick={() => setActiveView("todo")}
+                      >
+                        Todo
+                      </button>
+                      <button
+                        className={`${styles.viewButton} ${activeView === "dashboard" ? styles.active : ""}`}
+                        onClick={() => setActiveView("dashboard")}
+                      >
+                        Tablero
+                      </button>
+                    </div>
+                    <select className={`${styles.viewSelect} form-select`} onChange={handleSelectChange}>
+                      <option value={0}>Vista Personal</option>
+                      <option value={1}>Vista Global</option>
+                      <option value={2}>Todo</option>
+                      <option value={3}>Tablero</option>
+                    </select>
                   </div>
-                  <select className={`${styles.viewSelect} form-select`} onChange={handleSelectChange}>
-                    <option value={0}>Vista Personal</option>
-                    <option value={1}>Vista Global</option>
-                    <option value={2}>Todo</option>
-                    <option value={3}>Tablero</option>
-                  </select>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="app-container">
-            {/* Vista Personal */}
-            {(activeView === "personal" || activeView === "todo") && (
-              <>
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS A CERRAR</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160091</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160090</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS EN CURSO</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>HUN HUN Generico</td>
-                        <td>General</td>
-                        <td>LLAMOO DE TIMBRES (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>Wendy Johanna Alfonso Peralta</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>ENCUESTA DE SATISFACCIÓN</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503150021</td>
-                        <td>Julian Antonio Niño Oedoy</td>
-                        <td>General</td>
-                        <td>ALTA MEDICA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-
-            {/* Vista Global */}
-            {(activeView === "global" || activeView === "todo") && (
-              <>
-                <div className={styles.sectionContainer}>
-                  <h2>Tickets</h2>
-                  <div className={styles.cardsContainer}>
-                    {tickets.map((ticket, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: ticket.color }}>
-                        <span className="icon">{ticket.icon}</span>
-                        <span className="label">{ticket.label}</span>
-                        <span className="count">{ticket.count}</span>
-                      </div>
-                    ))}
+            <div className="app-container">
+              {/* Vista Personal */}
+              {(activeView === "personal" || activeView === "todo") && (
+                <>
+                  <div className={styles.tablaContainer}>
+                    <h2>SUS CASOS A CERRAR</h2>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>SOLICITANTE</th>
+                          <th>ELEMENTOS ASOCIADOS</th>
+                          <th>DESCRIPCIÓN</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>ID: 2503160091</td>
+                          <td>Santiago Caricena Corredor</td>
+                          <td>General</td>
+                          <td>NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)</td>
+                        </tr>
+                        <tr>
+                          <td>ID: 2503160090</td>
+                          <td>Santiago Caricena Corredor</td>
+                          <td>General</td>
+                          <td>CONFIGURAR IMPRESORA (1 - 0)</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-              </>
-            )}
 
-            {/* Vista Tablero */}
-            {activeView === "dashboard" && <Dashboard />}
-          </div>
-        </main>
-      </div>
-      <ChatBot />
+                  <div className={styles.tablaContainer}>
+                    <h2>SUS CASOS EN CURSO</h2>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>SOLICITANTE</th>
+                          <th>ELEMENTOS ASOCIADOS</th>
+                          <th>DESCRIPCIÓN</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>ID: 2503160088</td>
+                          <td>HUN HUN Generico</td>
+                          <td>General</td>
+                          <td>LLAMOO DE TIMBRES (1 - 0)</td>
+                        </tr>
+                        <tr>
+                          <td>ID: 2503160088</td>
+                          <td>Wendy Johanna Alfonso Peralta</td>
+                          <td>General</td>
+                          <td>CONFIGURAR IMPRESORA (1 - 0)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className={styles.tablaContainer}>
+                    <h2>ENCUESTA DE SATISFACCIÓN</h2>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>SOLICITANTE</th>
+                          <th>ELEMENTOS ASOCIADOS</th>
+                          <th>DESCRIPCIÓN</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>ID: 2503150021</td>
+                          <td>Julian Antonio Niño Oedoy</td>
+                          <td>General</td>
+                          <td>ALTA MEDICA (1 - 0)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* Vista Global */}
+              {(activeView === "global" || activeView === "todo") && (
+                <>
+                  <div className={styles.sectionContainer}>
+                    <h2>Tickets</h2>
+                    <div className={styles.cardsContainer}>
+                      {tickets.map((ticket, index) => (
+                        <div key={index} className={styles.card} style={{ borderColor: ticket.color }}>
+                          <span className="icon">{ticket.icon}</span>
+                          <span className="label">{ticket.label}</span>
+                          <span className="count">{ticket.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Vista Tablero */}
+              {activeView === "dashboard" && <Dashboard />}
+            </div>
+          </main>
+        </div>
+        <ChatBot />
       </>
     </MenuVertical>
   );

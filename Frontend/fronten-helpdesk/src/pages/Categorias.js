@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { FaPowerOff, FaChevronLeft, FaChevronRight, FaChevronDown, FaSearch, FaFilter, FaPlus, FaSpinner, FaFileExcel, FaFilePdf, FaFileCsv } from "react-icons/fa";
-import { FaMagnifyingGlass } from "react-icons/fa6";
-import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization, FcPrint } from "react-icons/fc";
 import axios from "axios";
 import styles from "../styles/Categorias.module.css";
-import Logo from "../imagenes/logo proyecto color.jpeg";
-import Logoempresarial from "../imagenes/logo empresarial.png";
 import ChatBot from "../Componentes/ChatBot";
-import { NotificationContext } from "../context/NotificationContext";
+import { useNotification } from "../context/NotificationContext";
 import MenuVertical from "../Componentes/MenuVertical";
 
 const Categorias = () => {
@@ -35,11 +31,12 @@ const Categorias = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
 
+  // Estados para modales
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,11 +45,12 @@ const Categorias = () => {
   // Datos del usuario
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol") || "";
+  const { addNotification } = useNotification();
 
   // Datos del formulario
   const [formData, setFormData] = useState({
     nombre_categoria: '',
-    entidad: '',
+    id_entidad: '',
     descripcion: ''
   });
 
@@ -96,6 +94,8 @@ const Categorias = () => {
       setEntidades(response.data);
     } catch (error) {
       console.error("Error al cargar entidades:", error);
+      setModalMessage("Error al cargar las entidades disponibles");
+      setShowErrorModal(true);
     }
   };
 
@@ -107,10 +107,7 @@ const Categorias = () => {
     });
   };
 
-
   const toggleExportDropdown = () => setIsExportDropdownOpen(!isExportDropdownOpen);
-
-
 
   // Funciones de exportación
   const exportToExcel = () => {
@@ -142,6 +139,8 @@ const Categorias = () => {
       setFilteredCategorias(response.data);
     } catch (error) {
       console.error("Error al cargar categorias:", error);
+      setModalMessage("Error al cargar las categorías");
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -161,28 +160,36 @@ const Categorias = () => {
       const response = await axios[method.toLowerCase()](url, formData);
 
       if (response.data.success) {
-        alert(editingId ? 'Categoría actualizada' : 'Categoría creada');
+        setModalMessage(editingId 
+          ? '¡Categoría actualizada correctamente!' 
+          : '¡Categoría creada con éxito!');
+        setShowSuccessModal(true);
         resetForm();
         fetchCategorias();
       }
     } catch (error) {
       console.error('Error:', error);
+      setModalMessage(error.response?.data?.message || "Error al procesar la solicitud");
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("¿Eliminar esta categoría?")) return;
+    if (!window.confirm("¿Estás seguro de eliminar esta categoría?")) return;
 
     try {
       const response = await axios.delete(`http://localhost:5000/categorias/eliminar/${id}`);
       if (response.data.success) {
-        alert("Categoría eliminada");
+        setModalMessage("Categoría eliminada correctamente");
+        setShowSuccessModal(true);
         fetchCategorias();
       }
     } catch (error) {
       console.error("Error al eliminar:", error);
+      setModalMessage(error.response?.data?.message || "Error al eliminar la categoría");
+      setShowErrorModal(true);
     }
   };
 
@@ -219,7 +226,7 @@ const Categorias = () => {
   const resetForm = () => {
     setFormData({
       nombre_categoria: '',
-      entidad: '',
+      id_entidad: '',
       descripcion: ''
     });
     setEditingId(null);
@@ -230,7 +237,7 @@ const Categorias = () => {
   const handleEdit = (categoria) => {
     setFormData({
       nombre_categoria: categoria.nombre_categoria,
-      entidad: categoria.entidad,
+      id_entidad: categoria.id_entidad,
       descripcion: categoria.descripcion || ''
     });
     setEditingId(categoria.id_categoria);
@@ -275,6 +282,15 @@ const Categorias = () => {
     setCurrentPage(1);
   };
 
+  // Cerrar modales
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+  };
+
   // Renderizado condicional
   if (!['administrador', 'tecnico'].includes(userRole)) {
     return (
@@ -288,12 +304,9 @@ const Categorias = () => {
 
   return (
     <MenuVertical>
-  
-
+      <>
         {/* Contenido */}
-        <div className={styles.container} style={{
-          marginLeft: isMenuExpanded ? "200px" : "60px"
-        }}>
+        <div className={styles.container} style={{  marginLeft: isMenuExpanded ? "100px" : "20px" }}>
           {isLoading && (
             <div className={styles.loadingOverlay}>
               <FaSpinner className={styles.spinner} />
@@ -349,7 +362,6 @@ const Categorias = () => {
                       {formErrors.id_entidad && <span className={styles.errorMessage}>{formErrors.id_entidad}</span>}
                     </div>
 
-
                     <div className={styles.formGroup}>
                       <label className={styles.label}>Descripción</label>
                       <textarea
@@ -385,7 +397,7 @@ const Categorias = () => {
                         value={searchField}
                         onChange={(e) => setSearchField(e.target.value)}
                       >
-                        <option value="nombre categoria">Nombre</option>
+                        <option value="nombre_categoria">Nombre</option>
                         <option value="entidad">Entidad</option>
                         <option value="descripcion">Descripción</option>
                       </select>
@@ -477,13 +489,12 @@ const Categorias = () => {
                         <th>Entidad</th>
                         <th>Descripción</th>
                         <th>Acciones</th>
-
                       </tr>
                     </thead>
                     <tbody>
                       {isLoading ? (
                         <tr>
-                          <td colSpan="3" className={styles.loadingCell}>
+                          <td colSpan="4" className={styles.loadingCell}>
                             <FaSpinner className={styles.spinner} /> Cargando categorías...
                           </td>
                         </tr>
@@ -511,7 +522,7 @@ const Categorias = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="3" className={styles.noUsers}>No se encontraron categorías</td>
+                          <td colSpan="4" className={styles.noUsers}>No se encontraron categorías</td>
                         </tr>
                       )}
                     </tbody>
@@ -585,11 +596,81 @@ const Categorias = () => {
             </>
           )}
 
-          <ChatBot />
-       </div>
-      </MenuVertical>
+          {/* Modal de éxito */}
+          {showSuccessModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modal}>
+                <div className={styles.modalHeader}>
+                  <h3>Operación Exitosa</h3>
+                  <button 
+                    onClick={handleCloseSuccessModal} 
+                    className={styles.modalCloseButton}
+                  >
+                    &times;
+                  </button>
+                </div>
+                
+                <div className={styles.modalBody}>
+                  <div className={styles.successIcon}>
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
+                    </svg>
+                  </div>
+                  <p>{modalMessage}</p>
+                  
+                  <div className={styles.modalActions}>
+                    <button
+                      onClick={handleCloseSuccessModal}
+                      className={styles.modalButton}
+                    >
+                      Aceptar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-      );
+          {/* Modal de error */}
+          {showErrorModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modal}>
+                <div className={styles.modalHeader}>
+                  <h3>Error</h3>
+                  <button 
+                    onClick={handleCloseErrorModal} 
+                    className={styles.modalCloseButton}
+                  >
+                    &times;
+                  </button>
+                </div>
+                
+                <div className={styles.modalBody}>
+                  <div className={styles.errorIcon}>
+                    <svg viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
+                    </svg>
+                  </div>
+                  <p>{modalMessage}</p>
+                  
+                  <div className={styles.modalActions}>
+                    <button
+                      onClick={handleCloseErrorModal}
+                      className={styles.modalButtonError}
+                    >
+                      Entendido
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <ChatBot />
+        </div>
+      </>
+    </MenuVertical>
+  );
 };
 
-      export default Categorias;
+export default Categorias;

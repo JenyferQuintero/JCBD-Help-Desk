@@ -1,27 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link, Outlet } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import {
-  FcHome,
-  FcAssistant,
-  FcBusinessman,
-  FcAutomatic,
-  FcAnswers,
-  FcCustomerSupport,
-  FcExpired,
-  FcGenealogy,
-  FcBullish,
-  FcConferenceCall,
-  FcPortraitMode,
-  FcOrganization,
-} from "react-icons/fc";
+import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport } from "react-icons/fc";
 import { FaRegClock, FaCheckCircle, FaHistory } from "react-icons/fa";
 import styles from '../styles/EncuestaSatisfaccion.module.css';
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
-import ChatbotIcon from "../imagenes/img chatbot.png";
 
 const EncuestaSatisfaccion = () => {
   // Estados del componente
@@ -36,44 +22,16 @@ const EncuestaSatisfaccion = () => {
   const [calificacion, setCalificacion] = useState("");
   const [comentario, setComentario] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [error, setError] = useState(null);
+  
+  // Estados para los modales
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
   
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol");
-  const isAdminOrTech = ["admin", "tecnico"].includes(userRole);
-
-  // Handlers del menú
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
-
-  // Cargar datos del ticket si es necesario
-  useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/EncuestaSatisfaccion/:surveyId");
-    }
-  }, [navigate]);
 
   // Función para enviar la encuesta
   const handleSubmit = async (e) => {
@@ -81,12 +39,12 @@ const EncuestaSatisfaccion = () => {
     
     // Validación básica
     if (!calificacion) {
-      setError("Por favor seleccione una calificación");
+      setModalMessage("Por favor seleccione una calificación");
+      setShowErrorModal(true);
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const response = await axios.post(
@@ -106,50 +64,35 @@ const EncuestaSatisfaccion = () => {
       );
 
       if (response.status === 200) {
-        setSubmitSuccess(true);
-        // Redirigir después de 3 segundos
-        setTimeout(() => {
-          navigate("/Tickets");
-        }, 3000);
+        setModalMessage("¡Gracias por tu feedback! La encuesta ha sido enviada correctamente.");
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error("Error al enviar encuesta:", err);
-      setError(err.response?.data?.message || "Error al enviar la encuesta");
+      setModalMessage(err.response?.data?.message || "Error al enviar la encuesta");
+      setShowErrorModal(true);
       
       if (err.response?.status === 401) {
-        navigate("/Tickets");
+        setTimeout(() => navigate("/Tickets"), 3000);
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Navegación según rol
-  const getRouteByRole = (section) => {
-    if (section === 'inicio') {
-      if (userRole === 'administrador') {
-        return '/HomeAdmiPage';
-      } else if (userRole === 'tecnico') {
-        return '/HomeTecnicoPage';
-      } else {
-        return '/home';
-      }
-    } else if (section === 'crear-caso') {
-      if (userRole === 'administrador') {
-        return '/CrearCasoAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/CrearCasoAdmin';
-      } else {
-        return '/CrearCasoUse';
-      }
-    } else if (section === "tickets") return "/Tickets";
-    return "/";
+  // Cerrar modales
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate("/Tickets");
   };
 
-  
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+  };
+
   return (
     <div className={styles.containerPrincipal}>
-      
+      {/* Contenido principal */}
       <div
         className={styles.containerColumnas}
         style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
@@ -157,60 +100,121 @@ const EncuestaSatisfaccion = () => {
         <div className={styles.encuestaContainer}>
           <h1>Encuesta de Satisfacción - Ticket #{surveyId}</h1>
           
-          {submitSuccess ? (
-            <div className={styles.successMessage}>
-              <p>¡Gracias por tu feedback! La encuesta ha sido enviada correctamente.</p>
-              <p>Redirigiendo a la página de tickets...</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className={styles.formGroup}>
-                <label>¿Cómo calificaría el servicio recibido?</label>
-                <select 
-                  value={calificacion}
-                  onChange={(e) => setCalificacion(e.target.value)}
-                  required
-                  className={error && !calificacion ? styles.errorInput : ""}
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="5">Excelente (5)</option>
-                  <option value="4">Muy Bueno (4)</option>
-                  <option value="3">Bueno (3)</option>
-                  <option value="2">Regular (2)</option>
-                  <option value="1">Deficiente (1)</option>
-                </select>
-                {error && !calificacion && (
-                  <span className={styles.errorText}>{error}</span>
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Comentarios adicionales:</label>
-                <textarea
-                  rows="4"
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  placeholder="(Opcional) ¿Algo que nos quieras comentar sobre el servicio recibido?"
-                />
-              </div>
-
-              {error && calificacion && (
-                <div className={styles.errorMessage}>{error}</div>
-              )}
-
-              <button 
-                type="submit" 
-                className={styles.submitButton}
+          <form onSubmit={handleSubmit}>
+            <div className={styles.formGroup}>
+              <label>¿Cómo calificaría el servicio recibido?</label>
+              <select 
+                value={calificacion}
+                onChange={(e) => setCalificacion(e.target.value)}
+                required
+                className={modalMessage && !calificacion ? styles.errorInput : ""}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
-              </button>
-            </form>
-          )}
+                <option value="">Seleccione una calificación...</option>
+                <option value="5">Excelente (5)</option>
+                <option value="4">Muy Bueno (4)</option>
+                <option value="3">Bueno (3)</option>
+                <option value="2">Regular (2)</option>
+                <option value="1">Deficiente (1)</option>
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Comentarios adicionales:</label>
+              <textarea
+                rows="4"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="(Opcional) ¿Algo que nos quieras comentar sobre el servicio recibido?"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className={styles.submitButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className={styles.loadingSpinner}></span>
+                  Enviando...
+                </>
+              ) : "Enviar Encuesta"}
+            </button>
+          </form>
         </div>
       </div>
 
-      
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>Encuesta Enviada</h3>
+              <button 
+                onClick={handleCloseSuccessModal} 
+                className={styles.modalCloseButton}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <div className={styles.successIcon}>
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" />
+                </svg>
+              </div>
+              <p>{modalMessage}</p>
+              
+              <div className={styles.modalActions}>
+                <button
+                  onClick={handleCloseSuccessModal}
+                  className={styles.modalButton}
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de error */}
+      {showErrorModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>Error</h3>
+              <button 
+                onClick={handleCloseErrorModal} 
+                className={styles.modalCloseButton}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <div className={styles.errorIcon}>
+                <svg viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
+                </svg>
+              </div>
+              <p>{modalMessage}</p>
+              
+              <div className={styles.modalActions}>
+                <button
+                  onClick={handleCloseErrorModal}
+                  className={styles.modalButtonError}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

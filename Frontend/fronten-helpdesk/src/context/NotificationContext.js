@@ -1,8 +1,11 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 
 import "../styles/NotificationContext.module.css";
-
 export const NotificationContext = createContext();
+
+export const useNotification = () => {
+  return useContext(NotificationContext);
+};
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
