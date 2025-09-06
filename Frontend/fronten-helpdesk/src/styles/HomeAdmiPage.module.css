@@ -4,7 +4,7 @@
   --tablet: 768px;
   --desktop: 1024px;
 }
-
+  
 .containerPrincipal {
   width: 100vw;
   height: 100vh;
@@ -16,7 +16,6 @@
   flex-direction: column;
   box-sizing: border-box;
 }
-
 .containerHomeAdmiPage {
   width: calc(92% - 60px);
   height: auto;
@@ -63,7 +62,7 @@
 @media (max-width: 768px) {
   .containerInicio {
     width: calc(100% - 30px);
-
+  
     border-radius: 10px;
   }
 }
@@ -201,7 +200,7 @@
   .cardsContainer {
     justify-content: center;
   }
-
+  
   .card {
     width: calc(33% - 20px);
   }
@@ -239,9 +238,7 @@
   left: 100%;
 }
 
-.icon,
-.label,
-.count {
+.icon, .label, .count {
   transition: all 0.3s ease;
 }
 
@@ -286,7 +283,6 @@ table {
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
   }
-
   .tablaContainer {
     padding: 10px;
     margin-top: 10px;
@@ -345,7 +341,164 @@ tr:hover td {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.chatbotContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
 
+.chatbotIcon {
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.chatbotIcon:hover {
+  transform: scale(1.1) rotate(5deg);
+  animation: none;
+}
+
+.chatWindow {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 300px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(20px);
+  opacity: 0;
+  animation: fadeInUp 0.3s ease forwards;
+}
+
+@media (max-width: 768px) {
+  .chatWindow {
+    width: 90%;
+    right: 5%;
+    bottom: 80px;
+  }
+  
+  .chatbotIcon {
+    width: 70px;
+    height: 70px;
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+@keyframes fadeInUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.chatHeader {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatHeader h4 {
+  margin: 0;
+}
+
+.closeChat {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.closeChat:hover {
+  transform: rotate(90deg);
+}
+
+.chatBody {
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.chatInput {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.chatInput input {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.chatInput input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.chatInput button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.chatInput button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.chatInput button:focus:not(:active)::after {
+  animation: ripple 0.6s ease-out;
+}
+
+.chatInput button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
 .logoContainer {
   text-align: center;
@@ -502,11 +655,9 @@ tr:hover td {
   0% {
     box-shadow: 0 0 0 0 rgba(58, 12, 163, 0.4);
   }
-
   70% {
     box-shadow: 0 0 0 10px rgba(58, 12, 163, 0);
   }
-
   100% {
     box-shadow: 0 0 0 0 rgba(58, 12, 163, 0);
   }
@@ -536,7 +687,6 @@ tr:hover td {
     transform: scale(0, 0);
     opacity: 0.5;
   }
-
   100% {
     transform: scale(20, 20);
     opacity: 0;
@@ -548,7 +698,7 @@ tr:hover td {
   .viewButtonsContainer {
     display: none;
   }
-
+  
   .viewSelect {
     display: block;
     width: 100%;
@@ -624,7 +774,7 @@ tr:hover td {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   text-align: center;
 }
 
@@ -658,7 +808,7 @@ tr:hover td {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .chartCard h3 {
@@ -693,13 +843,8 @@ tr:hover td {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .errorContainer {
@@ -730,7 +875,7 @@ tr:hover td {
   .chartsGrid {
     grid-template-columns: 1fr;
   }
-
+  
   .statsSummary {
     grid-template-columns: 1fr;
   }
@@ -741,8 +886,7 @@ tr:hover td {
   width: 60px;
   height: 100vh;
   background-color: #343bbf;
-  color: white;
-  position: fixed;
+  color: white;  position: fixed;
   top: 0;
   left: 0;
   transition: all 0.3s ease;
@@ -879,23 +1023,12 @@ tr:hover td {
   margin-left: 20px;
   max-height: 0;
   overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.4s ease, opacity 0.3s ease;
+  transition: max-height 0.5s ease-in;
   background-color: transparent;
-}
-.submenu li {
-  transform: translateY(-5px);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.showSubmenu li {
-  transform: translateY(0);
-  opacity: 1;
 }
 
 .showSubmenu {
   max-height: 500px;
-  opacity: 1;
 }
 
 .submenuLink {
@@ -986,7 +1119,6 @@ tr:hover td {
       opacity: 0;
       transform: translateY(-20px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1061,21 +1193,16 @@ tr:hover td {
   0% {
     transform: rotate(0);
   }
-
   25% {
     transform: rotate(5deg);
   }
-
   50% {
     transform: rotate(-5deg);
   }
-
   75% {
     transform: rotate(5deg);
   }
-
   100% {
     transform: rotate(0);
   }
 }
-
