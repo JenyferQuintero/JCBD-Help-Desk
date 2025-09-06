@@ -4,12 +4,11 @@ import { Link, useNavigate, Outlet, useLocation, useParams } from "react-router-
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
+import { FaTimes } from "react-icons/fa";
 import { FiAlignJustify } from "react-icons/fi";
 import { FcHome, FcAssistant, FcBusinessman, FcAutomatic, FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization } from "react-icons/fc";
-import ChatBot from "../Componentes/ChatBot";
-import { NotificationContext } from "../context/NotificationContext";
+import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/CrearCasoUse.module.css";
-import MenuVertical from "../Componentes/MenuVertical";
 
 const CrearCasoUse = () => {
   // Estados
@@ -26,6 +25,7 @@ const CrearCasoUse = () => {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,14 +77,14 @@ const CrearCasoUse = () => {
   // Estado del formulario
   const [formData, setFormData] = useState({
     id: "",
-    tipo: "incidente",
+    tipo: "",
     origen: "",
     ubicacion: "",
     prioridad: "",
     categoria: "",
     titulo: "",
     descripcion: "",
-    archivo: null,
+    archivos: [],  // Cambiado de 'archivo' a 'archivos' para múltiples archivos
     solicitante: userId,
     estado: "nuevo"
   });
@@ -134,7 +134,7 @@ const CrearCasoUse = () => {
             categoria: ticketData.id_categoria1,
             titulo: ticketData.titulo,
             descripcion: ticketData.descripcion,
-            archivo: null,
+            archivos: [], // Inicializar como array vacío
             solicitante: userId,
             estado: ticketData.estado_ticket
           });
@@ -158,10 +158,28 @@ const CrearCasoUse = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (name === "archivos" && files) {
+      // Para manejar múltiples archivos
+      const newFiles = Array.from(files);
+      setFormData(prev => ({
+        ...prev,
+        archivos: [...prev.archivos, ...newFiles],
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  // Función para eliminar archivo adjunto
+  const removeFile = (index) => {
+    setFormData(prev => {
+      const newFiles = [...prev.archivos];
+      newFiles.splice(index, 1);
+      return { ...prev, archivos: newFiles };
+    });
   };
 
   // Envío del formulario
@@ -170,6 +188,7 @@ const CrearCasoUse = () => {
     setIsLoading(true);
     setError(null);
     setSuccess(null);
+    setShowNotification(false);
 
     try {
       const formDataToSend = new FormData();
@@ -187,9 +206,10 @@ const CrearCasoUse = () => {
         formDataToSend.append("categoria", formData.categoria);
       }
 
-      if (formData.archivo) {
-        formDataToSend.append("archivo", formData.archivo);
-      }
+      // Adjuntar archivos - USAR "archivos" COMO NOMBRE (igual que en Admin)
+      formData.archivos.forEach(file => {
+        formDataToSend.append("archivos", file);
+      });
 
       if (isEditMode) {
         // En modo edición, agregar datos de usuario para validación en backend
@@ -208,6 +228,7 @@ const CrearCasoUse = () => {
         
         if (response.data.success) {
           setSuccess("Ticket actualizado correctamente");
+          setShowNotification(true);
         } else {
           setError(response.data.message || "Error al actualizar el ticket");
           return;
@@ -225,13 +246,12 @@ const CrearCasoUse = () => {
 
         if (response.data.success) {
           setSuccess("Ticket creado correctamente");
+          setShowNotification(true);
         } else {
           setError(response.data.message || "Error al crear el ticket");
           return;
         }
       }
-
-      setTimeout(() => navigate("/Tickets"), 2000);
     } catch (error) {
       console.error("Error detallado:", {
         error: error,
@@ -302,13 +322,34 @@ const CrearCasoUse = () => {
 
   return (
     <div className={styles.containerPrincipal}>
+      {/* Notificación de éxito */}
+      {showNotification && (
+        <div className={styles.notificationOverlay}>
+          <div className={styles.notification}>
+            <div className={styles.notificationContent}>
+              <div className={styles.notificationIcon}>✓</div>
+              <h3>{isEditMode ? 'Ticket Actualizado' : 'Ticket Creado'}</h3>
+              <p>{success}</p>
+              <button 
+                className={styles.notificationButton}
+                onClick={() => { setShowNotification(false)
+                  navigate("/Tickets");
+                }}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Menú Vertical */}
       <aside
         className={`${styles.menuVertical} ${
           isMenuExpanded ? styles.expanded : ""
         }`}
-        onMouseEnter={toggleMenu}
-        onMouseLeave={toggleMenu}
+        onMouseEnter={() => setIsMenuExpanded(true)}
+        onMouseLeave={() => setIsMenuExpanded(false)}
       >
         <div className={styles.containerFluidMenu}>
           <div className={styles.logoContainer}>
@@ -515,17 +556,6 @@ const CrearCasoUse = () => {
             </button>
           </div>
         )}
-        {success && (
-          <div className={styles.successMessage}>
-            {success}
-            <button
-              onClick={() => setSuccess(null)}
-              className={styles.closeMessage}
-            >
-              &times;
-            </button>
-          </div>
-        )}
 
         {/* Formulario */}
         <div className={styles.formColumn}>
@@ -569,22 +599,24 @@ const CrearCasoUse = () => {
                   name="origen"
                   value={formData.origen || ''}
                   readOnly
+                  disabled
                 />
               </div>
-                
-              {/* Campo Ubicación - editable siempre */}
-              <div className={styles.formGroupCaso}>
-                <label className={styles.casoLabel}>Ubicación*</label>
-                <input
-                  className={styles.casoInput}
-                  type="text"
-                  name="ubicacion"
-                  value={formData.ubicacion}
-                  onChange={handleChange}
-                  required
-                  placeholder="Ej: Edificio A, Piso 3, Oficina 302"
-                />
-              </div>
+                <div className={styles.formGroupCaso}>
+                  <label className={styles.casoLabel}>Tipo*</label>
+                  <select
+                  className={styles.casoSelect}
+                    name="tipo"
+                    value={formData.tipo}
+                    onChange={handleChange}
+                    required={!isEditMode}
+                    disabled={isEditMode && !(userRole === 'administrador' || userRole === 'tecnico')}
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="incidencia">Incidencia</option>
+                    <option value="requerimiento">Requerimiento</option>
+                  </select>
+                </div>
 
               {/* Prioridad - editable solo en creación o por admin/tecnico */}
               <div className={styles.formGroupCaso}>
@@ -623,7 +655,6 @@ const CrearCasoUse = () => {
                   ))}
                 </select>
               </div>
-
               {/* Título - siempre editable */}
               <div className={styles.formGroupCaso}>
                 <label className={styles.casoLabel}>Título*</label>
@@ -650,19 +681,50 @@ const CrearCasoUse = () => {
                   required
                 />
               </div>
-
-              {/* Archivo adjunto - siempre editable */}
+              {/* Campo Ubicación - editable siempre */}
               <div className={styles.formGroupCaso}>
-                <label className={styles.casoLabel}>Adjuntar archivo</label>
+                <label className={styles.casoLabel}>Ubicación*</label>
                 <input
-                  className={styles.casoFile}
-                  type="file"
-                  name="archivo"
+                  className={styles.casoInput}
+                  type="text"
+                  name="ubicacion"
+                  value={formData.ubicacion}
                   onChange={handleChange}
+                  required
+                  placeholder=""
                 />
-                {formData.archivo && (
-                  <span className={styles.fileName}>{formData.archivo.name}</span>
-                )}
+              </div>
+              
+              {/* Archivos adjuntos - siempre editable */}
+              <div className={styles.formGroupCaso}>
+                <label className={styles.casoLabel}>Adjuntar archivos</label>
+                <div className={styles.fileInputContainer}>
+                  <input
+                    className={styles.casoFile}
+                    type="file"
+                    name="archivos"
+                    onChange={handleChange}
+                    id="fileInput"
+                    multiple
+                  />
+                  {formData.archivos.length > 0 && (
+                    <div className={styles.fileList}>
+                      {formData.archivos.map((file, index) => (
+                        <div key={index} className={styles.fileItem}>
+                          <span className={styles.fileName}>{file.name}</span>
+                          <button 
+                            type="button" 
+                            className={styles.removeFileButton}
+                            onClick={() => removeFile(index)}
+                            title="Quitar archivo"
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button
@@ -681,7 +743,32 @@ const CrearCasoUse = () => {
         </div>
       </div>
       
-   <ChatBot />
+      {/* Chatbot */}
+      <div className={styles.chatbotContainer}>
+        <img
+          src={ChatbotIcon}
+          alt="Chatbot"
+          className={styles.chatbotIcon}
+          onClick={toggleChat}
+        />
+        {isChatOpen && (
+          <div className={styles.chatWindow}>
+            <div className={styles.chatHeader}>
+              <h4>Chat de Soporte</h4>
+              <button onClick={toggleChat} className={styles.closeChat}>
+                &times;
+              </button>
+            </div>
+            <div className={styles.chatBody}>
+              <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
+            </div>
+            <div className={styles.chatInput}>
+              <input type="text" placeholder="Escribe un mensaje..." />
+              <button>Enviar</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
