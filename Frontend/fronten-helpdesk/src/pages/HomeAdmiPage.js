@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
 import { FiAlignJustify } from "react-icons/fi";
-import {
-  FcHome, FcAssistant, FcBusinessman, FcAutomatic,
-  FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy,
-  FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization
+import { 
+  FcHome, FcAssistant, FcBusinessman, FcAutomatic, 
+  FcAnswers, FcCustomerSupport, FcExpired, FcGenealogy, 
+  FcBullish, FcConferenceCall, FcPortraitMode, FcOrganization 
 } from "react-icons/fc";
 import {
   BarChart, Bar, PieChart, Pie, LineChart, Line,
@@ -14,11 +14,8 @@ import {
 import axios from 'axios';
 import Logo from "../imagenes/logo proyecto color.jpeg";
 import Logoempresarial from "../imagenes/logo empresarial.png";
+import ChatbotIcon from "../imagenes/img chatbot.png";
 import styles from "../styles/HomeAdmiPage.module.css";
-import ChatBot from "../Componentes/ChatBot";
-import { NotificationContext } from "../context/NotificationContext";
-import MenuVertical from "../Componentes/MenuVertical";
-
 
 // Datos de ejemplo para el dashboard
 const demoStats = {
@@ -42,8 +39,8 @@ const demoStats = {
       { name: 'Resuelto', value: 214 },
       { name: 'Cerrado', value: 198 }
     ],
-    trend: Array.from({ length: 30 }, (_, i) => ({
-      date: `${i + 1}/06`,
+    trend: Array.from({length: 30}, (_, i) => ({
+      date: `${i+1}/06`,
       created: Math.floor(Math.random() * 20) + 5,
       resolved: Math.floor(Math.random() * 18) + 3
     }))
@@ -66,45 +63,22 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('month');
-  const { addNotification } = useContext(NotificationContext);
-
-
-  // Obtener userId y userRole del localStorage
-  const userId = localStorage.getItem("userId") || "";
-  const userRole = localStorage.getItem("rol") || "";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            usuario_id: userId,
-            rol: userRole
-          }
-        });
-
-        // Simular llamadas API con datos demo
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        addNotification("Datos del dashboard cargados correctamente", "success");
         setLoading(false);
       } catch (err) {
-        const errorMsg = err.response?.data?.message || err.message;
-        setError(errorMsg);
-        addNotification(`Error al cargar datos: ${errorMsg}`, "error");
+        setError(err.response?.data?.message || err.message);
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [timeRange, addNotification, userId, userRole]);
+  }, [timeRange]);
 
-  // Colores para las gráficas
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   if (loading) return (
@@ -126,8 +100,8 @@ const Dashboard = () => {
       <div className={styles.dashboardHeader}>
         <h2>Tablero de Estadísticas</h2>
         <div className={styles.timeRangeSelector}>
-          <select
-            value={timeRange}
+          <select 
+            value={timeRange} 
             onChange={(e) => setTimeRange(e.target.value)}
             className={styles.timeRangeSelect}
           >
@@ -139,7 +113,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Resumen de estadísticas */}
       <div className={styles.statsSummary}>
         <div className={styles.statCard}>
           <h3>Usuarios</h3>
@@ -149,7 +122,7 @@ const Dashboard = () => {
             <span>Inactivos: {stats.users.inactive}</span>
           </div>
         </div>
-
+        
         <div className={styles.statCard}>
           <h3>Tickets</h3>
           <p className={styles.statValue}>{stats.tickets.total}</p>
@@ -158,7 +131,7 @@ const Dashboard = () => {
             <span>Resueltos: {stats.tickets.resolved}</span>
           </div>
         </div>
-
+        
         <div className={styles.statCard}>
           <h3>Encuestas</h3>
           <p className={styles.statValue}>{stats.surveys.total}</p>
@@ -169,9 +142,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Gráficas principales */}
       <div className={styles.chartsGrid}>
-        {/* Gráfica de usuarios */}
         <div className={styles.chartCard}>
           <h3>Distribución de Usuarios</h3>
           <div className={styles.chartWrapper}>
@@ -199,7 +170,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Gráfica de tickets por estado */}
         <div className={styles.chartCard}>
           <h3>Tickets por Estado</h3>
           <div className={styles.chartWrapper}>
@@ -216,7 +186,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Gráfica de tendencia de tickets */}
         <div className={styles.chartCard}>
           <h3>Tendencia de Tickets ({timeRange === 'month' ? 'Últimos 30 días' : 'Últimos 12 meses'})</h3>
           <div className={styles.chartWrapper}>
@@ -234,7 +203,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Gráfica de entidades con más tickets */}
         <div className={styles.chartCard}>
           <h3>Entidades con más Tickets</h3>
           <div className={styles.chartWrapper}>
@@ -259,23 +227,192 @@ const HomeAdmiPage = () => {
   // Obtener datos del usuario
   const userRole = localStorage.getItem("rol") || "";
   const nombre = localStorage.getItem("nombre") || "";
-  const { addNotification } = useContext(NotificationContext);
+  const userId = localStorage.getItem("id_usuario");
+  const navigate = useNavigate();
 
   // Estados
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activeView, setActiveView] = useState("personal");
+  const [activeView, setActiveView] = useState("global");
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState({
+    type: null,
+    value: null
+  });
+  const [tableData, setTableData] = useState({
+    asignados: [],
+    resueltos: [],
+    encuesta: []
+  });
+  const [globalStats, setGlobalStats] = useState({
+    tickets: [],
+    problemas: []
+  });
+  const [allTickets, setAllTickets] = useState([]);
 
+  // Obtener tickets del administrador (asignados y resueltos)
+  useEffect(() => {
+    // Verificar rol antes de hacer la petición
+    if (userRole !== "administrador") return;
+    
+    const fetchTicketsAdmin = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:5000/usuarios/tickets", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            usuario_id: userId,
+            rol: userRole
+          }
+        });
 
-  // Verificación de rol
+        const tickets = response.data;
+        const asignados = tickets.filter(ticket => 
+          ticket.estado !== 'resuelto' && ticket.estado !== 'cerrado'
+        );
+        const resueltos = tickets.filter(ticket => 
+          (ticket.estado === 'resuelto' || ticket.estado === 'cerrado')
+        );
+
+        setTableData({
+          asignados,
+          resueltos,
+          encuesta: resueltos
+        });
+      } catch (error) {
+        console.error("Error al obtener tickets del administrador:", error);
+        // Usar datos de ejemplo si hay error
+        setTableData({
+          asignados: [
+            { id: "2503160091", solicitante: "Santiago Caricena Corredor", descripcion: "NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)", ubicacion: "General", estado: "Asignado" },
+            { id: "2503160090", solicitante: "Santiago Caricena Corredor", descripcion: "CONFIGURAR IMPRESORA (1 - 0)", ubicacion: "General", estado: "Asignado" }
+          ],
+          resueltos: [
+            { id: "2503160088", solicitante: "HUN HUN Generico", descripcion: "LLAMOO DE TIMBRES (1 - 0)", ubicacion: "General", fecha_cierre: "2023-10-15" },
+            { id: "2503160088", solicitante: "Wendy Johanna Alfonso Peralta", descripcion: "CONFIGURAR IMPRESORA (1 - 0)", ubicacion: "General", fecha_cierre: "2023-10-16" }
+          ],
+          encuesta: [
+            { id: "2503150021", solicitante: "Julian Antonio Niño Oedoy", descripcion: "ALTA MEDICA (1 - 0)", encuesta_realizada: "No", calificacion: "Pendiente" }
+          ]
+        });
+      }
+    };
+
+    if (userId && userRole) {
+      fetchTicketsAdmin();
+    }
+  }, [userId, userRole]);
+
+  // Obtener estadísticas globales y todos los tickets
+  useEffect(() => {
+    // Verificar rol antes de hacer la petición
+    if (userRole !== "administrador") return;
+    
+    const fetchGlobalStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
+
+        const tickets = response.data;
+        setAllTickets(tickets);
+        
+        const stats = {
+          nuevo: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'nuevo' || 
+             t.estado?.toLowerCase() === 'nuevo' || 
+             t.estado?.toLowerCase() === 'new')
+          ).length,
+          enProceso: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'en_proceso' || 
+             t.estado_ticket?.toLowerCase() === 'en curso' || 
+             t.estado?.toLowerCase() === 'en_proceso' || 
+             t.estado?.toLowerCase() === 'en curso' || 
+             t.estado?.toLowerCase() === 'proceso')
+          ).length,
+          enEspera: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'en-espera' || 
+             t.estado_ticket?.toLowerCase() === 'reabierto' || 
+             t.estado?.toLowerCase() === 'en-espera' || 
+             t.estado?.toLowerCase() === 'reabierto' || 
+             t.estado?.toLowerCase() === 'en espera')
+          ).length,
+          resueltos: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'resuelto' || 
+             t.estado?.toLowerCase() === 'resuelto' || 
+             t.estado?.toLowerCase() === 'solucionado')
+          ).length,
+          cerrados: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'cerrado' ||
+             t.estado?.toLowerCase() === 'resuelto' || 
+             t.estado?.toLowerCase() === 'cerrado')
+          ).length,
+          borrados: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'borrado' || 
+             t.estado?.toLowerCase() === 'borrado' || 
+             t.estado?.toLowerCase() === 'eliminado')
+          ).length,
+          encuesta: tickets.filter(t => 
+            (t.estado_ticket?.toLowerCase() === 'encuesta' || 
+             t.estado?.toLowerCase() === 'encuesta')
+          ).length
+        };
+
+        setGlobalStats({
+          tickets: [
+            { label: "Nuevo", color: "green", icon: "🟢", count: stats.nuevo, key: "nuevo" },
+            { label: "En proceso", color: "lightgreen", icon: "⭕", count: stats.enProceso, key: "enProceso" },
+            { label: "En espera", color: "orange", icon: "🟡", count: stats.enEspera, key: "enEspera" },
+            { label: "Resueltas", color: "gray", icon: "⚪", count: stats.resueltos, key: "resueltos" },
+            { label: "Cerrado", color: "black", icon: "⚫", count: stats.cerrados, key: "cerrados" },
+            { label: "Borrado", color: "red", icon: "🗑", count: stats.borrados, key: "borrados" },
+            { label: "Encuesta", color: "purple", icon: "📅", count: stats.encuesta, key: "encuesta" }
+          ],
+          problemas: [
+            { label: "Hardware", color: "blue", icon: "💻", count: tickets.filter(t => t.categoria === 'Hardware').length },
+            { label: "Software", color: "purple", icon: "📱", count: tickets.filter(t => t.categoria === 'Software').length },
+            { label: "Red", color: "orange", icon: "🌐", count: tickets.filter(t => t.categoria === 'Red').length },
+            { label: "Cuentas", color: "green", icon: "👤", count: tickets.filter(t => t.categoria === 'Cuentas').length }
+          ]
+        });
+      } catch (error) {
+        console.error("Error al obtener estadísticas globales:", error);
+        // Usar datos de ejemplo si hay error
+        setGlobalStats({
+          tickets: [
+            { label: "Nuevo", color: "green", icon: "🟢", count: 5, key: "nuevo" },
+            { label: "En proceso", color: "lightgreen", icon: "⭕", count: 3, key: "enProceso" },
+            { label: "En espera", color: "orange", icon: "🟡", count: 2, key: "enEspera" },
+            { label: "Resueltas", color: "gray", icon: "⚪", count: 12, key: "resueltos" },
+            { label: "Cerrado", color: "black", icon: "⚫", count: 8, key: "cerrados" },
+            { label: "Borrado", color: "red", icon: "🗑", count: 1, key: "borrados" },
+            { label: "Encuesta", color: "purple", icon: "📅", count: 4, key: "encuesta" }
+          ],
+          problemas: [
+            { label: "Hardware", color: "blue", icon: "💻", count: 15 },
+            { label: "Software", color: "purple", icon: "📱", count: 22 },
+            { label: "Red", color: "orange", icon: "🌐", count: 8 },
+            { label: "Cuentas", color: "green", icon: "👤", count: 12 }
+          ]
+        });
+      }
+    };
+
+    fetchGlobalStats();
+  }, [userRole]);
+
+  // Verificación de rol (debe ir después de los hooks)
   if (userRole !== "administrador") {
     return (
       <div className={styles.accessDenied}>
@@ -288,33 +425,356 @@ const HomeAdmiPage = () => {
     );
   }
 
+  // Handlers
+  const toggleChat = () => setIsChatOpen(!isChatOpen);
 
-  // Datos
-  const tickets = [
-{ label: "Nuevo", color: "green", icon: "🟢", count: 0 },
-    { label: "En curso", color: "lightgreen", icon: "⏳", count: 0 },
-    { label: "En espera", color: "orange", icon: "🟡", count: 0 },
-    { label: "Resueltos", color: "gray", icon: "✔️", count: 0 },
-    { label: "Cerrado", color: "black", icon: "✅", count: 0 },
-    { label: "Borrado", color: "red", icon: "🗑", count: 0 },
-    { label: "Encuesta", color: "purple", icon: "📅", count: 0 },
-    { label: "Abiertos", color: "#4CAF50", icon: "📝", count: 0 },
-    { label: "Pendientes", color: "#FF5722", icon: "⚠️", count: 0},
-  ];
+  const toggleSupport = () => {
+    setIsSupportOpen(!isSupportOpen);
+    setIsAdminOpen(false);
+    setIsConfigOpen(false);
+  };
 
+  const toggleAdmin = () => {
+    setIsAdminOpen(!isAdminOpen);
+    setIsSupportOpen(false);
+    setIsConfigOpen(false);
+  };
+
+  const toggleConfig = () => {
+    setIsConfigOpen(!isConfigOpen);
+    setIsSupportOpen(false);
+    setIsAdminOpen(false);
+  };
 
   const handleSelectChange = (event) => {
     const value = event.target.value;
     const views = ["personal", "global", "todo", "dashboard"];
     setActiveView(views[parseInt(value)]);
-    addNotification(`Vista cambiada a: ${views[parseInt(value)]}`, "info");
+  };
+
+  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  // Obtener datos para la tabla global según el estado
+  const getGlobalTableData = (tabKey) => {
+    switch(tabKey) {
+      case "nuevo":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'nuevo' || 
+           t.estado?.toLowerCase() === 'nuevo' || 
+           t.estado?.toLowerCase() === 'new')
+        );
+      case "enProceso":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'en_proceso' || 
+           t.estado_ticket?.toLowerCase() === 'en curso' || 
+           t.estado?.toLowerCase() === 'en_proceso' || 
+           t.estado?.toLowerCase() === 'en curso' || 
+           t.estado?.toLowerCase() === 'proceso')
+        );
+      case "enEspera":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'en-espera' || 
+           t.estado_ticket?.toLowerCase() === 'reabierto' || 
+           t.estado?.toLowerCase() === 'en-espera' || 
+           t.estado?.toLowerCase() === 'reabierto' || 
+           t.estado?.toLowerCase() === 'en espera')
+        );
+      case "resueltos":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'resuelto' || 
+           t.estado?.toLowerCase() === 'resuelto' || 
+           t.estado?.toLowerCase() === 'solucionado')
+        );
+      case "cerrados":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'cerrado' ||
+           t.estado?.toLowerCase() === 'resuelto' || 
+           t.estado?.toLowerCase() === 'cerrado')
+        );
+      case "borrados":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'borrado' || 
+           t.estado?.toLowerCase() === 'borrado' || 
+           t.estado?.toLowerCase() === 'eliminado')
+        );
+      case "encuesta":
+        return allTickets.filter(t => 
+          (t.estado_ticket?.toLowerCase() === 'encuesta' || 
+           t.estado?.toLowerCase() === 'encuesta')
+        );
+      case "todo":
+        return allTickets;
+      default:
+        return [];
+    }
+  };
+
+  // Obtener datos por categoría
+  const getCategoryTableData = (categoryName) => {
+    return allTickets.filter(t => 
+      t.categoria && t.categoria.toLowerCase() === categoryName.toLowerCase()
+    );
+  };
+
+  // Manejar clic en los estados
+  const handleStatusClick = (statusKey) => {
+    setActiveFilter(activeFilter.value === statusKey ? { type: null, value: null } : { type: 'status', value: statusKey });
+  };
+
+  // Manejar clic en las categorías
+  const handleCategoryClick = (categoryName) => {
+    setActiveFilter(activeFilter.value === categoryName ? { type: null, value: null } : { type: 'category', value: categoryName });
+  };
+
+  // Manejar clic en un ticket
+  const handleTicketClick = (ticket) => {
+    navigate(`/tickets/solucion/${ticket.id}`);
+  };
+
+  // Renderizar tablas para Vista Personal
+  const renderPersonalTable = (data, title, columns) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className={styles.tablaContainer}>
+          <h2>{title}</h2>
+          <p>No hay tickets en este estado.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.tablaContainer}>
+        <h2>{title}</h2>
+        <table>
+          <thead>
+            <tr>
+              {columns.map((col, index) => (
+                <th key={index}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index} onClick={() => handleTicketClick(item)} className={styles.clickableRow}>
+                <td>#{item.id}</td>
+                <td>{item.solicitante}</td>
+                <td>{item.descripcion}</td>
+                <td>{item.ubicacion}</td>
+                {columns.includes('ESTADO') && <td>{item.estado}</td>}
+                {columns.includes('FECHA CIERRE') && <td>{item.fecha_cierre || 'N/A'}</td>}
+                {columns.includes('CALIFICACIÓN') && <td>{item.calificacion || 'Pendiente'}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Renderizar tabla para Vista Global
+  const renderGlobalTable = (data, title) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className={styles.tablaContainer}>
+          <h2>{title}</h2>
+          <p>No hay tickets en este estado.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.tablaContainer}>
+        <h2>{title}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID TICKET</th>
+              <th>SOLICITANTE</th>
+              <th>DESCRIPCIÓN</th>
+              <th>UBICACION</th>
+              <th>ESTADO</th>
+              <th>TÉCNICO</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index} onClick={() => handleTicketClick(item)} className={styles.clickableRow}>
+                <td>#{item.id}</td>
+                <td>{item.solicitante}</td>
+                <td>{item.descripcion}</td>
+                <td>{item.ubicacion}</td>
+                <td>{item.estado || item.estado_ticket}</td>
+                <td>{item.tecnico || 'Sin asignar'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   return (
-    <MenuVertical>
-       <>
+    <div className={styles.containerPrincipal}>
+      {/* Menú Vertical */}
+      <aside
+        className={`${styles.menuVertical} ${isMenuExpanded ? styles.expanded : ""}`}
+        onMouseEnter={() => setIsMenuExpanded(true)}
+        onMouseLeave={() => setIsMenuExpanded(false)}
+      >
+        <div className={styles.containerFluidMenu}>
+          <div className={styles.logoContainer}>
+            <img src={Logo} alt="Logo" />
+          </div>
+
+          <button
+            className={`${styles.menuButton} ${styles.mobileMenuButton}`}
+            type="button"
+            onClick={toggleMobileMenu}
+          >
+            <FiAlignJustify className={styles.menuIcon} />
+          </button>
+
+          <div className={`${styles.menuVerticalDesplegable} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
+            <ul className={styles.menuIconos}>
+              {/* Opción Inicio */}
+              <li className={styles.iconosMenu}>
+                <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
+                  <FcHome className={styles.menuIcon} />
+                  <span className={styles.menuText}>Inicio</span>
+                </Link>
+              </li>
+
+              {/* Menú Soporte */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleSupport}>
+                  <FcAssistant className={styles.menuIcon} />
+                  <span className={styles.menuText}> Soporte</span>
+                </div>
+
+                <ul className={`${styles.submenu} ${isSupportOpen ? styles.showSubmenu : ''}`}>
+                 
+                  <li>
+                    <Link to="/Tickets" className={styles.submenuLink}>
+                      <FcAnswers className={styles.menuIcon} />
+                      <span className={styles.menuText}>Tickets</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/CrearCasoAdmin" className={styles.submenuLink}>
+                      <FcCustomerSupport className={styles.menuIcon} />
+                      <span className={styles.menuText}>Crear Caso</span>
+                    </Link>
+                  </li>
+                  
+                  <li>
+                    <Link to="/Estadisticas" className={styles.submenuLink}>
+                      <FcBullish className={styles.menuIcon} />
+                      <span className={styles.menuText}>Estadísticas</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+
+              {/* Menú Administración */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleAdmin}>
+                  <FcBusinessman className={styles.menuIcon} />
+                  <span className={styles.menuText}> Administración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isAdminOpen ? styles.showSubmenu : ''}`}>
+                  <li>
+                    <Link to="/Usuarios" className={styles.submenuLink}>
+                      <FcPortraitMode className={styles.menuIcon} />
+                      <span className={styles.menuText}> Usuarios</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/Grupos" className={styles.submenuLink}>
+                      <FcConferenceCall className={styles.menuIcon} />
+                      <span className={styles.menuText}> Grupos</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/Entidades" className={styles.submenuLink}>
+                      <FcOrganization className={styles.menuIcon} />
+                      <span className={styles.menuText}> Entidades</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+
+              {/* Menú Configuración */}
+              <li className={styles.iconosMenu}>
+                <div className={styles.linkSinSubrayado} onClick={toggleConfig}>
+                  <FcAutomatic className={styles.menuIcon} />
+                  <span className={styles.menuText}> Configuración</span>
+                </div>
+                <ul className={`${styles.submenu} ${isConfigOpen ? styles.showSubmenu : ''}`}>
+                  <li>
+                    <Link to="/Categorias" className={styles.submenuLink}>
+                      <FcGenealogy className={styles.menuIcon} />
+                      <span className={styles.menuText}>Categorias</span>
+                    </Link>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.floatingContainer}>
+            <div className={styles.menuLogoEmpresarial}>
+              <img src={Logoempresarial} alt="Logo Empresarial" />
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Contenido principal */}
+      <div style={{ marginLeft: isMenuExpanded ? "200px" : "60px", transition: "margin-left 0.3s ease" }}>
+        <Outlet />
+      </div>
+      
+      {/* Header */}
+      <header className={styles.containerInicio} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
+        <div className={styles.containerInicioImg}>
+          <Link to="/homeAdmiPage" className={styles.linkSinSubrayado}>
+            <span>Inicio</span>
+          </Link>
+        </div>
+        <div className={styles.inputContainer}>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.search}
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button
+              className={styles.buttonBuscar}
+              title="Buscar"
+              disabled={isLoading || !searchTerm.trim()}
+            >
+              <FaMagnifyingGlass className={styles.searchIcon} />
+            </button>
+            {isLoading && <span className={styles.loading}>Buscando...</span>}
+            {error && <div className={styles.errorMessage}>{error}</div>}
+          </div>
+
+          <div className={styles.userContainer}>
+            <span className={styles.username}>Bienvenido, <span id="nombreusuario">{nombre}</span></span>
+            <div className={styles.iconContainer}>
+              <Link to="/">
+                <FaPowerOff className={styles.icon} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Contenido Principal */}
-      <div className={styles.containerHomeAdmiPage}>
+      <div className={styles.containerHomeAdmiPage} style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}>
         <main>
           <div className={styles.flexColumna}>
             <div className={styles.row}>
@@ -361,83 +821,14 @@ const HomeAdmiPage = () => {
             {/* Vista Personal */}
             {(activeView === "personal" || activeView === "todo") && (
               <>
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS A CERRAR</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160091</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>NO LE PERMITE REALIZA NINGUNA ACCIÓN - USUARIO TEMPORAL (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160090</td>
-                        <td>Santiago Caricena Corredor</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>SUS CASOS EN CURSO</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>HUN HUN Generico</td>
-                        <td>General</td>
-                        <td>LLAMOO DE TIMBRES (1 - 0)</td>
-                      </tr>
-                      <tr>
-                        <td>ID: 2503160088</td>
-                        <td>Wendy Johanna Alfonso Peralta</td>
-                        <td>General</td>
-                        <td>CONFIGURAR IMPRESORA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className={styles.tablaContainer}>
-                  <h2>ENCUESTA DE SATISFACCIÓN</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>SOLICITANTE</th>
-                        <th>ELEMENTOS ASOCIADOS</th>
-                        <th>DESCRIPCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>ID: 2503150021</td>
-                        <td>Julian Antonio Niño Oedoy</td>
-                        <td>General</td>
-                        <td>ALTA MEDICA (1 - 0)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                {renderPersonalTable(tableData.asignados, "SUS CASOS ASIGNADOS", 
+                  ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "UBICACION", "ESTADO"])}
+                
+                {renderPersonalTable(tableData.resueltos, "SUS CASOS RESUELTOS", 
+                  ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "UBICACION", "FECHA CIERRE"])}
+                
+                {renderPersonalTable(tableData.encuesta, "ENCUESTA DE SATISFACCIÓN", 
+                  ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "ENCUESTA REALIZADA", "CALIFICACIÓN"])}
               </>
             )}
 
@@ -447,15 +838,50 @@ const HomeAdmiPage = () => {
                 <div className={styles.sectionContainer}>
                   <h2>Tickets</h2>
                   <div className={styles.cardsContainer}>
-                    {tickets.map((ticket, index) => (
-                      <div key={index} className={styles.card} style={{ borderColor: ticket.color }}>
-                        <span className="icon">{ticket.icon}</span>
-                        <span className="label">{ticket.label}</span>
-                        <span className="count">{ticket.count}</span>
+                    {globalStats.tickets.map((ticket, index) => (
+                      <div 
+                        key={index} 
+                        className={`${styles.card} ${activeFilter.type === 'status' && activeFilter.value === ticket.key ? styles.activeCard : ""}`} 
+                        style={{ borderColor: ticket.color }}
+                        onClick={() => handleStatusClick(ticket.key)}
+                      >
+                        <span className={styles.icon}>{ticket.icon}</span>
+                        <span className={styles.label}>{ticket.label}</span>
+                        <span className={styles.count}>{ticket.count}</span>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                <div className={styles.sectionContainer}>
+                  <h2>Problemas por Categoría</h2>
+                  <div className={styles.cardsContainer}>
+                    {globalStats.problemas.map((problema, index) => (
+                      <div 
+                        key={index} 
+                        className={`${styles.card} ${activeFilter.type === 'category' && activeFilter.value === problema.label ? styles.activeCard : ""}`} 
+                        style={{ borderColor: problema.color }}
+                        onClick={() => handleCategoryClick(problema.label)}
+                      >
+                        <span className={styles.icon}>{problema.icon}</span>
+                        <span className={styles.label}>{problema.label}</span>
+                        <span className={styles.count}>{problema.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mostrar tabla cuando se hace clic en un estado o categoría */}
+                {activeFilter.type && (
+                  renderGlobalTable(
+                    activeFilter.type === 'status' 
+                      ? getGlobalTableData(activeFilter.value) 
+                      : getCategoryTableData(activeFilter.value),
+                    activeFilter.type === 'status' 
+                      ? `TICKETS - ${activeFilter.value.toUpperCase()}` 
+                      : `TICKETS - CATEGORÍA ${activeFilter.value.toUpperCase()}`
+                  )
+                )}
               </>
             )}
 
@@ -464,9 +890,34 @@ const HomeAdmiPage = () => {
           </div>
         </main>
       </div>
-      <ChatBot />
-      </>
-    </MenuVertical>
+
+      {/* Chatbot */}
+      <div className={styles.chatbotContainer}>
+        <img
+          src={ChatbotIcon}
+          alt="Chatbot"
+          className={styles.chatbotIcon}
+          onClick={toggleChat}
+        />
+        {isChatOpen && (
+          <div className={styles.chatWindow}>
+            <div className={styles.chatHeader}>
+              <h4>Chat de Soporte</h4>
+              <button onClick={toggleChat} className={styles.closeChat}>
+                &times;
+              </button>
+            </div>
+            <div className={styles.chatBody}>
+              <p>Bienvenido al chat de soporte. ¿En qué podemos ayudarte?</p>
+            </div>
+            <div className={styles.chatInput}>
+              <input type="text" placeholder="Escribe un mensaje..." />
+              <button>Enviar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
