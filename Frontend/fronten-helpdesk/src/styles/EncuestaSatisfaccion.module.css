@@ -125,4 +125,198 @@
   background-color: #9e9e9e;
   cursor: not-allowed;
 }
+/* Variables para breakpoints */
+:root {
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
+}
 
+/* Contenedor principal con fondo gris */
+.pageContainer {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.encuestaCard {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin-top: 20px;
+}
+
+.encuestaCard h1 {
+  color: #3a0ca3;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 15px;
+}
+
+.ticketInfo {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 25px;
+  border-left: 4px solid #3a0ca3;
+}
+
+.ticketInfo h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.ticketInfo p {
+  margin: 8px 0;
+  color: #555;
+}
+
+.resuelto {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.encuestaForm {
+  margin-top: 20px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.formSelect, .formTextarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.formSelect:focus, .formTextarea:focus {
+  outline: none;
+  border-color: #3a0ca3;
+  box-shadow: 0 0 0 3px rgba(58, 12, 163, 0.2);
+}
+
+.formTextarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.errorInput {
+  border-color: #d32f2f !important;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2) !important;
+}
+
+.errorMessage {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin: 15px 0;
+  text-align: center;
+  border-left: 4px solid #d32f2f;
+}
+
+.successMessage {
+  text-align: center;
+  padding: 30px;
+  background-color: #f1f8e9;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.successIcon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.successMessage h2 {
+  color: #2e7d32;
+  margin-bottom: 10px;
+}
+
+.successMessage p {
+  color: #388e3c;
+  margin: 5px 0;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.cancelButton, .submitButton {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.cancelButton:hover {
+  background-color: #e0e0e0;
+}
+
+.submitButton {
+  background-color: #3a0ca3;
+  color: white;
+}
+
+.submitButton:hover {
+  background-color: #2a077a;
+}
+
+.submitButton:disabled {
+  background-color: #9e9e9e;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .encuestaCard {
+    padding: 20px;
+  }
+  
+  .buttonGroup {
+    flex-direction: column;
+  }
+}
