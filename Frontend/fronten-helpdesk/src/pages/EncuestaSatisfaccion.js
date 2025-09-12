@@ -1,85 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link, Outlet } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaMagnifyingGlass, FaPowerOff } from "react-icons/fa6";
-import { FiAlignJustify } from "react-icons/fi";
-import {
-  FcHome,
-  FcAssistant,
-  FcBusinessman,
-  FcAutomatic,
-  FcAnswers,
-  FcCustomerSupport,
-  FcExpired,
-  FcGenealogy,
-  FcBullish,
-  FcConferenceCall,
-  FcPortraitMode,
-  FcOrganization,
-} from "react-icons/fc";
-import { FaRegClock, FaCheckCircle, FaHistory } from "react-icons/fa";
 import styles from '../styles/EncuestaSatisfaccion.module.css';
-import Logo from "../imagenes/logo proyecto color.jpeg";
-import Logoempresarial from "../imagenes/logo empresarial.png";
-import ChatbotIcon from "../imagenes/img chatbot.png";
 
 const EncuestaSatisfaccion = () => {
-  // Estados del componente
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-  
-  // Estados del formulario
   const [calificacion, setCalificacion] = useState("");
   const [comentario, setComentario] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [ticketInfo, setTicketInfo] = useState(null);
+  const [yaRespondida, setYaRespondida] = useState(false);
   
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const nombre = localStorage.getItem("nombre");
   const userRole = localStorage.getItem("rol");
-  const isAdminOrTech = ["admin", "tecnico"].includes(userRole);
 
-  // Handlers del menú
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
-  const toggleSupport = () => {
-    setIsSupportOpen(!isSupportOpen);
-    setIsAdminOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleAdmin = () => {
-    setIsAdminOpen(!isAdminOpen);
-    setIsSupportOpen(false);
-    setIsConfigOpen(false);
-  };
-
-  const toggleConfig = () => {
-    setIsConfigOpen(!isConfigOpen);
-    setIsSupportOpen(false);
-    setIsAdminOpen(false);
-  };
-
-  // Cargar datos del ticket si es necesario
+  // Verificar si ya existe encuesta y obtener info del ticket
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/EncuestaSatisfaccion/:surveyId");
-    }
-  }, [navigate]);
+    const verifySurveyAndTicket = async () => {
+      try {
+        // Verificar si ya existe encuesta
+        const encuestaResponse = await axios.get(
+          `http://localhost:5000/usuarios/encuestas/${surveyId}/verificar`
+        );
+        
+        if (encuestaResponse.data.existe_encuesta) {
+          setYaRespondida(true);
+          setError("Ya has completado la encuesta para este ticket");
+          setTimeout(() => {
+            navigate("/Tickets");
+          }, 3000);
+          return;
+        }
 
-  // Función para enviar la encuesta
+        // Obtener información del ticket
+        const ticketResponse = await axios.get(
+          `http://localhost:5000/usuarios/tickets/${surveyId}`
+        );
+        
+        if (ticketResponse.data.estado !== 'resuelto') {
+          setError("Solo puedes completar encuestas para tickets resueltos");
+          setTimeout(() => {
+            navigate("/Tickets");
+          }, 3000);
+          return;
+        }
+
+        setTicketInfo(ticketResponse.data);
+
+      } catch (err) {
+        console.error("Error verificando encuesta:", err);
+        if (err.response?.status === 404) {
+          setError("Ticket no encontrado");
+        } else {
+          setError("Error al cargar la encuesta");
+        }
+        setTimeout(() => {
+          navigate("/Tickets");
+        }, 3000);
+      }
+    };
+    
+    verifySurveyAndTicket();
+  }, [surveyId, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validación básica
     if (!calificacion) {
       setError("Por favor seleccione una calificación");
       return;
@@ -90,114 +79,127 @@ const EncuestaSatisfaccion = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/encuestasatisfaccion`,
+        `http://localhost:5000/usuarios/api/encuestasatisfaccion`,
         {
-          ticketId: surveyId,
+          ticketId: parseInt(surveyId),
           calificacion: parseInt(calificacion),
           comentario,
-          fecha: new Date().toISOString(),
           usuario: nombre || "Anónimo"
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
         }
       );
 
-      if (response.status === 200) {
+      if (response.data.success) {
         setSubmitSuccess(true);
-        // Redirigir después de 3 segundos
         setTimeout(() => {
           navigate("/Tickets");
         }, 3000);
       }
     } catch (err) {
       console.error("Error al enviar encuesta:", err);
-      setError(err.response?.data?.message || "Error al enviar la encuesta");
       
-      if (err.response?.status === 401) {
-        navigate("/Tickets");
+      if (err.response?.status === 409) {
+        setError("Ya has completado la encuesta para este ticket");
+      } else if (err.response?.status === 400) {
+        setError("El ticket no está resuelto o no existe");
+      } else {
+        setError(err.response?.data?.message || "Error al enviar la encuesta");
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Navegación según rol
-  const getRouteByRole = (section) => {
-    if (section === 'inicio') {
-      if (userRole === 'administrador') {
-        return '/HomeAdmiPage';
-      } else if (userRole === 'tecnico') {
-        return '/HomeTecnicoPage';
-      } else {
-        return '/home';
-      }
-    } else if (section === 'crear-caso') {
-      if (userRole === 'administrador') {
-        return '/CrearCasoAdmin';
-      } else if (userRole === 'tecnico') {
-        return '/CrearCasoAdmin';
-      } else {
-        return '/CrearCasoUse';
-      }
-    } else if (section === "tickets") return "/Tickets";
-    return "/";
-  };
+  if (yaRespondida) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorMessage}>
+          <h2>Encuesta ya completada</h2>
+          <p>Ya has respondido la encuesta para este ticket. Redirigiendo...</p>
+        </div>
+      </div>
+    );
+  }
 
-  
+  if (error && !ticketInfo) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorMessage}>
+          <h2>Error</h2>
+          <p>{error}</p>
+          <p>Redirigiendo a tickets...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.containerPrincipal}>
-      
-      <div
-        className={styles.containerColumnas}
-        style={{ marginLeft: isMenuExpanded ? "200px" : "60px" }}
-      >
-        <div className={styles.encuestaContainer}>
-          <h1>Encuesta de Satisfacción - Ticket #{surveyId}</h1>
-          
-          {submitSuccess ? (
-            <div className={styles.successMessage}>
-              <p>¡Gracias por tu feedback! La encuesta ha sido enviada correctamente.</p>
-              <p>Redirigiendo a la página de tickets...</p>
+    <div className={styles.container}>
+      <div className={styles.encuestaCard}>
+        <h1>📊 Encuesta de Satisfacción</h1>
+        
+        {ticketInfo && (
+          <div className={styles.ticketInfo}>
+            <h3>Ticket #{ticketInfo.id}: {ticketInfo.titulo}</h3>
+            <p><strong>Descripción:</strong> {ticketInfo.descripcion}</p>
+            <p><strong>Estado:</strong> <span className={styles.resuelto}>Resuelto</span></p>
+          </div>
+        )}
+
+        {submitSuccess ? (
+          <div className={styles.successMessage}>
+            <div className={styles.successIcon}>✅</div>
+            <h2>¡Gracias por tu feedback!</h2>
+            <p>Tu encuesta ha sido enviada correctamente.</p>
+            <p>Redirigiendo a la página de tickets...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className={styles.encuestaForm}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                ¿Cómo calificaría el servicio recibido? *
+              </label>
+              <select 
+                value={calificacion}
+                onChange={(e) => setCalificacion(e.target.value)}
+                required
+                className={`${styles.formSelect} ${error && !calificacion ? styles.errorInput : ""}`}
+              >
+                <option value="">Seleccione una calificación...</option>
+                <option value="5">⭐️⭐️⭐️⭐️⭐️ Excelente (5)</option>
+                <option value="4">⭐️⭐️⭐️⭐️ Muy Bueno (4)</option>
+                <option value="3">⭐️⭐️⭐️ Bueno (3)</option>
+                <option value="2">⭐️⭐️ Regular (2)</option>
+                <option value="1">⭐️ Deficiente (1)</option>
+              </select>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className={styles.formGroup}>
-                <label>¿Cómo calificaría el servicio recibido?</label>
-                <select 
-                  value={calificacion}
-                  onChange={(e) => setCalificacion(e.target.value)}
-                  required
-                  className={error && !calificacion ? styles.errorInput : ""}
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="5">Excelente (5)</option>
-                  <option value="4">Muy Bueno (4)</option>
-                  <option value="3">Bueno (3)</option>
-                  <option value="2">Regular (2)</option>
-                  <option value="1">Deficiente (1)</option>
-                </select>
-                {error && !calificacion && (
-                  <span className={styles.errorText}>{error}</span>
-                )}
+
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Comentarios adicionales (opcional):
+              </label>
+              <textarea
+                rows="4"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="¿Qué opinas del servicio recibido? ¿Alguna sugerencia para mejorar?"
+                className={styles.formTextarea}
+              />
+            </div>
+
+            {error && (
+              <div className={styles.errorMessage}>
+                {error}
               </div>
+            )}
 
-              <div className={styles.formGroup}>
-                <label>Comentarios adicionales:</label>
-                <textarea
-                  rows="4"
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  placeholder="(Opcional) ¿Algo que nos quieras comentar sobre el servicio recibido?"
-                />
-              </div>
-
-              {error && calificacion && (
-                <div className={styles.errorMessage}>{error}</div>
-              )}
-
+            <div className={styles.buttonGroup}>
+              <button 
+                type="button" 
+                onClick={() => navigate("/Tickets")}
+                className={styles.cancelButton}
+              >
+                Cancelar
+              </button>
               <button 
                 type="submit" 
                 className={styles.submitButton}
@@ -205,12 +207,10 @@ const EncuestaSatisfaccion = () => {
               >
                 {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
               </button>
-            </form>
-          )}
-        </div>
+            </div>
+          </form>
+        )}
       </div>
-
-      
     </div>
   );
 };
