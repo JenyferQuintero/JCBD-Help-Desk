@@ -28,13 +28,15 @@ const HomeTecnicoPage = () => {
   const [tableData, setTableData] = useState({
     asignados: [],
     resueltos: [],
-    encuesta: []
+    encuesta: [],
+    todasLasEncuestas: []
   });
   const [globalStats, setGlobalStats] = useState({
     tickets: [],
     problemas: []
   });
   const [allTickets, setAllTickets] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
   
   const navigate = useNavigate();
 
@@ -63,11 +65,13 @@ const HomeTecnicoPage = () => {
   const toggleMenu = () => setIsMenuExpanded(!isMenuExpanded);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  // Obtener tickets del técnico (asignados y resueltos)
+  // Obtener tickets del técnico (asignados y resueltos) y encuestas
   useEffect(() => {
     const fetchTicketsTecnico = async () => {
       try {
         const token = localStorage.getItem("token");
+        
+        // Obtener tickets
         const response = await axios.get("http://localhost:5000/usuarios/tickets", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -76,6 +80,11 @@ const HomeTecnicoPage = () => {
             usuario_id: userId,
             rol: userRole
           }
+        });
+
+        // Obtener encuestas de tickets asignados a este técnico
+        const encuestasResponse = await axios.get(`http://localhost:5000/usuarios/encuestas/tecnico/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
 
         const tickets = response.data;
@@ -88,11 +97,33 @@ const HomeTecnicoPage = () => {
           ticket.tecnico && ticket.tecnico.includes(nombre)
         );
 
-        setTableData({
+        // Procesar encuestas de tickets asignados al técnico
+        let encuestas = [];
+        if (encuestasResponse.data.success && encuestasResponse.data.encuestas) {
+          encuestas = encuestasResponse.data.encuestas.map(encuesta => ({
+            id: encuesta.id_ticket,
+            id_encuesta: encuesta.id_encuesta,
+            solicitante: encuesta.nombre_usuario || 'Usuario',
+            descripcion: `Encuesta completada - Calificación: ${encuesta.calificacion}/5 - ${encuesta.comentario || 'Sin comentario'}`,
+            titulo: encuesta.titulo || `Ticket #${encuesta.id_ticket}`,
+            prioridad: 'Completada',
+            fecha_creacion: encuesta.fecha_encuesta,
+            tecnico: nombre,
+            estado: 'encuesta',
+            calificacion: encuesta.calificacion,
+            comentario: encuesta.comentario,
+            fechaEncuesta: encuesta.fecha_encuesta,
+            esEncuestaRealizada: true,
+            ticket_titulo: encuesta.titulo
+          }));
+        }
+
+        setTableData(prev => ({
+          ...prev,
           asignados,
           resueltos,
-          encuesta: resueltos // Para ejemplo, todos los resueltos tienen encuesta pendiente
-        });
+          encuesta: encuestas
+        }));
       } catch (error) {
         console.error("Error al obtener tickets del técnico:", error);
       }
@@ -108,6 +139,8 @@ const HomeTecnicoPage = () => {
     const fetchGlobalStats = async () => {
       try {
         const token = localStorage.getItem("token");
+        
+        // Obtener tickets
         const response = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -117,9 +150,32 @@ const HomeTecnicoPage = () => {
         const tickets = response.data;
         setAllTickets(tickets);
         
-        // Debug: verificar estructura de datos
-        console.log("Datos de tickets recibidos:", tickets);
-        
+        // Obtener TODAS las encuestas (no solo las del usuario)
+        const encuestasResponse = await axios.get("http://localhost:5000/usuarios/encuestas/todas", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        let todasLasEncuestas = [];
+        if (encuestasResponse.data.success && encuestasResponse.data.encuestas) {
+          todasLasEncuestas = encuestasResponse.data.encuestas.map(encuesta => ({
+            id: encuesta.id_ticket,
+            id_encuesta: encuesta.id_encuesta,
+            solicitante: encuesta.usuario || 'Usuario',
+            descripcion: `Encuesta completada - Calificación: ${encuesta.calificacion}/5 - ${encuesta.comentario || 'Sin comentario'}`,
+            titulo: `Ticket #${encuesta.id_ticket} - ${encuesta.ticket_titulo || ''}`,
+            prioridad: 'Completada',
+            fecha_creacion: encuesta.fecha_encuesta,
+            tecnico: encuesta.nombre_tecnico || 'Sin asignar',
+            estado: 'encuesta',
+            calificacion: encuesta.calificacion,
+            comentario: encuesta.comentario,
+            fechaEncuesta: encuesta.fecha_encuesta,
+            esEncuestaRealizada: true,
+            ticket_titulo: encuesta.ticket_titulo,
+            nombre_tecnico: encuesta.nombre_tecnico
+          }));
+        }
+
         const stats = {
           nuevo: tickets.filter(t => 
             (t.estado_ticket?.toLowerCase() === 'nuevo' || 
@@ -155,10 +211,7 @@ const HomeTecnicoPage = () => {
              t.estado?.toLowerCase() === 'borrado' || 
              t.estado?.toLowerCase() === 'eliminado')
           ).length,
-          encuesta: tickets.filter(t => 
-            (t.estado_ticket?.toLowerCase() === 'encuesta' || 
-             t.estado?.toLowerCase() === 'encuesta')
-          ).length
+          encuesta: todasLasEncuestas.length
         };
 
         setGlobalStats({
@@ -178,6 +231,12 @@ const HomeTecnicoPage = () => {
             { label: "Cuentas", color: "green", icon: "👤", count: tickets.filter(t => t.categoria === 'Cuentas').length }
           ]
         });
+
+        setTableData(prev => ({
+          ...prev,
+          todasLasEncuestas: todasLasEncuestas
+        }));
+
       } catch (error) {
         console.error("Error al obtener estadísticas globales:", error);
       }
@@ -205,10 +264,14 @@ const HomeTecnicoPage = () => {
 
   // Manejar clic en un ticket
   const handleTicketClick = (ticket) => {
-    navigate(`/tickets/solucion/${ticket.id}`);
+    if (ticket.esEncuestaRealizada) {
+      navigate(`/encuestas/detalle/${ticket.id_encuesta}`);
+    } else {
+      navigate(`/tickets/solucion/${ticket.id}`);
+    }
   };
 
-  // Obtener datos para la tabla global según el estado - CORREGIDO
+  // Obtener datos para la tabla global según el estado
   const getGlobalTableData = (tabKey) => {
     switch(tabKey) {
       case "nuevo":
@@ -252,10 +315,7 @@ const HomeTecnicoPage = () => {
            t.estado?.toLowerCase() === 'eliminado')
         );
       case "encuesta":
-        return allTickets.filter(t => 
-          (t.estado_ticket?.toLowerCase() === 'encuesta' || 
-           t.estado?.toLowerCase() === 'encuesta')
-        );
+        return tableData.todasLasEncuestas || [];
       case "todo":
         return allTickets;
       default:
@@ -278,6 +338,11 @@ const HomeTecnicoPage = () => {
   // Manejar clic en las categorías
   const handleCategoryClick = (categoryName) => {
     setActiveFilter(activeFilter.value === categoryName ? { type: null, value: null } : { type: 'category', value: categoryName });
+  };
+
+  // Manejar clic en las pestañas
+  const handleTabClick = (tabKey) => {
+    setActiveTab(activeTab === tabKey ? null : tabKey);
   };
 
   // Renderizar tablas para Vista Personal
@@ -354,6 +419,93 @@ const HomeTecnicoPage = () => {
                 <td>{item.ubicacion}</td>
                 <td>{item.estado || item.estado_ticket}</td>
                 <td>{item.tecnico || 'Sin asignar'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Renderizar tabla de encuestas personales (NO CLICKEABLES)
+const renderSurveyTable = (data, title) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className={styles.tablaContainer}>
+        <h2>{title}</h2>
+        <p>No hay encuestas de usuarios para tus tickets.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.tablaContainer}>
+      <h2>{title}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID TICKET</th>
+            <th>USUARIO</th>
+            <th>CALIFICACIÓN</th>
+            <th>COMENTARIO</th>
+            <th>FECHA ENCUESTA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item, index) => (
+            <tr key={index} className={styles.nonClickableRow}>
+              <td>#{item.id}</td>
+              <td>{item.solicitante}</td>
+              <td>
+                <span className={styles.calificacion} style={{ 
+                }}>
+                  {item.calificacion}/5
+                </span>
+              </td>
+              <td>{item.comentario || 'Sin comentario'}</td>
+              <td>{item.fechaEncuesta ? new Date(item.fechaEncuesta).toLocaleDateString() : 'N/A'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+  // Renderizar tabla de encuestas globales (NO CLICKEABLE)
+  const renderGlobalSurveyTable = (data, title) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className={styles.tablaContainer}>
+          <h2>{title}</h2>
+          <p>No hay encuestas registradas.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.tablaContainer}>
+        <h2>{title}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID TICKET</th>
+              <th>SOLICITANTE</th>
+              <th>TÉCNICO</th>
+              <th>CALIFICACIÓN</th>
+              <th>COMENTARIO</th>
+              <th>FECHA ENCUESTA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index} className={styles.nonClickableRow}>
+                <td>#{item.id}</td>
+                <td>{item.solicitante}</td>
+                <td>{item.nombre_tecnico || 'Sin asignar'}</td>
+                <td>{item.calificacion}/5</td>
+                <td>{item.comentario || 'Sin comentario'}</td>
+                <td>{item.fechaEncuesta ? new Date(item.fechaEncuesta).toLocaleDateString() : 'N/A'}</td>
               </tr>
             ))}
           </tbody>
@@ -517,7 +669,7 @@ const HomeTecnicoPage = () => {
               <Link to="/Tickets" className={styles.linkSinSubrayado}>
                 <FcAnswers className={styles.menuIcon} />
                 <span className={styles.menuText}>Tickets</span>
-              </Link>
+                </Link>
             </li>
           </ul>
         );
@@ -642,8 +794,7 @@ const HomeTecnicoPage = () => {
                 {renderPersonalTable(tableData.resueltos, "SUS CASOS RESUELTOS", 
                   ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "UBICACION", "FECHA CIERRE"])}
                 
-                {renderPersonalTable(tableData.encuesta, "ENCUESTA DE SATISFACCIÓN", 
-                  ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "ENCUESTA REALIZADA", "CALIFICACIÓN"])}
+                {renderSurveyTable(tableData.encuesta, "ENCUESTAS DE SATISFACCIÓN DE TUS USUARIOS")}
               </>
             )}
 
@@ -688,14 +839,20 @@ const HomeTecnicoPage = () => {
 
                 {/* Mostrar tabla cuando se hace clic en un estado o categoría */}
                 {activeFilter.type && (
-                  renderGlobalTable(
-                    activeFilter.type === 'status' 
-                      ? getGlobalTableData(activeFilter.value) 
-                      : getCategoryTableData(activeFilter.value),
-                    activeFilter.type === 'status' 
-                      ? `TICKETS - ${activeFilter.value.toUpperCase()}` 
-                      : `TICKETS - CATEGORÍA ${activeFilter.value.toUpperCase()}`
-                  )
+                  activeFilter.type === 'status' && activeFilter.value === 'encuesta' ? 
+                    renderGlobalSurveyTable(
+                      getGlobalTableData(activeFilter.value),
+                      `ENCUESTAS DE SATISFACCIÓN - TODOS LOS USUARIOS`
+                    )
+                    :
+                    renderGlobalTable(
+                      activeFilter.type === 'status' 
+                        ? getGlobalTableData(activeFilter.value) 
+                        : getCategoryTableData(activeFilter.value),
+                      activeFilter.type === 'status' 
+                        ? `TICKETS - ${activeFilter.value.toUpperCase()}` 
+                        : `TICKETS - CATEGORÍA ${activeFilter.value.toUpperCase()}`
+                    )
                 )}
               </>
             )}
@@ -712,8 +869,7 @@ const HomeTecnicoPage = () => {
                   {renderPersonalTable(tableData.resueltos, "SUS CASOS RESUELTOS", 
                     ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "UBICACION", "FECHA CIERRE"])}
                   
-                  {renderPersonalTable(tableData.encuesta, "ENCUESTA DE SATISFACCIÓN", 
-                    ["ID TICKET", "SOLICITANTE", "DESCRIPCIÓN", "ENCUESTA REALIZADA", "CALIFICACIÓN"])}
+                  {renderSurveyTable(tableData.encuesta, "ENCUESTAS DE SATISFACCIÓN DE TUS USUARIOS")}
                 </div>
 
                 {/* Vista Global en Todo */}
@@ -755,14 +911,20 @@ const HomeTecnicoPage = () => {
 
                 {/* Mostrar tabla cuando se hace clic en un estado o categoría en la vista Todo */}
                 {activeFilter.type && (
-                  renderGlobalTable(
-                    activeFilter.type === 'status' 
-                      ? getGlobalTableData(activeFilter.value) 
-                      : getCategoryTableData(activeFilter.value),
-                    activeFilter.type === 'status' 
-                      ? `TICKETS - ${activeFilter.value.toUpperCase()}` 
-                      : `TICKETS - CATEGORÍA ${activeFilter.value.toUpperCase()}`
-                  )
+                  activeFilter.type === 'status' && activeFilter.value === 'encuesta' ? 
+                    renderGlobalSurveyTable(
+                      getGlobalTableData(activeFilter.value),
+                      `ENCUESTAS DE SATISFACCIÓN - TODOS LOS USUARIOS`
+                    )
+                    :
+                    renderGlobalTable(
+                      activeFilter.type === 'status' 
+                        ? getGlobalTableData(activeFilter.value) 
+                        : getCategoryTableData(activeFilter.value),
+                      activeFilter.type === 'status' 
+                        ? `TICKETS - ${activeFilter.value.toUpperCase()}` 
+                        : `TICKETS - CATEGORÍA ${activeFilter.value.toUpperCase()}`
+                    )
                 )}
               </>
             )}
