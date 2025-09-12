@@ -63,7 +63,6 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
-  const [completedSurveys, setCompletedSurveys] = useState([]);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -106,7 +105,6 @@ const HomePage = () => {
   const handleTicketClick = (ticket) => {
     const estado = ticket.estado?.toLowerCase() || '';
     
-    // Solo permitir edición para tickets en estado "nuevo"
     if (estado === 'nuevo' || estado === 'new') {
       const editRoute = userRole === "usuario" ? "/CrearCasoUse" : "/CrearCasoAdmin";
       navigate(editRoute, {
@@ -116,27 +114,25 @@ const HomePage = () => {
         },
       });
     } else {
-      // Para todos los demás estados, redirigir a la solución del ticket
       navigate(`/tickets/solucion/${ticket.id}`);
     }
   };
 
-  const markSurveyAsCompleted = (surveyId) => {
-    setCompletedSurveys([...completedSurveys, surveyId]);
-  };
-
   useEffect(() => {
-    const fetchTickets = async () => {
+    const fetchTicketsAndSurveys = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            usuario_id: userId,
-            rol: userRole
-          }
+        
+        // Obtener tickets
+        const ticketsResponse = await axios.get("http://localhost:5000/usuarios/estado_tickets", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { usuario_id: userId, rol: userRole }
+        });
+
+        // Obtener encuestas del usuario logeado
+        const encuestasResponse = await axios.get("http://localhost:5000/usuarios/encuestas/usuario", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { usuario_id: userId }
         });
 
         const agrupados = {
@@ -149,7 +145,8 @@ const HomePage = () => {
           encuesta: [],
         };
 
-        response.data.forEach((ticket) => {
+        // Procesar tickets
+        ticketsResponse.data.forEach((ticket) => {
           const estado = ticket.estado?.toLowerCase() || ticket.estado_ticket?.toLowerCase();
           
           let estadoFrontend;
@@ -172,16 +169,12 @@ const HomePage = () => {
             case 'solucionado':
               estadoFrontend = 'resueltos';
               break;
-            case 'resuelto':
             case 'cerrado':
               estadoFrontend = 'cerrados';
               break;
             case 'borrado':
             case 'eliminado':
               estadoFrontend = 'borrados';
-              break;
-            case 'encuesta':
-              estadoFrontend = 'encuesta';
               break;
             default:
               estadoFrontend = estado;
@@ -196,19 +189,40 @@ const HomePage = () => {
               prioridad: ticket.prioridad,
               fecha_creacion: ticket.fecha_creacion,
               tecnico: ticket.tecnico || ticket.asignadoA || 'Sin asignar',
-              estado: estadoFrontend // Guardamos el estado para usarlo en la verificación
+              estado: estadoFrontend
             });
           }
         });
 
+        // Procesar encuestas del usuario logeado
+        if (encuestasResponse.data.success && encuestasResponse.data.encuestas) {
+          encuestasResponse.data.encuestas.forEach(encuesta => {
+            agrupados.encuesta.push({
+              id: encuesta.id_ticket,
+              id_encuesta: encuesta.id_encuesta,
+              solicitante: encuesta.usuario || nombre,
+              descripcion: `Encuesta completada - Calificación: ${encuesta.calificacion}/5`,
+              titulo: `Ticket #${encuesta.id_ticket}`,
+              prioridad: 'Completada',
+              fecha_creacion: encuesta.fecha_encuesta,
+              tecnico: 'Sistema',
+              estado: 'encuesta',
+              calificacion: encuesta.calificacion,
+              comentario: encuesta.comentario,
+              fechaEncuesta: encuesta.fecha_encuesta,
+              esEncuestaRealizada: true
+            });
+          });
+        }
+
         setTableData(agrupados);
       } catch (error) {
-        console.error("Error al obtener los tickets:", error);
+        console.error("Error al obtener los datos:", error);
       }
     };
 
-    fetchTickets();
-  }, [userId, userRole]);
+    fetchTicketsAndSurveys();
+  }, [userId, userRole, nombre]);
 
   const renderTable = (data, title) => {
     if (!data || data.length === 0) {
@@ -239,7 +253,7 @@ const HomePage = () => {
                 <tr 
                   key={index}
                   onClick={() => handleTicketClick(item)}
-                  className={styles.clickableRow} // Todos los tickets son clickeables
+                  className={styles.clickableRow}
                 >
                   <td>#{item.id}</td>
                   <td>{item.solicitante}</td>
@@ -260,15 +274,11 @@ const HomePage = () => {
   };
 
   const renderSurveyTable = (data, title) => {
-    const pendingSurveys = data.filter(
-      (survey) => !completedSurveys.includes(survey.id)
-    );
-
-    if (pendingSurveys.length === 0) {
+    if (!data || data.length === 0) {
       return (
         <div className={styles.tablaContainer}>
           <h2>{title.toUpperCase()}</h2>
-          <p>No hay encuestas pendientes.</p>
+          <p>No has realizado ninguna encuesta.</p>
         </div>
       );
     }
@@ -279,26 +289,31 @@ const HomePage = () => {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>SOLICITANTE</th>
-              <th>DESCRIPCIÓN</th>
-              <th>TÉCNICO ASIGNADO</th>
+              <th>ID TICKET</th>
+              <th>CALIFICACIÓN</th>
+              <th>COMENTARIO</th>
+              <th>FECHA ENCUESTA</th>
             </tr>
           </thead>
           <tbody>
-            {pendingSurveys.map((item, index) => (
-              <tr 
-                key={index}
-                onClick={() => {
-                  markSurveyAsCompleted(item.id);
-                  navigate(`/EncuestaSatisfaccion/${item.id}`);
-                }}
-                className={styles.clickableRow}
-              >
+            {data.map((item, index) => (
+              <tr key={index}>
                 <td>#{item.id}</td>
-                <td>{item.solicitante}</td>
-                <td>{item.descripcion}</td>
-                <td>{item.tecnico || 'Sin asignar'}</td>
+                <td>
+                  <span className={styles.calificacion}>
+                    {'⭐'.repeat(item.calificacion || 0)}
+                    {item.calificacion}/5
+                  </span>
+                </td>
+                <td className={styles.comentarioCell}>
+                  {item.comentario || 'Sin comentario'}
+                </td>
+                <td>
+                  {item.fechaEncuesta ? 
+                    new Date(item.fechaEncuesta).toLocaleDateString() : 
+                    'N/A'
+                  }
+                </td>
               </tr>
             ))}
           </tbody>
@@ -619,7 +634,7 @@ const HomePage = () => {
         {activeTab === "resueltos" && renderTable(tableData.resueltos, "Resueltos")}
         {activeTab === "cerrados" && renderTable(tableData.cerrados, "Cerrados")}
         {activeTab === "borrados" && renderTable(tableData.borrados, "Borrados")}
-        {activeTab === "encuesta" && renderSurveyTable(tableData.encuesta, "Encuesta de Satisfacción")}
+        {activeTab === "encuesta" && renderSurveyTable(tableData.encuesta, "Mis Encuestas")}
 
         {/* Chatbot */}
         <div className={styles.chatbotContainer}>
