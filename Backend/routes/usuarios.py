@@ -1251,3 +1251,303 @@ def obtener_tecnicos_por_grupo(grupo_id):
             "success": False, 
             "message": "Error al obtener técnicos"
         }), 500
+    
+# ENCUESTAS DE SATISFACCIÓN
+@usuarios_bp.route("/encuestas/<int:ticket_id>/verificar", methods=["GET"])
+def verificar_encuesta(ticket_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT * FROM encuestas_satisfaccion 
+            WHERE id_ticket = %s
+        """, (ticket_id,))
+        
+        encuesta = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "existe_encuesta": encuesta is not None,
+            "encuesta": encuesta
+        }), 200
+        
+    except Exception as e:
+        print("Error al verificar encuesta:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al verificar encuesta: {str(e)}"
+        }), 500
+
+@usuarios_bp.route("/api/encuestasatisfaccion", methods=["POST"])
+def crear_encuesta_satisfaccion():
+    try:
+        data = request.get_json()
+        ticket_id = data.get("ticketId")
+        calificacion = data.get("calificacion")
+        comentario = data.get("comentario", "")
+        usuario = data.get("usuario", "Anónimo")
+        
+        # Validaciones
+        if not ticket_id or not calificacion:
+            return jsonify({
+                "success": False,
+                "message": "Faltan campos requeridos"
+            }), 400
+            
+        if int(calificacion) < 1 or int(calificacion) > 5:
+            return jsonify({
+                "success": False,
+                "message": "La calificación debe estar entre 1 y 5"
+            }), 400
+            
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar si ya existe encuesta para este ticket
+        cursor.execute("""
+            SELECT id_encuesta FROM encuestas_satisfaccion 
+            WHERE id_ticket = %s
+        """, (ticket_id,))
+        
+        if cursor.fetchone():
+            return jsonify({
+                "success": False,
+                "message": "Ya existe una encuesta para este ticket"
+            }), 409
+        
+        # Verificar que el ticket existe y está resuelto
+        cursor.execute("""
+            SELECT estado_ticket FROM tickets 
+            WHERE id_ticket = %s
+        """, (ticket_id,))
+        
+        ticket = cursor.fetchone()
+        if not ticket:
+            return jsonify({
+                "success": False,
+                "message": "Ticket no encontrado"
+            }), 404
+            
+        if ticket['estado_ticket'] != 'resuelto':
+            return jsonify({
+                "success": False,
+                "message": "Solo se pueden enviar encuestas para tickets resueltos"
+            }), 400
+        
+        # Insertar encuesta
+        cursor.execute("""
+            INSERT INTO encuestas_satisfaccion 
+            (id_ticket, calificacion, comentario, usuario)
+            VALUES (%s, %s, %s, %s)
+        """, (ticket_id, calificacion, comentario, usuario))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "message": "Encuesta enviada correctamente"
+        }), 200
+        
+    except Exception as e:
+        print("Error al crear encuesta:", e)
+        if 'conn' in locals():
+            conn.rollback()
+        return jsonify({
+            "success": False,
+            "message": f"Error al procesar la encuesta: {str(e)}"
+        }), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@usuarios_bp.route("/encuestas/ticket/<int:ticket_id>", methods=["GET"])
+def obtener_encuesta_por_ticket(ticket_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT * FROM encuestas_satisfaccion 
+            WHERE id_ticket = %s
+        """, (ticket_id,))
+        
+        encuesta = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not encuesta:
+            return jsonify({
+                "success": False,
+                "message": "No se encontró encuesta para este ticket"
+            }), 404
+            
+        return jsonify({
+            "success": True,
+            "encuesta": encuesta
+        }), 200
+        
+    except Exception as e:
+        print("Error al obtener encuesta:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al obtener encuesta: {str(e)}"
+        }), 500
+
+@usuarios_bp.route("/encuestas/usuario", methods=["GET"])
+def obtener_encuestas_usuario():
+    try:
+        usuario_id = request.args.get("usuario_id")
+        
+        if not usuario_id:
+            return jsonify({
+                "success": False,
+                "message": "Se requiere ID de usuario"
+            }), 400
+            
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Obtener el nombre del usuario para filtrar las encuestas
+        cursor.execute("SELECT nombre_completo FROM usuarios WHERE id_usuario = %s", (usuario_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            return jsonify({
+                "success": False,
+                "message": "Usuario no encontrado"
+            }), 404
+        
+        # Obtener encuestas SOLO del usuario específico usando su nombre
+        cursor.execute("""
+            SELECT es.*, t.titulo as ticket_titulo, t.descripcion as ticket_descripcion
+            FROM encuestas_satisfaccion es
+            JOIN tickets t ON es.id_ticket = t.id_ticket
+            WHERE es.usuario = %s
+            ORDER BY es.fecha_encuesta DESC
+        """, (usuario['nombre_completo'],))
+        
+        encuestas = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "encuestas": encuestas
+        }), 200
+        
+    except Exception as e:
+        print("Error al obtener encuestas del usuario:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al obtener encuestas: {str(e)}"
+        }), 500
+    
+@usuarios_bp.route("/encuestas/detalle/<int:encuesta_id>", methods=["GET"])
+def obtener_detalle_encuesta(encuesta_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT es.*, t.titulo, t.descripcion, u.nombre_completo as tecnico_asignado
+            FROM encuestas_satisfaccion es
+            JOIN tickets t ON es.id_ticket = t.id_ticket
+            LEFT JOIN usuarios u ON t.id_tecnico_asignado = u.id_usuario
+            WHERE es.id_encuesta = %s
+        """, (encuesta_id,))
+        
+        encuesta = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if not encuesta:
+            return jsonify({
+                "success": False,
+                "message": "Encuesta no encontrada"
+            }), 404
+            
+        return jsonify({
+            "success": True,
+            "encuesta": encuesta
+        }), 200
+        
+    except Exception as e:
+        print("Error al obtener detalle de encuesta:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al obtener detalle: {str(e)}"
+        }), 500
+    
+@usuarios_bp.route("/encuestas/tecnico/<int:tecnico_id>", methods=["GET"])
+def obtener_encuestas_por_tecnico(tecnico_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Obtener encuestas de tickets asignados a este técnico
+        cursor.execute("""
+            SELECT es.*, t.titulo, t.descripcion, 
+                   u.nombre_completo as nombre_usuario,
+                   t.id_tecnico_asignado
+            FROM encuestas_satisfaccion es
+            JOIN tickets t ON es.id_ticket = t.id_ticket
+            JOIN usuarios u ON t.id_usuario_reporta = u.id_usuario
+            WHERE t.id_tecnico_asignado = %s
+            ORDER BY es.fecha_encuesta DESC
+        """, (tecnico_id,))
+        
+        encuestas = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "encuestas": encuestas
+        }), 200
+        
+    except Exception as e:
+        print("Error al obtener encuestas del técnico:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al obtener encuestas: {str(e)}"
+        }), 500
+    
+@usuarios_bp.route("/encuestas/todas", methods=["GET"])
+def obtener_todas_encuestas():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT es.*, t.titulo as ticket_titulo, t.descripcion as ticket_descripcion,
+                   u.nombre_completo as nombre_tecnico, t.id_tecnico_asignado
+            FROM encuestas_satisfaccion es
+            JOIN tickets t ON es.id_ticket = t.id_ticket
+            LEFT JOIN usuarios u ON t.id_tecnico_asignado = u.id_usuario
+            ORDER BY es.fecha_encuesta DESC
+        """)
+        
+        encuestas = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "encuestas": encuestas
+        }), 200
+        
+    except Exception as e:
+        print("Error al obtener todas las encuestas:", e)
+        return jsonify({
+            "success": False, 
+            "message": f"Error al obtener encuestas: {str(e)}"
+        }), 500
